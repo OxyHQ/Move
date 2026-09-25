@@ -1,0 +1,15 @@
+{
+ "@context": "https://www.w3.org/ns/activitystreams",
+ "id": "https://mastodon.social/users/Gargron/following?page=1",
+ "type": "OrderedCollectionPage",
+ "totalItems": 742,
+ "partOf": "https://mastodon.social/users/Gargron/following",
+ "orderedItems": [
+  "https://cyberpunk.gay/users/arc5ougxj2b5000s",
+  "https://mastodon.social/ap/users/117293268054618181",
+  "https://fedi.freebooters.uk/chris",
+  "https://mastodon.social/users/grishka",
+  "https://mastodon.au/users/nigl"
+ ],
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

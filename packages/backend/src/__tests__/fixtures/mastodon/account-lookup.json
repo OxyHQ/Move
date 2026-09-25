@@ -1,0 +1,52 @@
+{
+ "id": "1",
+ "username": "Gargron",
+ "acct": "Gargron",
+ "display_name": "Eugen Rochko",
+ "locked": false,
+ "bot": false,
+ "discoverable": true,
+ "indexable": true,
+ "group": false,
+ "created_at": "2016-03-16T00:00:00.000Z",
+ "note": "<p>Executive Strategy &amp; Product Advisor, Founder of <span class=\"h-card\" translate=\"no\"><a href=\"https://mastodon.social/@Mastodon\" class=\"u-url mention\">@<span>Mastodon</span></a></span>. Film photography, prog metal, Dota 2. Likes all things analog. Luddite.</p>",
+ "url": "https://mastodon.social/@Gargron",
+ "uri": "https://mastodon.social/users/Gargron",
+ "avatar": "https://files.mastodon.social/accounts/avatars/000/000/001/original/6b2384b33799a0dd.png",
+ "avatar_static": "https://files.mastodon.social/accounts/avatars/000/000/001/original/6b2384b33799a0dd.png",
+ "avatar_description": "A white man with medium-length black hair, a short beard and a mustache, wearing dark-framed glasses and a white t-shirt, holding a Pentax 6x7 camera.",
+ "header": "https://files.mastodon.social/accounts/headers/000/000/001/original/d13e4417706a5fec.jpg",
+ "header_static": "https://files.mastodon.social/accounts/headers/000/000/001/original/d13e4417706a5fec.jpg",
+ "header_description": "",
+ "followers_count": 382784,
+ "following_count": 742,
+ "statuses_count": 82318,
+ "last_status_at": "2026-09-25",
+ "hide_collections": false,
+ "show_media": true,
+ "show_media_replies": false,
+ "show_featured": true,
+ "noindex": false,
+ "feature_approval": {
+  "automatic": [
+   "public"
+  ],
+  "manual": [],
+  "current_user": "denied"
+ },
+ "emojis": [],
+ "roles": [],
+ "fields": [
+  {
+   "name": "GitHub",
+   "value": "<a href=\"https://github.com/Gargron\" target=\"_blank\" rel=\"nofollow noopener me\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">github.com/Gargron</span><span class=\"invisible\"></span></a>",
+   "verified_at": "2023-02-07T23:24:40.347+00:00"
+  },
+  {
+   "name": "Portfolio",
+   "value": "<a href=\"https://eugenrochko.com\" target=\"_blank\" rel=\"nofollow noopener me\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">eugenrochko.com</span><span class=\"invisible\"></span></a>",
+   "verified_at": "2024-07-06T01:06:10.801+00:00"
+  }
+ ],
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

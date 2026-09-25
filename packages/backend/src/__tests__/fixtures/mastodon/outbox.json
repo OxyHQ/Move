@@ -1,0 +1,9 @@
+{
+ "@context": "https://www.w3.org/ns/activitystreams",
+ "id": "https://mastodon.social/users/Gargron/outbox",
+ "type": "OrderedCollection",
+ "totalItems": 82318,
+ "first": "https://mastodon.social/users/Gargron/outbox?page=true",
+ "last": "https://mastodon.social/users/Gargron/outbox?min_id=0&page=true",
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

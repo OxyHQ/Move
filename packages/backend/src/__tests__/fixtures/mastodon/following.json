@@ -1,0 +1,8 @@
+{
+ "@context": "https://www.w3.org/ns/activitystreams",
+ "id": "https://mastodon.social/users/Gargron/following",
+ "type": "OrderedCollection",
+ "totalItems": 742,
+ "first": "https://mastodon.social/users/Gargron/following?page=1",
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

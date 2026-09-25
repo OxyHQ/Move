@@ -1,0 +1,166 @@
+{
+ "@context": "https://www.w3.org/ns/activitystreams",
+ "id": "https://mastodon.social/users/Gargron/outbox?max_id=117293597728332883&page=true",
+ "type": "OrderedCollectionPage",
+ "partOf": "https://mastodon.social/users/Gargron/outbox",
+ "orderedItems": [
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117293597728332882/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-18T19:04:26Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117293597728332882",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": null,
+    "published": "2026-09-18T19:04:26Z",
+    "url": "https://mastodon.social/@Gargron/117293597728332882",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117293597728332882",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117293597728332882",
+    "context": "https://mastodon.social/contexts/1-117293597728332882",
+    "content": "<p>Greetings from the Overhead, the Albatross / <a href=\"https://mastodon.social/tags/TheDearHunter\" class=\"mention hashtag\" rel=\"tag\">#<span>TheDearHunter</span></a> concert in <a href=\"https://mastodon.social/tags/MCR\" class=\"mention hashtag\" rel=\"tag\">#<span>MCR</span></a>!</p>",
+    "contentMap": {
+     "en": "<p>Greetings from the Overhead, the Albatross / <a href=\"https://mastodon.social/tags/TheDearHunter\" class=\"mention hashtag\" rel=\"tag\">#<span>TheDearHunter</span></a> concert in <a href=\"https://mastodon.social/tags/MCR\" class=\"mention hashtag\" rel=\"tag\">#<span>MCR</span></a>!</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [
+     {
+      "type": "Document",
+      "mediaType": "image/jpeg",
+      "url": "https://files.mastodon.social/media_attachments/files/117/293/595/506/766/616/original/75329e55809fe8ce.jpeg",
+      "name": "Band on stage",
+      "blurhash": "UKA9i^NdjGxaayfkxZWC0goJkBNGxZaeI:s.",
+      "focalPoint": [
+       0.0,
+       0.0
+      ],
+      "width": 3325,
+      "height": 2494
+     }
+    ],
+    "tag": [
+     {
+      "type": "Hashtag",
+      "href": "https://mastodon.social/tags/TheDearHunter",
+      "name": "#TheDearHunter"
+     },
+     {
+      "type": "Hashtag",
+      "href": "https://mastodon.social/tags/mcr",
+      "name": "#mcr"
+     }
+    ],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117293597728332882/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117293597728332882/replies?min_id=117294179974600212&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117293597728332882/replies",
+      "items": [
+       "https://mastodon.social/users/Gargron/statuses/117294179974600212"
+      ]
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117293597728332882/likes",
+     "type": "Collection",
+     "totalItems": 37
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117293597728332882/shares",
+     "type": "Collection",
+     "totalItems": 4
+    }
+   }
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117254912647958576/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-11T23:06:18Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117254912647958576",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": null,
+    "published": "2026-09-11T23:06:18Z",
+    "url": "https://mastodon.social/@Gargron/117254912647958576",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117254912647958576",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117254912647958576",
+    "context": "https://mastodon.social/contexts/1-117254912647958576",
+    "content": "<p>I don&#39;t want a foldable phone, I want the phone I bought in 2020 that worked flawlessly to not lag because somebody forced Liquid Glass on it.</p>",
+    "contentMap": {
+     "en": "<p>I don&#39;t want a foldable phone, I want the phone I bought in 2020 that worked flawlessly to not lag because somebody forced Liquid Glass on it.</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117254912647958576/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117254912647958576/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117254912647958576/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117254912647958576/likes",
+     "type": "Collection",
+     "totalItems": 701
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117254912647958576/shares",
+     "type": "Collection",
+     "totalItems": 262
+    }
+   }
+  }
+ ],
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

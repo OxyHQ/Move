@@ -1,0 +1,22 @@
+{
+  "extends": "@oxy.so/app-preset/tsconfig/backend.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@move/shared-types": ["../shared-types/src"],
+      "@move/shared-types/*": ["../shared-types/src/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  // drizzle.config.ts is excluded from the EMITTING build on purpose. It imports
+  // `drizzle-kit`, a devDependency the runtime image strips
+  // (`bun install --production` in the Dockerfile), so compiling it puts a module
+  // into dist/ whose first `require` throws in production. Nothing requires it
+  // today, which is exactly what makes it worth excluding now rather than after
+  // something does. drizzle-kit loads and type-checks the config itself when
+  // `db:generate` runs, which is the only place it is ever used.
+  "exclude": ["node_modules", "dist", "drizzle.config.ts", "src/__tests__"],
+  "references": [{ "path": "../shared-types" }]
+}

@@ -1,0 +1,58 @@
+{
+ "feed": [
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r",
+    "cid": "bafyreicwdtqz6nsa6t5u772vmem2ibzoxycy5xejfw44u3smsfmqmektey",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-09T02:25:37.837Z",
+     "langs": [
+      "en"
+     ],
+     "text": "become an animist and never again worry about whether the machines are thinking. so are the trees? the machines can help us make better websites though"
+    },
+    "bookmarkCount": 19,
+    "replyCount": 46,
+    "repostCount": 36,
+    "likeCount": 502,
+    "quoteCount": 53,
+    "indexedAt": "2026-09-09T02:25:38.259Z",
+    "labels": []
+   },
+   "opThreadPostIndex": 1,
+   "opThreadPostCount": 2
+  }
+ ],
+ "_fixture": "Recorded 2026-09-25 from public.api.bsky.app (public XRPC) for jay.bsky.team and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

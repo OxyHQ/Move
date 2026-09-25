@@ -1,0 +1,32 @@
+{
+ "records": [
+  {
+   "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.graph.block/3mk426pj2yq23",
+   "cid": "bafyreia5ob6njej7cbpydpynutprpll56rqlkkuo55knruwgugb4gnaswq",
+   "value": {
+    "$type": "app.bsky.graph.block",
+    "subject": "did:plc:lhnfzt5en3xcgjyucabidumj",
+    "createdAt": "2026-04-22T17:41:06.628Z"
+   }
+  },
+  {
+   "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.graph.block/3miilzlixtu2z",
+   "cid": "bafyreidl54dzj6cizjitas7ktbljl7pnjuosw4yo6unh4npljiqax4cxfy",
+   "value": {
+    "$type": "app.bsky.graph.block",
+    "subject": "did:plc:slca7d33txjmc6hohu3aenmw",
+    "createdAt": "2026-04-02T06:41:55.567Z"
+   }
+  },
+  {
+   "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.graph.block/3miadgho7gx26",
+   "cid": "bafyreicqgzyxydh3jcm3vyqmisf3duccckox4r27q3r26f4zfqnyzwy2au",
+   "value": {
+    "$type": "app.bsky.graph.block",
+    "subject": "did:plc:fvuvnr3tl55jdz5hsaa7iecs",
+    "createdAt": "2026-03-29T23:46:46.109Z"
+   }
+  }
+ ],
+ "cursor": "3miadgho7gx26"
+}

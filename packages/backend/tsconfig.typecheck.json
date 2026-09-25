@@ -1,0 +1,27 @@
+{
+  "//": "Typecheck-only view: the build tsconfig excludes src/__tests__ so no test (or bun:test import) is emitted into dist/ and shipped in the image; this one puts the tests back under tsc. It also checks the ONE frontend module the pipeline test drives (the client's plan applier), hence rootDir '..'.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [
+      "bun",
+      "node"
+    ],
+    "rootDir": "..",
+    "composite": false
+  },
+  "include": [
+    "**/*.ts",
+    "../frontend/lib/planApplier.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "drizzle.config.ts"
+  ],
+  "references": [
+    {
+      "path": "../shared-types"
+    }
+  ]
+}

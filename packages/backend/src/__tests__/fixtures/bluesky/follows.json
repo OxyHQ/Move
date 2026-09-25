@@ -1,0 +1,99 @@
+{
+ "follows": [
+  {
+   "did": "did:plc:xoa2hgn2azylagqqzb2s4ce3",
+   "handle": "typesafeai.bsky.social",
+   "displayName": "Diogo Almeida",
+   "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:xoa2hgn2azylagqqzb2s4ce3/bafkreid7sqygmgxiaci35cr3ft5p3myrz3uff74ox2dnlhasj2xwpj47i4",
+   "associated": {
+    "activitySubscription": {
+     "allowSubscriptions": "followers"
+    }
+   },
+   "labels": [],
+   "createdAt": "2026-09-15T05:14:42.557Z",
+   "verification": {
+    "verifications": [
+     {
+      "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+      "issuerDisplayName": "Bluesky",
+      "issuerHandle": "bsky.app",
+      "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3mvlmzmwj5z2q",
+      "isValid": true,
+      "createdAt": "2026-09-15T22:05:21.126Z"
+     }
+    ],
+    "verifiedStatus": "valid",
+    "trustedVerifierStatus": "none"
+   },
+   "description": "Neolab",
+   "indexedAt": "2026-09-15T21:54:52.266Z"
+  },
+  {
+   "did": "did:plc:vzuk2fayavqg3emkeag4auli",
+   "handle": "anthromancer.com",
+   "displayName": "Dr. Dan the P(ancake Man)",
+   "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:vzuk2fayavqg3emkeag4auli/bafkreibxdg4dacbf5re5qqf33z5btohse5d5xdzyhxtjqbbdl6t3usqefa",
+   "associated": {
+    "activitySubscription": {
+     "allowSubscriptions": "followers"
+    }
+   },
+   "labels": [],
+   "createdAt": "2023-04-11T19:24:38.969Z",
+   "description": "I literally invented live pancake art as a trade\n\nSt. Louis, MO\n\n🥞 https://TheJoyofPancakes.com 🎨\n🃏 https://Anthromancer.com 🔮",
+   "indexedAt": "2026-09-15T04:10:44.362Z"
+  },
+  {
+   "did": "did:plc:gwvh3frsmdih2zpol2holysc",
+   "handle": "brennan.computer",
+   "displayName": "brennan",
+   "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:gwvh3frsmdih2zpol2holysc/bafkreifiwjuwexurqx7foisyrl2nlhd7y7irfaega7rebqkncsitlt44pm",
+   "associated": {
+    "chat": {
+     "allowIncoming": "all"
+    },
+    "activitySubscription": {
+     "allowSubscriptions": "followers"
+    }
+   },
+   "labels": [],
+   "createdAt": "2023-04-10T03:11:17.289Z",
+   "description": "unlicensed back alley alchemy\n\ndigital ⇄ physical, 3D and AI research. living in a world of magic and vibrance",
+   "indexedAt": "2025-11-22T22:47:19.725Z"
+  }
+ ],
+ "subject": {
+  "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+  "handle": "jay.bsky.team",
+  "displayName": "Jay 🦋",
+  "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+  "associated": {
+   "chat": {
+    "allowIncoming": "following"
+   },
+   "activitySubscription": {
+    "allowSubscriptions": "followers"
+   }
+  },
+  "labels": [],
+  "createdAt": "2022-11-17T06:31:40.296Z",
+  "verification": {
+   "verifications": [
+    {
+     "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+     "issuerDisplayName": "Bluesky",
+     "issuerHandle": "bsky.app",
+     "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+     "isValid": true,
+     "createdAt": "2025-04-21T11:35:53.359Z"
+    }
+   ],
+   "verifiedStatus": "valid",
+   "trustedVerifierStatus": "none"
+  },
+  "description": "Founder & Chief Innovation Officer @ Bluesky\n\nWorking on @attie.ai\n\n🌱 🪴 🌳",
+  "indexedAt": "2026-03-29T21:16:33.460Z"
+ },
+ "_fixture": "Recorded 2026-09-25 from public.api.bsky.app (public XRPC) for jay.bsky.team and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

@@ -1,0 +1,1105 @@
+{
+ "feed": [
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvvdpby3x22t",
+    "cid": "bafyreibceqpn27xqeqymfexsotda2czcabwbsn6ynbkwna3h6ojj2undny",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-19T18:45:07.963Z",
+     "embed": {
+      "$type": "app.bsky.embed.images",
+      "images": [
+       {
+        "alt": "two puppies",
+        "aspectRatio": {
+         "height": 3999,
+         "width": 3000
+        },
+        "image": {
+         "$type": "blob",
+         "ref": {
+          "$link": "bafkreic4ht5ww2pplaulfcyqxqwm6ym5x74zxjpr6dv3oscce7afbifya4"
+         },
+         "mimeType": "image/jpeg",
+         "size": 1956129
+        }
+       }
+      ]
+     },
+     "langs": [
+      "en"
+     ],
+     "text": "good dogs"
+    },
+    "embed": {
+     "images": [
+      {
+       "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreic4ht5ww2pplaulfcyqxqwm6ym5x74zxjpr6dv3oscce7afbifya4",
+       "fullsize": "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreic4ht5ww2pplaulfcyqxqwm6ym5x74zxjpr6dv3oscce7afbifya4",
+       "alt": "two puppies",
+       "aspectRatio": {
+        "height": 3999,
+        "width": 3000
+       }
+      }
+     ],
+     "$type": "app.bsky.embed.images#view"
+    },
+    "bookmarkCount": 3,
+    "replyCount": 20,
+    "repostCount": 23,
+    "likeCount": 662,
+    "quoteCount": 2,
+    "indexedAt": "2026-09-19T18:45:16.166Z",
+    "labels": []
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvorbgjaks24",
+    "cid": "bafyreieya4kuzk4clzvh6coqqqm2w4cpwsugejnejydsk6mxnop5zl2wsi",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-17T03:59:17.182Z",
+     "embed": {
+      "$type": "app.bsky.embed.video",
+      "aspectRatio": {
+       "height": 1920,
+       "width": 1080
+      },
+      "presentation": "default",
+      "video": {
+       "$type": "blob",
+       "ref": {
+        "$link": "bafkreifkphpesihcwllhvyazux4ho33nf4obttkmblbj3d4fhdtkllmdpy"
+       },
+       "mimeType": "video/mp4",
+       "size": 5019281
+      }
+     },
+     "langs": [
+      "en"
+     ],
+     "text": "ai ea e/acc p(doom) singularity slowdown arms race cyberwarfare drone swarm x-risk consolidation decentralization destabilization —\n\nyes. but have you ever heard the ancient refrain of a midsummer song echoing through the forest as you approach a sacred spring on the solstice?"
+    },
+    "embed": {
+     "cid": "bafkreifkphpesihcwllhvyazux4ho33nf4obttkmblbj3d4fhdtkllmdpy",
+     "playlist": "https://video.bsky.app/watch/did%3Aplc%3Aoky5czdrnfjpqslsw2a5iclo/bafkreifkphpesihcwllhvyazux4ho33nf4obttkmblbj3d4fhdtkllmdpy/playlist.m3u8",
+     "thumbnail": "https://video.bsky.app/watch/did%3Aplc%3Aoky5czdrnfjpqslsw2a5iclo/bafkreifkphpesihcwllhvyazux4ho33nf4obttkmblbj3d4fhdtkllmdpy/thumbnail.jpg",
+     "aspectRatio": {
+      "height": 1920,
+      "width": 1080
+     },
+     "presentation": "default",
+     "$type": "app.bsky.embed.video#view"
+    },
+    "bookmarkCount": 20,
+    "replyCount": 17,
+    "repostCount": 22,
+    "likeCount": 341,
+    "quoteCount": 1,
+    "indexedAt": "2026-09-17T03:59:22.862Z",
+    "labels": []
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:gwvh3frsmdih2zpol2holysc/app.bsky.feed.post/3mvkiqpf4x22s",
+    "cid": "bafyreibzwuhyclbsicpiaooidq7xymox5mhv3p3s5gjqcdv4ylxbpovr4q",
+    "author": {
+     "did": "did:plc:gwvh3frsmdih2zpol2holysc",
+     "handle": "brennan.computer",
+     "displayName": "brennan",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:gwvh3frsmdih2zpol2holysc/bafkreifiwjuwexurqx7foisyrl2nlhd7y7irfaega7rebqkncsitlt44pm",
+     "associated": {
+      "chat": {
+       "allowIncoming": "all"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2023-04-10T03:11:17.289Z"
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-15T11:16:07.172Z",
+     "embed": {
+      "$type": "app.bsky.embed.record",
+      "record": {
+       "cid": "bafyreicfuury3bvimvaq5ficjiqbwgpf56ejzo74pqvqkzq343hytyyvdq",
+       "uri": "at://did:plc:qwfrxx4xe4sxjjx3hdkohkqn/app.bsky.feed.post/3mtybjy27ds2a"
+      }
+     },
+     "langs": [
+      "en"
+     ],
+     "text": "really the main fight seems to be people who see AI as the right one foisted upon them, and people who see AI as a way to build the left one themselves and finally be free of the corpo version forever"
+    },
+    "embed": {
+     "record": {
+      "uri": "at://did:plc:qwfrxx4xe4sxjjx3hdkohkqn/app.bsky.feed.post/3mtybjy27ds2a",
+      "cid": "bafyreicfuury3bvimvaq5ficjiqbwgpf56ejzo74pqvqkzq343hytyyvdq",
+      "author": {
+       "did": "did:plc:qwfrxx4xe4sxjjx3hdkohkqn",
+       "handle": "marko.tech",
+       "displayName": "Marko Bajlovic",
+       "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:qwfrxx4xe4sxjjx3hdkohkqn/bafkreietfr4p4ycqiof4hrsknfjpiyaalfc6r3msp2y75udqgv5rhev6c4",
+       "associated": {
+        "chat": {
+         "allowIncoming": "following"
+        },
+        "activitySubscription": {
+         "allowSubscriptions": "followers"
+        }
+       },
+       "labels": [],
+       "createdAt": "2024-10-19T06:04:58.607Z"
+      },
+      "value": {
+       "$type": "app.bsky.feed.post",
+       "createdAt": "2026-08-26T11:53:58.251Z",
+       "embed": {
+        "$type": "app.bsky.embed.images",
+        "images": [
+         {
+          "alt": "",
+          "aspectRatio": {
+           "height": 559,
+           "width": 1024
+          },
+          "image": {
+           "$type": "blob",
+           "ref": {
+            "$link": "bafkreibhotkuhpq2ydehjjxkt4aof7yus43dpclko2upapgh2ocwwccdyq"
+           },
+           "mimeType": "image/jpeg",
+           "size": 194737
+          }
+         }
+        ]
+       },
+       "langs": [
+        "en"
+       ],
+       "text": "State of SaaS"
+      },
+      "labels": [],
+      "likeCount": 3744,
+      "replyCount": 67,
+      "repostCount": 887,
+      "quoteCount": 49,
+      "indexedAt": "2026-08-26T11:54:00.669Z",
+      "embeds": [
+       {
+        "images": [
+         {
+          "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:qwfrxx4xe4sxjjx3hdkohkqn/bafkreibhotkuhpq2ydehjjxkt4aof7yus43dpclko2upapgh2ocwwccdyq",
+          "fullsize": "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:qwfrxx4xe4sxjjx3hdkohkqn/bafkreibhotkuhpq2ydehjjxkt4aof7yus43dpclko2upapgh2ocwwccdyq",
+          "alt": "",
+          "aspectRatio": {
+           "height": 559,
+           "width": 1024
+          }
+         }
+        ],
+        "$type": "app.bsky.embed.images#view"
+       }
+      ],
+      "$type": "app.bsky.embed.record#viewRecord"
+     },
+     "$type": "app.bsky.embed.record#view"
+    },
+    "bookmarkCount": 21,
+    "replyCount": 11,
+    "repostCount": 37,
+    "likeCount": 255,
+    "quoteCount": 5,
+    "indexedAt": "2026-09-15T11:16:07.268Z",
+    "labels": []
+   },
+   "reason": {
+    "by": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.repost/3mvl7ji2b4w2v",
+    "cid": "bafyreiarbibqhd6iq2iufzoydinru7xnfco3rjo2dwdpcwrjdxvz2taifq",
+    "indexedAt": "2026-09-15T18:03:40.766Z",
+    "$type": "app.bsky.feed.defs#reasonRepost"
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvqo2jcqlk25",
+    "cid": "bafyreicaavnmgpp2cuhmgnsnc2hywnelfx3vkokgxghrdre5grjmrtu7ny",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-17T22:07:03.486Z",
+     "langs": [
+      "en"
+     ],
+     "reply": {
+      "parent": {
+       "cid": "bafyreidg6fgyfhf3qzbqibxw6nlcy5fliblmnrmsyakg257ax72fcieg4u",
+       "uri": "at://did:plc:xfqcsi7wuwedeqaa5m7aih44/app.bsky.feed.post/3mvqnpb54bk2k"
+      },
+      "root": {
+       "cid": "bafyreidg6fgyfhf3qzbqibxw6nlcy5fliblmnrmsyakg257ax72fcieg4u",
+       "uri": "at://did:plc:xfqcsi7wuwedeqaa5m7aih44/app.bsky.feed.post/3mvqnpb54bk2k"
+      }
+     },
+     "text": "💙"
+    },
+    "bookmarkCount": 0,
+    "replyCount": 0,
+    "repostCount": 0,
+    "likeCount": 10,
+    "quoteCount": 0,
+    "indexedAt": "2026-09-17T22:07:05.689Z",
+    "labels": []
+   },
+   "reply": {
+    "root": {
+     "uri": "at://did:plc:xfqcsi7wuwedeqaa5m7aih44/app.bsky.feed.post/3mvqnpb54bk2k",
+     "notFound": true,
+     "$type": "app.bsky.feed.defs#notFoundPost"
+    },
+    "parent": {
+     "uri": "at://did:plc:xfqcsi7wuwedeqaa5m7aih44/app.bsky.feed.post/3mvqnpb54bk2k",
+     "notFound": true,
+     "$type": "app.bsky.feed.defs#notFoundPost"
+    }
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvh5dnvywc2b",
+    "cid": "bafyreidm5rssrmm74z23xvja6l6hrmckjr3hvlyt3uwzj6l4jibo64x3mi",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-14T03:13:59.045Z",
+     "facets": [
+      {
+       "$type": "app.bsky.richtext.facet",
+       "features": [
+        {
+         "$type": "app.bsky.richtext.facet#mention",
+         "did": "did:plc:gsbue2dtbtqzw5du5btlh7p2"
+        }
+       ],
+       "index": {
+        "byteEnd": 15,
+        "byteStart": 0
+       }
+      }
+     ],
+     "langs": [
+      "en"
+     ],
+     "reply": {
+      "parent": {
+       "cid": "bafyreicaewddpxxye3elqy5i4jnw4fnzbn26iehbllol5l4ba7xj2vlynq",
+       "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvgpj46mmk24"
+      },
+      "root": {
+       "cid": "bafyreig4bbsp7qzfhsyhcb5v3l2ckkgxor63a23yqqhr2crmca27gegab4",
+       "uri": "at://did:plc:oisofpd7lj26yvgiivf3lxsi/app.bsky.feed.post/3mvgnbxs2as2s"
+      }
+     },
+     "text": "@alexbenzer.com the people have spoken"
+    },
+    "bookmarkCount": 0,
+    "replyCount": 2,
+    "repostCount": 0,
+    "likeCount": 34,
+    "quoteCount": 0,
+    "indexedAt": "2026-09-14T03:13:59.564Z",
+    "labels": []
+   },
+   "reply": {
+    "root": {
+     "uri": "at://did:plc:oisofpd7lj26yvgiivf3lxsi/app.bsky.feed.post/3mvgnbxs2as2s",
+     "cid": "bafyreig4bbsp7qzfhsyhcb5v3l2ckkgxor63a23yqqhr2crmca27gegab4",
+     "author": {
+      "did": "did:plc:oisofpd7lj26yvgiivf3lxsi",
+      "handle": "hailey.at",
+      "displayName": "hailey",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oisofpd7lj26yvgiivf3lxsi/bafkreiah3rghaakqitphmhxu2xgev5nanxumnsjaqq2alb3psspqsnmwga",
+      "associated": {
+       "chat": {
+        "allowIncoming": "following",
+        "allowGroupInvites": "following"
+       },
+       "activitySubscription": {
+        "allowSubscriptions": "followers"
+       }
+      },
+      "labels": [],
+      "createdAt": "2023-08-15T03:48:23.045Z",
+      "verification": {
+       "verifications": [
+        {
+         "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+         "issuerDisplayName": "Bluesky",
+         "issuerHandle": "bsky.app",
+         "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3ltp7i2spls2h",
+         "isValid": true,
+         "createdAt": "2025-07-11T15:56:56.595Z"
+        }
+       ],
+       "verifiedStatus": "valid",
+       "trustedVerifierStatus": "none"
+      },
+      "status": {
+       "uri": "at://did:plc:oisofpd7lj26yvgiivf3lxsi/app.bsky.actor.status/self",
+       "cid": "bafyreifgiqyb3v66toilmq6hcbuvxgtzzzaenqrdk6j7ssiq3gzvm2delu",
+       "record": {
+        "$type": "app.bsky.actor.status",
+        "createdAt": "2025-10-12T19:41:32Z",
+        "durationMinutes": 2,
+        "embed": {
+         "$type": "app.bsky.embed.external",
+         "external": {
+          "description": "@hailey.at is 🔴LIVE on stream.place",
+          "thumb": {
+           "$type": "blob",
+           "ref": {
+            "$link": "bafkreia5ax7swaonyziwjjkcg7qmvlvn4crz7f6jcoccjp5hzynf6vmetu"
+           },
+           "mimeType": "image/jpeg",
+           "size": 200043
+          },
+          "title": "learning to play fps again",
+          "uri": "https://stream.place/hailey.at"
+         }
+        },
+        "status": "app.bsky.actor.status#live"
+       },
+       "status": "app.bsky.actor.status#live",
+       "embed": {
+        "external": {
+         "uri": "https://stream.place/hailey.at",
+         "title": "learning to play fps again",
+         "description": "@hailey.at is 🔴LIVE on stream.place",
+         "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:oisofpd7lj26yvgiivf3lxsi/bafkreia5ax7swaonyziwjjkcg7qmvlvn4crz7f6jcoccjp5hzynf6vmetu"
+        },
+        "$type": "app.bsky.embed.external#view"
+       },
+       "labels": [],
+       "expiresAt": "2025-10-12T19:46:32.000Z",
+       "isActive": false
+      }
+     },
+     "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-09-13T22:26:42.419Z",
+      "langs": [
+       "en"
+      ],
+      "text": "i think this website needs a healthy dose of pragmatism. multiple unrelated arguments going on where a bit of pragmatism would help. is anyone dispensing pragmatism?"
+     },
+     "bookmarkCount": 2,
+     "replyCount": 34,
+     "repostCount": 5,
+     "likeCount": 198,
+     "quoteCount": 5,
+     "indexedAt": "2026-09-13T22:26:43.158Z",
+     "labels": [],
+     "$type": "app.bsky.feed.defs#postView"
+    },
+    "parent": {
+     "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvgpj46mmk24",
+     "cid": "bafyreicaewddpxxye3elqy5i4jnw4fnzbn26iehbllol5l4ba7xj2vlynq",
+     "author": {
+      "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+      "handle": "jay.bsky.team",
+      "displayName": "Jay 🦋",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+      "associated": {
+       "chat": {
+        "allowIncoming": "following"
+       },
+       "activitySubscription": {
+        "allowSubscriptions": "followers"
+       }
+      },
+      "labels": [],
+      "createdAt": "2022-11-17T06:31:40.296Z",
+      "verification": {
+       "verifications": [
+        {
+         "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+         "issuerDisplayName": "Bluesky",
+         "issuerHandle": "bsky.app",
+         "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+         "isValid": true,
+         "createdAt": "2025-04-21T11:35:53.359Z"
+        }
+       ],
+       "verifiedStatus": "valid",
+       "trustedVerifierStatus": "none"
+      }
+     },
+     "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-09-13T23:06:29.395Z",
+      "langs": [
+       "en"
+      ],
+      "reply": {
+       "parent": {
+        "cid": "bafyreid2hcemqsb7pzy6vwu5nyv34s2xt7uxjgfzfvf3znfyc4ftlheo5y",
+        "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvgolj26is24"
+       },
+       "root": {
+        "cid": "bafyreig4bbsp7qzfhsyhcb5v3l2ckkgxor63a23yqqhr2crmca27gegab4",
+        "uri": "at://did:plc:oisofpd7lj26yvgiivf3lxsi/app.bsky.feed.post/3mvgnbxs2as2s"
+       }
+      },
+      "text": "100 likes and i’m considering this a feature request"
+     },
+     "bookmarkCount": 0,
+     "replyCount": 5,
+     "repostCount": 4,
+     "likeCount": 128,
+     "quoteCount": 1,
+     "indexedAt": "2026-09-13T23:06:32.162Z",
+     "labels": [],
+     "$type": "app.bsky.feed.defs#postView"
+    },
+    "grandparentAuthor": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    }
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2ijovls22r",
+    "cid": "bafyreie2e5l36kyqxfshiicwwdcqlt4oldruebrxco36ihwvcpdabuwvsa",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-09T02:29:35.968Z",
+     "langs": [
+      "en"
+     ],
+     "reply": {
+      "parent": {
+       "cid": "bafyreicwdtqz6nsa6t5u772vmem2ibzoxycy5xejfw44u3smsfmqmektey",
+       "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r"
+      },
+      "root": {
+       "cid": "bafyreicwdtqz6nsa6t5u772vmem2ibzoxycy5xejfw44u3smsfmqmektey",
+       "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r"
+      }
+     },
+     "text": "my current favorite non-human entities to converse with:\n\n- 500 year old trees\n- claude"
+    },
+    "bookmarkCount": 8,
+    "replyCount": 44,
+    "repostCount": 8,
+    "likeCount": 264,
+    "quoteCount": 22,
+    "indexedAt": "2026-09-09T02:29:36.765Z",
+    "labels": []
+   },
+   "reply": {
+    "root": {
+     "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r",
+     "cid": "bafyreicwdtqz6nsa6t5u772vmem2ibzoxycy5xejfw44u3smsfmqmektey",
+     "author": {
+      "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+      "handle": "jay.bsky.team",
+      "displayName": "Jay 🦋",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+      "associated": {
+       "chat": {
+        "allowIncoming": "following"
+       },
+       "activitySubscription": {
+        "allowSubscriptions": "followers"
+       }
+      },
+      "labels": [],
+      "createdAt": "2022-11-17T06:31:40.296Z",
+      "verification": {
+       "verifications": [
+        {
+         "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+         "issuerDisplayName": "Bluesky",
+         "issuerHandle": "bsky.app",
+         "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+         "isValid": true,
+         "createdAt": "2025-04-21T11:35:53.359Z"
+        }
+       ],
+       "verifiedStatus": "valid",
+       "trustedVerifierStatus": "none"
+      }
+     },
+     "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-09-09T02:25:37.837Z",
+      "langs": [
+       "en"
+      ],
+      "text": "become an animist and never again worry about whether the machines are thinking. so are the trees? the machines can help us make better websites though"
+     },
+     "bookmarkCount": 19,
+     "replyCount": 46,
+     "repostCount": 36,
+     "likeCount": 502,
+     "quoteCount": 53,
+     "indexedAt": "2026-09-09T02:25:38.259Z",
+     "labels": [],
+     "$type": "app.bsky.feed.defs#postView"
+    },
+    "parent": {
+     "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r",
+     "cid": "bafyreicwdtqz6nsa6t5u772vmem2ibzoxycy5xejfw44u3smsfmqmektey",
+     "author": {
+      "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+      "handle": "jay.bsky.team",
+      "displayName": "Jay 🦋",
+      "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+      "associated": {
+       "chat": {
+        "allowIncoming": "following"
+       },
+       "activitySubscription": {
+        "allowSubscriptions": "followers"
+       }
+      },
+      "labels": [],
+      "createdAt": "2022-11-17T06:31:40.296Z",
+      "verification": {
+       "verifications": [
+        {
+         "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+         "issuerDisplayName": "Bluesky",
+         "issuerHandle": "bsky.app",
+         "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+         "isValid": true,
+         "createdAt": "2025-04-21T11:35:53.359Z"
+        }
+       ],
+       "verifiedStatus": "valid",
+       "trustedVerifierStatus": "none"
+      }
+     },
+     "record": {
+      "$type": "app.bsky.feed.post",
+      "createdAt": "2026-09-09T02:25:37.837Z",
+      "langs": [
+       "en"
+      ],
+      "text": "become an animist and never again worry about whether the machines are thinking. so are the trees? the machines can help us make better websites though"
+     },
+     "bookmarkCount": 19,
+     "replyCount": 46,
+     "repostCount": 36,
+     "likeCount": 502,
+     "quoteCount": 53,
+     "indexedAt": "2026-09-09T02:25:38.259Z",
+     "labels": [],
+     "$type": "app.bsky.feed.defs#postView"
+    }
+   },
+   "opThreadPostIndex": 2,
+   "opThreadPostCount": 2
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvhgk4t7gc2y",
+    "cid": "bafyreibsssgverv6s3s33wn7nb4lzwbah7m5mmhjoncflnfcaxoyv7tgci",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-14T05:58:39.685Z",
+     "embed": {
+      "$type": "app.bsky.embed.record",
+      "record": {
+       "cid": "bafyreib6ys3srm5rp5unh7hj6zetadfxfdslxwwpnwd6onxacn2xcentvm",
+       "uri": "at://did:plc:h25avmes6g7fgcddc3xj7qmg/app.bsky.feed.post/3mv6v5gxos22t"
+      }
+     },
+     "langs": [
+      "en"
+     ],
+     "text": "very true"
+    },
+    "embed": {
+     "record": {
+      "uri": "at://did:plc:h25avmes6g7fgcddc3xj7qmg/app.bsky.feed.post/3mv6v5gxos22t",
+      "cid": "bafyreib6ys3srm5rp5unh7hj6zetadfxfdslxwwpnwd6onxacn2xcentvm",
+      "author": {
+       "did": "did:plc:h25avmes6g7fgcddc3xj7qmg",
+       "handle": "moultano.bsky.social",
+       "displayName": "Ryan Moulton",
+       "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:h25avmes6g7fgcddc3xj7qmg/bafkreifb43dvbcpgkqkaib5cnctcafx7o6ryy42treelxybngn7z57jwbm",
+       "associated": {
+        "chat": {
+         "allowIncoming": "following"
+        },
+        "activitySubscription": {
+         "allowSubscriptions": "followers"
+        }
+       },
+       "labels": [],
+       "createdAt": "2023-04-11T21:35:41.182Z"
+      },
+      "value": {
+       "$type": "app.bsky.feed.post",
+       "createdAt": "2026-09-10T20:26:02.456Z",
+       "embed": {
+        "$type": "app.bsky.embed.images",
+        "images": [
+         {
+          "alt": "Plum throated cotinga",
+          "aspectRatio": {
+           "height": 982,
+           "width": 992
+          },
+          "image": {
+           "$type": "blob",
+           "ref": {
+            "$link": "bafkreick3qwwprhjh63bb6y7xiphy4rp44veatvf2wtq4vvyr3wdi25s3u"
+           },
+           "mimeType": "image/jpeg",
+           "size": 537233
+          }
+         },
+         {
+          "alt": "Blue Morpho butterfly of unspecified species.",
+          "aspectRatio": {
+           "height": 853,
+           "width": 1280
+          },
+          "image": {
+           "$type": "blob",
+           "ref": {
+            "$link": "bafkreiav6ncolffuj6muknhjbyn7dbugl2blxen7kfwptijojan6l7q2jq"
+           },
+           "mimeType": "image/jpeg",
+           "size": 595136
+          }
+         }
+        ]
+       },
+       "langs": [
+        "en"
+       ],
+       "text": "Both the Twitter logo and the Bluesky logo actually exist. They are real.\n\nThe X logo does not. That is why it is not ensouled."
+      },
+      "labels": [],
+      "likeCount": 227,
+      "replyCount": 11,
+      "repostCount": 30,
+      "quoteCount": 5,
+      "indexedAt": "2026-09-10T20:26:05.374Z",
+      "embeds": [
+       {
+        "images": [
+         {
+          "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:h25avmes6g7fgcddc3xj7qmg/bafkreick3qwwprhjh63bb6y7xiphy4rp44veatvf2wtq4vvyr3wdi25s3u",
+          "fullsize": "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:h25avmes6g7fgcddc3xj7qmg/bafkreick3qwwprhjh63bb6y7xiphy4rp44veatvf2wtq4vvyr3wdi25s3u",
+          "alt": "Plum throated cotinga",
+          "aspectRatio": {
+           "height": 982,
+           "width": 992
+          }
+         },
+         {
+          "thumb": "https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:h25avmes6g7fgcddc3xj7qmg/bafkreiav6ncolffuj6muknhjbyn7dbugl2blxen7kfwptijojan6l7q2jq",
+          "fullsize": "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:h25avmes6g7fgcddc3xj7qmg/bafkreiav6ncolffuj6muknhjbyn7dbugl2blxen7kfwptijojan6l7q2jq",
+          "alt": "Blue Morpho butterfly of unspecified species.",
+          "aspectRatio": {
+           "height": 853,
+           "width": 1280
+          }
+         }
+        ],
+        "$type": "app.bsky.embed.images#view"
+       }
+      ],
+      "$type": "app.bsky.embed.record#viewRecord"
+     },
+     "$type": "app.bsky.embed.record#view"
+    },
+    "bookmarkCount": 5,
+    "replyCount": 13,
+    "repostCount": 41,
+    "likeCount": 526,
+    "quoteCount": 2,
+    "indexedAt": "2026-09-14T05:58:39.958Z",
+    "labels": []
+   }
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvhgk4t7gc2z",
+    "cid": "bafyreibsssgverv6s3s33wn7nb4lzwbah7m5mmhjoncflnfcaxoyv7tgci",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-14T05:58:39.685Z",
+     "embed": {
+      "$type": "app.bsky.embed.record",
+      "record": {
+       "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r",
+       "cid": "bafyreib"
+      }
+     },
+     "langs": [
+      "en"
+     ],
+     "text": "very true"
+    },
+    "embed": {
+     "$type": "app.bsky.embed.record#view",
+     "record": {
+      "$type": "app.bsky.embed.record#viewRecord",
+      "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mv2iclsgxk2r",
+      "author": {
+       "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+       "handle": "jay.bsky.team"
+      }
+     }
+    },
+    "bookmarkCount": 5,
+    "replyCount": 13,
+    "repostCount": 41,
+    "likeCount": 526,
+    "quoteCount": 2,
+    "indexedAt": "2026-09-14T05:58:39.958Z",
+    "labels": []
+   },
+   "_synthetic": "self-quote: copy of 3mvhgk4t7gc2y re-pointed at jay's own 3mv2iclsgxk2r"
+  },
+  {
+   "post": {
+    "uri": "at://did:plc:oky5czdrnfjpqslsw2a5iclo/app.bsky.feed.post/3mvjnvtfw4s2d",
+    "cid": "bafyreihaztgdilo257rhusc4536phw523c56vw2ow7ph4ynj7q4vmkwlyi",
+    "author": {
+     "did": "did:plc:oky5czdrnfjpqslsw2a5iclo",
+     "handle": "jay.bsky.team",
+     "displayName": "Jay 🦋",
+     "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oky5czdrnfjpqslsw2a5iclo/bafkreihxtnc37g7jqdcgidtkknwuswtjiijcdnc6cx4imc4oq33cnsc5da",
+     "associated": {
+      "chat": {
+       "allowIncoming": "following"
+      },
+      "activitySubscription": {
+       "allowSubscriptions": "followers"
+      }
+     },
+     "labels": [],
+     "createdAt": "2022-11-17T06:31:40.296Z",
+     "verification": {
+      "verifications": [
+       {
+        "issuer": "did:plc:z72i7hdynmk6r22z27h6tvur",
+        "issuerDisplayName": "Bluesky",
+        "issuerHandle": "bsky.app",
+        "uri": "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.verification/3lndslpegeo2f",
+        "isValid": true,
+        "createdAt": "2025-04-21T11:35:53.359Z"
+       }
+      ],
+      "verifiedStatus": "valid",
+      "trustedVerifierStatus": "none"
+     }
+    },
+    "record": {
+     "$type": "app.bsky.feed.post",
+     "createdAt": "2026-09-15T03:15:48.132Z",
+     "langs": [
+      "en"
+     ],
+     "text": "when facing an unstoppable force, focus on changing its course.",
+     "labels": {
+      "$type": "com.atproto.label.defs#selfLabels",
+      "values": [
+       {
+        "val": "nudity"
+       }
+      ]
+     }
+    },
+    "bookmarkCount": 18,
+    "replyCount": 27,
+    "repostCount": 28,
+    "likeCount": 336,
+    "quoteCount": 7,
+    "indexedAt": "2026-09-15T03:15:49.163Z",
+    "labels": []
+   },
+   "_synthetic": "self-labelled: copy of 3mvjnvtfw4s2c with the nudity self-label"
+  }
+ ],
+ "cursor": "2026-06-20T00:00:00.000Z",
+ "_fixture": "Recorded 2026-09-25 from public.api.bsky.app (public XRPC) for jay.bsky.team and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}

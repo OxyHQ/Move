@@ -1,0 +1,458 @@
+{
+ "@context": "https://www.w3.org/ns/activitystreams",
+ "id": "https://mastodon.social/users/Gargron/outbox?page=true",
+ "type": "OrderedCollectionPage",
+ "next": "https://mastodon.social/users/Gargron/outbox?max_id=117293597728332883&page=true",
+ "partOf": "https://mastodon.social/users/Gargron/outbox",
+ "orderedItems": [
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117331146366002767/activity",
+   "type": "Announce",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-25T10:13:32Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/pyrenaicus",
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": "https://mastodon.social/users/pyrenaicus/statuses/117330534752694651"
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117330917869779654/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-25T09:15:26Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117330917869779654",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": null,
+    "published": "2026-09-25T09:15:26Z",
+    "url": "https://mastodon.social/@Gargron/117330917869779654",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117330917869779654",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117330917869779654",
+    "context": "https://mastodon.social/contexts/1-117330917869779654",
+    "content": "<p class=\"quote-inline\">RE: <a href=\"https://mastodon.social/@Gargron/117327932994028225\" target=\"_blank\" rel=\"nofollow noopener\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"ellipsis\">mastodon.social/@Gargron/11732</span><span class=\"invisible\">7932994028225</span></a></p><p>Reposting for the morning crew :polarbear:</p>",
+    "contentMap": {
+     "en": "<p class=\"quote-inline\">RE: <a href=\"https://mastodon.social/@Gargron/117327932994028225\" target=\"_blank\" rel=\"nofollow noopener\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"ellipsis\">mastodon.social/@Gargron/11732</span><span class=\"invisible\">7932994028225</span></a></p><p>Reposting for the morning crew :polarbear:</p>"
+    },
+    "quote": "https://mastodon.social/users/Gargron/statuses/117327932994028225",
+    "_misskey_quote": "https://mastodon.social/users/Gargron/statuses/117327932994028225",
+    "quoteUri": "https://mastodon.social/users/Gargron/statuses/117327932994028225",
+    "quoteAuthorization": "https://mastodon.social/users/Gargron/quote_authorizations/117330917869800042",
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [
+     {
+      "id": "https://mastodon.social/emojis/10443",
+      "type": "Emoji",
+      "name": ":polarbear:",
+      "updated": "2017-12-17T01:30:08Z",
+      "icon": {
+       "type": "Image",
+       "mediaType": "image/png",
+       "url": "https://files.mastodon.social/custom_emojis/images/000/010/443/original/a3981421a04d4f47.png"
+      }
+     }
+    ],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117330917869779654/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117330917869779654/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117330917869779654/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117330917869779654/likes",
+     "type": "Collection",
+     "totalItems": 18
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117330917869779654/shares",
+     "type": "Collection",
+     "totalItems": 9
+    }
+   }
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117328495945801440/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-24T22:59:30Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers",
+    "https://beige.party/users/bedast"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117328495945801440",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": "https://beige.party/users/bedast/statuses/117328414503617818",
+    "published": "2026-09-24T22:59:30Z",
+    "url": "https://mastodon.social/@Gargron/117328495945801440",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers",
+     "https://beige.party/users/bedast"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117328495945801440",
+    "inReplyToAtomUri": "https://beige.party/users/bedast/statuses/117328414503617818",
+    "conversation": "https://mastodon.social/contexts/1-117327932994028225",
+    "context": "https://mastodon.social/contexts/1-117327932994028225",
+    "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://beige.party/@bedast\" class=\"u-url mention\">@<span>bedast</span></a></span> Have you e-mailed us about it? An order number would be helpful so I can look into it.</p>",
+    "contentMap": {
+     "en": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://beige.party/@bedast\" class=\"u-url mention\">@<span>bedast</span></a></span> Have you e-mailed us about it? An order number would be helpful so I can look into it.</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [
+     {
+      "type": "Mention",
+      "href": "https://beige.party/users/bedast",
+      "name": "@bedast@beige.party"
+     }
+    ],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117328495945801440/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117328495945801440/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117328495945801440/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117328495945801440/likes",
+     "type": "Collection",
+     "totalItems": 2
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117328495945801440/shares",
+     "type": "Collection",
+     "totalItems": 0
+    }
+   }
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117327932994028225/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-24T20:36:20Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117327932994028225",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": null,
+    "published": "2026-09-24T20:36:20Z",
+    "url": "https://mastodon.social/@Gargron/117327932994028225",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117327932994028225",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117327932994028225",
+    "context": "https://mastodon.social/contexts/1-117327932994028225",
+    "content": "<p>I&#39;ve just added a reviews plugin to the <a href=\"https://mastodon.social/tags/Mastodon\" class=\"mention hashtag\" rel=\"tag\">#<span>Mastodon</span></a> merch shop. If you&#39;ve bought something from us before, would you mind leaving a review? (If you are okay with using reviews.io) Thank you! (And if this is the first time you hear that there is Mastodon merch, yes, there is, please help yourself, it supports our mission)</p><p><a href=\"https://shop.joinmastodon.org/\" target=\"_blank\" rel=\"nofollow noopener\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">shop.joinmastodon.org/</span><span class=\"invisible\"></span></a></p>",
+    "contentMap": {
+     "en": "<p>I&#39;ve just added a reviews plugin to the <a href=\"https://mastodon.social/tags/Mastodon\" class=\"mention hashtag\" rel=\"tag\">#<span>Mastodon</span></a> merch shop. If you&#39;ve bought something from us before, would you mind leaving a review? (If you are okay with using reviews.io) Thank you! (And if this is the first time you hear that there is Mastodon merch, yes, there is, please help yourself, it supports our mission)</p><p><a href=\"https://shop.joinmastodon.org/\" target=\"_blank\" rel=\"nofollow noopener\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">shop.joinmastodon.org/</span><span class=\"invisible\"></span></a></p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [
+     {
+      "type": "Link",
+      "href": "https://shop.joinmastodon.org/"
+     }
+    ],
+    "tag": [
+     {
+      "type": "Hashtag",
+      "href": "https://mastodon.social/tags/mastodon",
+      "name": "#mastodon"
+     }
+    ],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117327932994028225/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117327932994028225/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117327932994028225/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117327932994028225/likes",
+     "type": "Collection",
+     "totalItems": 64
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117327932994028225/shares",
+     "type": "Collection",
+     "totalItems": 62
+    }
+   }
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117294179974600212/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-18T21:32:30Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117294179974600212",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": "https://mastodon.social/users/Gargron/statuses/117293597728332882",
+    "published": "2026-09-18T21:32:30Z",
+    "url": "https://mastodon.social/@Gargron/117294179974600212",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117294179974600212",
+    "inReplyToAtomUri": "https://mastodon.social/users/Gargron/statuses/117293597728332882",
+    "conversation": "https://mastodon.social/contexts/1-117293597728332882",
+    "context": "https://mastodon.social/contexts/1-117293597728332882",
+    "content": "<p>I got to talk to Gleeb!</p>",
+    "contentMap": {
+     "en": "<p>I got to talk to Gleeb!</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117294179974600212/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117294179974600212/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117294179974600212/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117294179974600212/likes",
+     "type": "Collection",
+     "totalItems": 14
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117294179974600212/shares",
+     "type": "Collection",
+     "totalItems": 0
+    }
+   }
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/1172759643453271019/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-15T16:20:02Z",
+   "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+   ],
+   "cc": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/1172759643453271019",
+    "type": "Note",
+    "summary": "spoilers: the ending of the film",
+    "inReplyTo": null,
+    "published": "2026-09-15T16:20:02Z",
+    "url": "https://mastodon.social/@Gargron/1172759643453271019",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "sensitive": true,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117275964345327101",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117275964345327101",
+    "context": "https://mastodon.social/contexts/1-117275964345327101",
+    "content": "<p>Some random man just walked into our house, up a floor, to tell our electrician to move his van. What the fuck.</p>",
+    "contentMap": {
+     "en": "<p>Some random man just walked into our house, up a floor, to tell our electrician to move his van. What the fuck.</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275964345327101/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117275964345327101/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117275964345327101/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275964345327101/likes",
+     "type": "Collection",
+     "totalItems": 127
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275964345327101/shares",
+     "type": "Collection",
+     "totalItems": 26
+    }
+   },
+   "_synthetic": "CW: copy of 117275964345327101 with summary+sensitive set"
+  },
+  {
+   "id": "https://mastodon.social/users/Gargron/statuses/117275979075957026/activity",
+   "type": "Create",
+   "actor": "https://mastodon.social/users/Gargron",
+   "published": "2026-09-15T16:23:46Z",
+   "to": [
+    "https://mastodon.social/users/Gargron/followers"
+   ],
+   "cc": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "https://mastodon.neilzone.co.uk/users/neil"
+   ],
+   "object": {
+    "id": "https://mastodon.social/users/Gargron/statuses/117275979075957026",
+    "type": "Note",
+    "summary": null,
+    "inReplyTo": null,
+    "published": "2026-09-15T16:23:46Z",
+    "url": "https://mastodon.social/@Gargron/117275979075957026",
+    "attributedTo": "https://mastodon.social/users/Gargron",
+    "to": [
+     "https://mastodon.social/users/Gargron/followers"
+    ],
+    "cc": [
+     "https://www.w3.org/ns/activitystreams#Public",
+     "https://mastodon.neilzone.co.uk/users/neil"
+    ],
+    "sensitive": false,
+    "atomUri": "https://mastodon.social/users/Gargron/statuses/117275979075957026",
+    "inReplyToAtomUri": null,
+    "conversation": "https://mastodon.social/contexts/1-117275964345327101",
+    "context": "https://mastodon.social/contexts/1-117275964345327101",
+    "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://mastodon.neilzone.co.uk/@neil\" class=\"u-url mention\">@<span>neil</span></a></span> How normal is it in the UK?</p>",
+    "contentMap": {
+     "en": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://mastodon.neilzone.co.uk/@neil\" class=\"u-url mention\">@<span>neil</span></a></span> How normal is it in the UK?</p>"
+    },
+    "interactionPolicy": {
+     "canQuote": {
+      "automaticApproval": [
+       "https://www.w3.org/ns/activitystreams#Public"
+      ]
+     }
+    },
+    "attachment": [],
+    "tag": [
+     {
+      "type": "Mention",
+      "href": "https://mastodon.neilzone.co.uk/users/neil",
+      "name": "@neil@mastodon.neilzone.co.uk"
+     }
+    ],
+    "replies": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275979075957026/replies",
+     "type": "Collection",
+     "first": {
+      "type": "CollectionPage",
+      "next": "https://mastodon.social/users/Gargron/statuses/117275979075957026/replies?only_other_accounts=true&page=true",
+      "partOf": "https://mastodon.social/users/Gargron/statuses/117275979075957026/replies",
+      "items": []
+     }
+    },
+    "likes": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275979075957026/likes",
+     "type": "Collection",
+     "totalItems": 3
+    },
+    "shares": {
+     "id": "https://mastodon.social/users/Gargron/statuses/117275979075957026/shares",
+     "type": "Collection",
+     "totalItems": 0
+    }
+   }
+  }
+ ],
+ "_fixture": "Recorded 2026-09-25 from mastodon.social (public, unsigned GETs) and trimmed; items marked \"_synthetic\" are copies of recorded items edited to cover a case the recording lacked."
+}
