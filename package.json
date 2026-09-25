@@ -25,11 +25,11 @@
     "test": "bun run build:shared-types && bun run --cwd packages/frontend test && bun run --cwd packages/backend test"
   },
   "overrides": {
-    "@oxy.so/core": "^1.7.3",
+    "@oxy.so/core": "^1.11.0",
     "@oxy.so/bloom": "^4.2.0"
   },
   "resolutions": {
-    "@oxy.so/core": "^1.7.3",
+    "@oxy.so/core": "^1.11.0",
     "@oxy.so/bloom": "^4.2.0"
   }
 }

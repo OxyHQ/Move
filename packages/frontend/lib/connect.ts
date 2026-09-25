@@ -12,7 +12,6 @@ import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
 import { LINKED_RETURN_TO, MENTION_FEDERATION_DOMAIN, OXY_CLIENT_ID } from './config';
 import { PLATFORM_NETWORK, completeLink, formatMentionHandle, outcomeFromParams, type LinkOutcome, type LinkResult } from './handles';
-import { linkedAccounts } from './linkedAccounts';
 
 let pendingAuthSession = false;
 
@@ -39,12 +38,12 @@ export type LinkAttempt = LinkResult | { kind: 'cancelled' };
  * later failure comes back as `{ kind: 'error' }`.
  */
 export async function linkAccount(
-  oxy: Pick<OxyServices, 'makeRequest'>,
+  oxy: Pick<OxyServices, 'startLinkedAccount' | 'completeLinkedAccount'>,
   platform: MigrationPlatform,
   input: string,
 ): Promise<LinkAttempt> {
   const network = PLATFORM_NETWORK[platform];
-  const { authorizeUrl } = await linkedAccounts(oxy).startLinkedAccount(network, {
+  const { authorizeUrl } = await oxy.startLinkedAccount(network, {
     ...(network === 'activitypub' ? { instance: input } : { handle: input }),
     clientId: OXY_CLIENT_ID,
     returnTo: LINKED_RETURN_TO,

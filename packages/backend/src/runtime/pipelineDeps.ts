@@ -21,7 +21,7 @@ export function createPipelineDeps(): PipelineDeps {
   const oxyClient = getServiceOxyClient();
   return {
     db: getDb(),
-    oxy: new OxyGateway((method, path, body) => oxyClient.makeServiceRequest(method, path, body)),
+    oxy: new OxyGateway(oxyClient),
     destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy: oxyClient }),
     media: createMediaCopier({ limiter: createUploadLimiter(config.media.uploadsPerMinute) }),
     sourceFactory: createSourceFactory(),

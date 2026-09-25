@@ -7,7 +7,7 @@ import { expect, test } from 'bun:test';
 import { JOB_STATUSES, PHASE_STATUSES, UPCOMING_PLATFORMS, MIGRATION_PLATFORMS } from '@move/shared-types';
 import en from '../locales/en.json';
 import es from '../locales/es.json';
-import { LINKED_ACCOUNT_CALLBACK_ERRORS } from '../lib/linkedAccounts';
+import { LINKED_ACCOUNT_CALLBACK_ERRORS } from '@oxy.so/contracts';
 
 type Catalog = { [key: string]: string | Catalog };
 

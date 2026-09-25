@@ -3,14 +3,9 @@
  * Native imports, so the unit tests load them directly.
  */
 
+import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccountCallbackError, type LinkedAccountNetwork } from '@oxy.so/contracts';
 import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
-import {
-  LINKED_ACCOUNT_CALLBACK_ERRORS,
-  linkedAccounts,
-  type LinkedAccountCallbackError,
-  type LinkedAccountNetwork,
-} from './linkedAccounts';
 
 /** The Oxy network a Move source platform proves ownership through. */
 export const PLATFORM_NETWORK: Record<MigrationPlatform, LinkedAccountNetwork> = {
@@ -64,9 +59,9 @@ function httpStatus(error: unknown): number | undefined {
  * Turn the callback's one-time code into the link, as the signed-in user —
  * the ONLY place that does. Never throws: a refusal comes back as an error.
  */
-export async function completeLink(oxy: Pick<OxyServices, 'makeRequest'>, code: string): Promise<LinkResult> {
+export async function completeLink(oxy: Pick<OxyServices, 'completeLinkedAccount'>, code: string): Promise<LinkResult> {
   try {
-    const account = await linkedAccounts(oxy).completeLinkedAccount(code);
+    const account = await oxy.completeLinkedAccount(code);
     return { kind: 'linked', linkedAccountId: account.id };
   } catch (error) {
     const status = httpStatus(error);

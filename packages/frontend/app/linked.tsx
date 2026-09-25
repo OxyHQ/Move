@@ -8,7 +8,6 @@ import { RiCheckboxCircleLine, RiErrorWarningLine } from '@oxy.so/bloom/icons';
 import { Loading } from '@oxy.so/bloom/loading';
 import { PageScreen } from '@/components/PageScreen';
 import { completeLink, linkErrorKey, outcomeFromParams, platformForNetwork, type LinkResult } from '@/lib/handles';
-import { linkedAccounts } from '@/lib/linkedAccounts';
 import { queryKeys } from '@/lib/moveApiContext';
 
 /**
@@ -45,7 +44,7 @@ export default function LinkedScreen() {
 
   const accounts = useQuery({
     queryKey: queryKeys.linkedAccounts,
-    queryFn: () => linkedAccounts(oxyServices).listLinkedAccounts(),
+    queryFn: () => oxyServices.listLinkedAccounts(),
     enabled: isAuthenticated && linkedAccountId !== null,
   });
   const account = accounts.data?.find((candidate) => candidate.id === linkedAccountId);

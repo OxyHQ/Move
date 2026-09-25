@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import type { LinkedAccount } from '@oxy.so/contracts';
 import { useOxy } from '@oxy.so/services';
 import { Admonition } from '@oxy.so/bloom/admonition';
 import { AlertDialog } from '@oxy.so/bloom/alert-dialog';
@@ -19,7 +20,6 @@ import { isMigrationPlatform, type MigrationPlatform } from '@move/shared-types'
 import { PageScreen } from '@/components/PageScreen';
 import { linkAccount, type LinkAttempt } from '@/lib/connect';
 import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput } from '@/lib/handles';
-import { linkedAccounts, type LinkedAccount } from '@/lib/linkedAccounts';
 import { queryKeys } from '@/lib/moveApiContext';
 
 export default function ConnectScreen() {
@@ -49,7 +49,7 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
 
   const linked = useQuery({
     queryKey: queryKeys.linkedAccounts,
-    queryFn: () => linkedAccounts(oxyServices).listLinkedAccounts(),
+    queryFn: () => oxyServices.listLinkedAccounts(),
   });
   const accounts = (linked.data ?? []).filter((account) => account.network === PLATFORM_NETWORK[platform]);
   const normalized = normalizeSourceInput(platform, input);
@@ -83,7 +83,7 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
 
   const unlink = async (account: LinkedAccount) => {
     try {
-      await linkedAccounts(oxyServices).revokeLinkedAccount(account.id);
+      await oxyServices.revokeLinkedAccount(account.id);
       await queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts });
       toast.success(t('connect.unlinked', { handle: account.handle }));
     } catch {

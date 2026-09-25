@@ -10,11 +10,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:tes
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MIGRATION_PLATFORMS } from '@move/shared-types';
+import type { ServiceLinkedAccount, ServiceLinkedAccountListResponse } from '@oxy.so/contracts';
 import { migrationItems, migrationJobs, type MigrationJob } from '../db/schema';
 import { MastodonSource } from '../sources/mastodon';
 import { BlueskySource } from '../sources/bluesky';
 import { createMediaCopier, createMemoryUploadLimiter } from '../destinations/media';
-import { ForeignLinkedAccountError, OxyGateway, type ServiceRequest } from '../destinations/oxy';
+import { ForeignLinkedAccountError, OxyGateway, type OxyServiceClient } from '../destinations/oxy';
 import {
   DestinationRateLimitedError,
   type ContentDestination,
@@ -127,14 +128,16 @@ class FakeMention implements ContentDestination {
 }
 
 class FakeOxy {
-  linkedAccounts: Array<Record<string, unknown>> = [];
+  linkedAccounts: Array<ServiceLinkedAccount & { ownerId: string }> = [];
   notifications: Array<Record<string, unknown>> = [];
-  request: ServiceRequest = async (method, path, body) => {
-    if (method === 'GET' && path.startsWith('/linked-accounts/by-user/')) {
-      // `serviceLinkedAccountListResponseSchema`, as the SDK hands it back (unwrapped).
-      const userId = decodeURIComponent(path.split('/').pop() ?? '');
-      return { userId, linkedAccounts: this.linkedAccounts.filter((account) => account.ownerId === userId).map(({ ownerId: _, ...account }) => account) };
-    }
+  readonly client = {
+    getLinkedAccountsForUser: async (userId: string): Promise<ServiceLinkedAccountListResponse> => ({
+      userId,
+      linkedAccounts: this.linkedAccounts.filter((account) => account.ownerId === userId).map(({ ownerId: _, ...account }) => account),
+    }),
+    makeServiceRequest: async <R,>(method: string, path: string, body?: unknown): Promise<R> => (await this.serviceRequest(method, path, body)) as R,
+  } satisfies OxyServiceClient;
+  private async serviceRequest(method: string, path: string, body?: unknown): Promise<unknown> {
     if (method === 'POST' && path === '/federation/identities/lookup') {
       const identifiers = (body as { identifiers: string[] }).identifiers;
       // Oxy already knows every other account; the rest need a resolve.
@@ -150,7 +153,7 @@ class FakeOxy {
       return {};
     }
     throw new Error(`unexpected Oxy call ${method} ${path}`);
-  };
+  }
 }
 
 const USER = 'user-1';
@@ -177,7 +180,7 @@ function build(maxBatchSize = 50): void {
   uploads = 0;
   deps = {
     db: database.db,
-    oxy: new OxyGateway(oxy.request),
+    oxy: new OxyGateway(oxy.client),
     destination: mention,
     media: createMediaCopier({
       limiter: createMemoryUploadLimiter(100, () => clock),
@@ -222,11 +225,11 @@ afterAll(async () => {
 beforeEach(async () => {
   await database.db.delete(migrationJobs);
   oxy = new FakeOxy();
-  const linked = { proofMethod: 'oauth', verifiedAt: '2026-09-25T00:00:00.000Z', createdAt: '2026-09-25T00:00:00.000Z', federatedUserId: null };
+  const linked = { proofMethod: 'oauth' as const, verifiedAt: '2026-09-25T00:00:00.000Z', createdAt: '2026-09-25T00:00:00.000Z', federatedUserId: null };
   oxy.linkedAccounts = [{
     ownerId: USER,
     id: LINKED,
-    network: 'activitypub',
+    network: 'activitypub' as const,
     accountKey: 'Gargron@mastodon.social',
     actorUri: GARGRON,
     handle: 'Gargron',
@@ -235,7 +238,7 @@ beforeEach(async () => {
   }, {
     ownerId: USER,
     id: LINKED_BSKY,
-    network: 'atproto',
+    network: 'atproto' as const,
     accountKey: JAY_DID,
     actorUri: JAY_DID,
     handle: 'jay.bsky.team',

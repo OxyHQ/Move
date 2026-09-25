@@ -12,7 +12,7 @@ import { createMoveApi, errorCode, type MoveHttp } from '../lib/moveApi';
 import { applyPlan, planHasPendingWork, undoPlan, type PlanSdk } from '../lib/planApplier';
 import type { OxyServices } from '@oxy.so/core';
 import { completeLink, mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle } from '../lib/handles';
-import { LINKED_ACCOUNT_CALLBACK_ERRORS } from '../lib/linkedAccounts';
+import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccount } from '@oxy.so/contracts';
 
 const PLAN: MigrationPlan = {
   profile: { displayName: 'Ada', bio: 'Poet of numbers', avatarFileId: 'file-avatar', links: ['https://ada.example'] },
@@ -234,18 +234,18 @@ describe('connect helpers', () => {
     expect(outcomeFromParams({})).toBeNull();
   });
 
-  test('a code becomes the link only through POST /linked-accounts/complete, and each refusal is named', async () => {
-    const calls: Array<{ method: string; url: string; data: unknown }> = [];
-    const oxy = (failWith?: number): Pick<OxyServices, 'makeRequest'> => ({
-      makeRequest: (async (method: string, url: string, data: unknown) => {
-        calls.push({ method, url, data });
+  test('a code becomes the link only through completeLinkedAccount, and each refusal is named', async () => {
+    const codes: string[] = [];
+    const oxy = (failWith?: number): Pick<OxyServices, 'completeLinkedAccount'> => ({
+      completeLinkedAccount: async (code) => {
+        codes.push(code);
         if (failWith) throw Object.assign(new Error(`HTTP ${failWith}`), { status: failWith });
-        return { linkedAccount: { id: 'la-1' } };
-      }) as Pick<OxyServices, 'makeRequest'>['makeRequest'],
+        return { id: 'la-1' } as LinkedAccount;
+      },
     });
 
     expect(await completeLink(oxy(), 'c-1')).toEqual({ kind: 'linked', linkedAccountId: 'la-1' });
-    expect(calls).toEqual([{ method: 'POST', url: '/linked-accounts/complete', data: { code: 'c-1' } }]);
+    expect(codes).toEqual(['c-1']);
 
     expect(await completeLink(oxy(409), 'c-2')).toEqual({ kind: 'error', code: 'already_linked' });
     // 403: another user started the flow (the code is now burned); 404: expired or used.
