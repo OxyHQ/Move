@@ -1,0 +1,90 @@
+# Deploy the Oxy Move web app to Cloudflare Workers Static Assets (move.oxy.so)
+# after CI passed on main. Called with `bunx wrangler@4` directly — never
+# cloudflare/wrangler-action, which picks npm in a monorepo and cannot resolve
+# `workspace:*` (forbidden fleet-wide; scripts/check-workflow-secrets.mjs fails
+# CI on it).
+name: Deploy Frontends
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-move-frontend
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: '1.4.2'
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  deploy-frontend:
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          fetch-depth: 2
+
+      - name: Verify current main before building
+        run: bash .github/scripts/require-current-main.sh
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install exact dependency graph
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Build the web app
+        env:
+          NODE_ENV: production
+          EXPO_PUBLIC_ENV: production
+          EXPO_PUBLIC_API_URL: https://api.move.oxy.so
+          EXPO_PUBLIC_OXY_CLIENT_ID: ${{ vars.EXPO_PUBLIC_OXY_CLIENT_ID }}
+        run: bun run build:shared-types && bun run build:frontend
+
+      # Metro can serve a cached transform with a STALE `EXPO_PUBLIC_*` value and
+      # still exit 0 (~/Oxy/docs/build-and-runtime-traps.md). `export:web` passes
+      # --clear, and this checks the VALUE in the bundle, not the exit code.
+      - name: The bundle carries this deployment's Oxy client id
+        env:
+          EXPO_PUBLIC_OXY_CLIENT_ID: ${{ vars.EXPO_PUBLIC_OXY_CLIENT_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$EXPO_PUBLIC_OXY_CLIENT_ID" ]]; then
+            echo "::error::vars.EXPO_PUBLIC_OXY_CLIENT_ID is empty: the app would ship unable to sign in."
+            exit 1
+          fi
+          grep -rqF "$EXPO_PUBLIC_OXY_CLIENT_ID" packages/frontend/dist/_expo/static/js/web/
+          grep -qx '  X-Content-Type-Options: nosniff' packages/frontend/dist/_headers
+
+      - name: Re-verify current main before production changes
+        run: bash .github/scripts/require-current-main.sh
+
+      - name: Deploy the Worker
+        working-directory: packages/frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: bunx wrangler@4 deploy
+
+      - name: Smoke test the live origin (shell, SPA fallback, security headers)
+        env:
+          WEB_ORIGIN: https://move.oxy.so
+        run: bash .github/scripts/smoke-frontend.sh

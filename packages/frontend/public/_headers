@@ -1,0 +1,12 @@
+# Cloudflare reads this file from the export root (`expo export` copies public/
+# into dist/), and Workers Static Assets honours it for every asset response.
+#
+# Why it has to exist: Cloudflare PAGES added these two headers to every response
+# on its own, and Workers Static Assets does not (~/Oxy/docs/infra-and-deploys.md,
+# "Pages ADDS x-content-type-options…"). Without them a browser may sniff a
+# declared Content-Type into a script. Declaring them here makes them a property
+# of this deployment rather than of the platform. The deploy workflow asserts
+# both on the live origin after every deploy.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

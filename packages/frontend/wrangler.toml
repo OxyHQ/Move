@@ -1,0 +1,31 @@
+# The Oxy Move web app: an assets-only Cloudflare Worker (Workers Static Assets),
+# never a Pages project.
+#
+# WHY NOT PAGES: a Pages project ALWAYS also serves `<project>.pages.dev` and
+# Cloudflare offers no way to switch it off, so the app would exist at a second,
+# indexable origin that is in no CORS allowlist and no registered Oxy redirect
+# URI (~/Oxy/docs/infra-and-deploys.md, "Cloudflare: Pages → Workers").
+# `workers_dev = false` is what closes that for a Worker.
+#
+# Deployed by .github/workflows/deploy-frontends.yml with `bunx wrangler@4`
+# called directly (never cloudflare/wrangler-action — forbidden fleet-wide).
+name = "oxy-move"
+compatibility_date = "2026-09-09"
+
+# No `oxy-move.<subdomain>.workers.dev`, and no per-version preview URLs.
+workers_dev = false
+preview_urls = false
+
+# `expo export --platform web` emits ONE index.html plus hashed assets — a
+# client-routed SPA — so unknown paths fall back to index.html. `public/_headers`
+# is carried into dist/ by the export and applies to every asset response.
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+
+# A Worker custom domain refuses a hostname with pre-existing externally managed
+# DNS records (code 100117): `move.oxy.so` must carry none before the first
+# deploy; Cloudflare then writes and manages the record itself.
+[[routes]]
+pattern = "move.oxy.so"
+custom_domain = true

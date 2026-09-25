@@ -1,0 +1,148 @@
+name: CI
+
+# Modelled on OxyHQ/Mention's CI: every check is a named job, and `ci-complete`
+# is the ONE required check, failing unless every job actually passed — a job
+# that was skipped by a future `if:` edit reads as a failure, not a pass.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Keep in lockstep with packages/backend/Dockerfile (`oven/bun:<ver>`): a
+  # different bun between CI and the image is how `lockfile had changes, but
+  # lockfile is frozen` appears only at image build time.
+  BUN_VERSION: '1.4.2'
+
+jobs:
+  quality:
+    name: Gates, typecheck, lint and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install exact dependency graph
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Repository gates (AGENTS.md budget, migration phase markers, workflow secrets)
+        run: bun run validate:agents-md && bun run validate:gates
+      - name: Typecheck backend and frontend
+        run: bun run typecheck
+      - name: Lint frontend
+        run: bun run lint
+      - name: Build backend
+        run: bun run build
+
+  lockfile:
+    name: Lockfile is in sync with every manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      # `--frozen-lockfile` is not a sync check (it passes on a widened range);
+      # a plain install followed by asking git whether bun.lock moved is.
+      - name: Install and require an unchanged bun.lock
+        run: |
+          set -euo pipefail
+          bun install --ignore-scripts
+          git diff --exit-code bun.lock
+
+  tests:
+    name: Backend tests (real Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: move
+          POSTGRES_PASSWORD: move
+          POSTGRES_DB: move_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U move -d move_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install exact dependency graph
+        run: bun install --frozen-lockfile --ignore-scripts
+      # The pipeline suite REFUSES to run without a database rather than skip,
+      # so a missing service fails here instead of reporting a hollow green.
+      - name: Run the backend suite
+        env:
+          TEST_DATABASE_URL: postgres://move:move@127.0.0.1:5432/move_ci
+        run: bun run test
+      - name: Migrations apply from zero with the production migrator
+        env:
+          DATABASE_URL: postgres://move:move@127.0.0.1:5432/move_ci
+        run: bun run --cwd packages/backend db:migrate --target-database=move_ci --phase=all
+
+  web:
+    name: Web export honours the static hosting contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install exact dependency graph
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Export the web app
+        env:
+          EXPO_PUBLIC_API_URL: https://api.move.oxy.so
+        run: bun run build:shared-types && bun run build:frontend
+      - name: The export carries the security headers and a single SPA shell
+        run: |
+          set -euo pipefail
+          dist=packages/frontend/dist
+          test -f "$dist/index.html"
+          grep -q '_expo/static/js/web/' "$dist/index.html"
+          grep -qx '  X-Content-Type-Options: nosniff' "$dist/_headers"
+          grep -qx '  Referrer-Policy: strict-origin-when-cross-origin' "$dist/_headers"
+
+  ci-complete:
+    name: CI complete
+    needs: [quality, lockfile, tests, web]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every CI job to have passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          failures=()
+          for job in quality lockfile tests web; do
+            result="$(jq -r --arg job "$job" '.[$job].result' <<<"$RESULTS")"
+            if [ "$result" != success ]; then
+              failures+=("$job did not pass: $result")
+            fi
+          done
+          if [ ${#failures[@]} -gt 0 ]; then
+            for failure in "${failures[@]}"; do echo "::error::$failure"; done
+            exit 1
+          fi
+          echo 'Every CI job passed.'

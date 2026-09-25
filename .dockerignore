@@ -1,0 +1,13 @@
+# BuildKit needs the ** glob to match nested workspace dirs.
+**/node_modules
+**/dist
+**/lib
+**/.expo
+**/web-build
+.git
+*.log
+.DS_Store
+# A local incremental-build record makes `tsc` inside the image skip emitting
+# (the matching dist/ is excluded above), which fails the backend build with
+# TS6305. Measured building the image from a developer checkout.
+**/*.tsbuildinfo

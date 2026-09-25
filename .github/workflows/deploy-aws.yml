@@ -1,0 +1,156 @@
+# Deploy the Oxy Move backend to AWS ECS (Fargate, linux/arm64), Mention's shape:
+# only after CI passed on main, one rollout at a time, a digest-pinned image, a
+# task revision derived from the RUNNING one, `pre` migrations before the
+# rollout and `post` migrations after it, smoke checks, and rollback on failure.
+#
+# Infra: oxy-infra terraform-uswest2/app-move.tf (service `move`, api.move.oxy.so,
+# health check /ready) and iam-move-deploy.tf (the repository-exclusive OIDC role
+# below, and the `oxy-move-task` role it may pass).
+name: Deploy to AWS
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-move-backend
+  # Never cancel a rollout mid-flight: an `update-service` whose watcher was
+  # cancelled is an unmonitored deployment. Also the migrator takes no lock of its
+  # own; this group is the interlock.
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: '237343248947'
+  ECR_REGISTRY: 237343248947.dkr.ecr.us-west-2.amazonaws.com
+  APP: move
+  CONTAINER_NAME: move
+  CLUSTER: oxy-cluster
+  DOCKERFILE: packages/backend/Dockerfile
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          fetch-depth: 2
+
+      - name: Verify current main before building
+        run: bash .github/scripts/require-current-main.sh
+
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        with:
+          # Repository-exclusive: trusts only OxyHQ/Move main, may push only
+          # oxy/move, write only /oxy/move/DATABASE_URL, roll only the `move`
+          # service and pass only Move's roles. Never a role shared by generated
+          # repositories.
+          role-to-assume: arn:aws:iam::237343248947:role/oxy-move-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build and push immutable backend image
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE }}
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/oxy/${{ env.APP }}:${{ env.DEPLOY_SHA }}
+          cache-from: type=gha,scope=move-backend
+          cache-to: type=gha,mode=max,scope=move-backend
+          provenance: true
+          sbom: true
+
+      - name: Sync GitHub secrets to SSM
+        # Each secret is named EXPLICITLY. Reading the whole secrets context in
+        # one expression is forbidden fleet-wide (scripts/check-workflow-secrets.mjs
+        # fails CI on it). This list IS the allowlist; adding a runtime secret
+        # means adding it here, to TASK_SECRET_OVERRIDES_JSON below, and to the
+        # deploy role's ssm:PutParameter resources in oxy-infra.
+        #
+        # REDIS_URL is NOT here: the task reads the shared /oxy/_shared/REDIS_URL.
+        # There is no OXY_SERVICE_API_* pair either: Move attests its task role.
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          for key in DATABASE_URL; do
+            value="${!key-}"
+            # A placeholder is worse than an absent secret: it would overwrite a
+            # real SSM value and crash-loop the service.
+            if [[ -z "$value" || "$value" == "-" ]]; then
+              echo "::warning::Skipping empty or placeholder secret $key; SSM unchanged."
+              continue
+            fi
+            printf '%s' "$value" | aws ssm put-parameter \
+              --name "/oxy/$APP/$key" \
+              --type SecureString \
+              --value file:///dev/stdin \
+              --overwrite >/dev/null
+            echo "Synced /oxy/$APP/$key"
+          done
+
+      - name: Decide whether the ECS service exists yet
+        id: service
+        run: |
+          set -euo pipefail
+          status="$(aws ecs describe-services --cluster "$CLUSTER" --services "$APP" \
+            --query 'services[0].status' --output text 2>/dev/null || echo NONE)"
+          echo "status=$status" >>"$GITHUB_OUTPUT"
+          if [[ "$status" != ACTIVE ]]; then
+            # oxy-infra app-move.tf creates the service only once an image exists
+            # (its build-out order, step 6). Until then this is the designed path.
+            echo "::notice::ECS service $APP is not ACTIVE ($status); the image is in ECR and no rollout is performed."
+          fi
+
+      - name: Re-verify current main before ECS rollout
+        if: steps.service.outputs.status == 'ACTIVE'
+        run: bash .github/scripts/require-current-main.sh
+
+      - name: Register task definition, migrate (pre), roll out, migrate (post), smoke
+        if: steps.service.outputs.status == 'ACTIVE'
+        env:
+          IMAGE_URI: ${{ env.ECR_REGISTRY }}/oxy/${{ env.APP }}@${{ steps.build.outputs.digest }}
+          RUN_MIGRATIONS: 'true'
+          # Destructive migrations only once the new image is live.
+          POST_DEPLOY_TASK_COMMAND_JSON: '["bun","packages/backend/dist/src/db/migrate.js","--target-database=oxymove","--phase=post"]'
+          POST_DEPLOY_SMOKE_SCRIPT: .github/scripts/smoke-move.sh
+          # The revision is derived from the LIVE task definition, so anything the
+          # service must receive is re-asserted here on every deploy.
+          TASK_SECRET_OVERRIDES_JSON: >-
+            {"DATABASE_URL":"arn:aws:ssm:us-west-2:237343248947:parameter/oxy/move/DATABASE_URL",
+             "REDIS_URL":"arn:aws:ssm:us-west-2:237343248947:parameter/oxy/_shared/REDIS_URL"}
+          TASK_ENV_OVERRIDES_JSON: >-
+            {"NODE_ENV":"production",
+             "OXY_API_URL":"https://api.oxy.so",
+             "MENTION_API_URL":"https://api.mention.earth"}
+          # A standing absence assertion: Move authenticates to Oxy by attesting
+          # oxy-move-task (oxy ADR 0026) and must never grow a key pair.
+          TASK_SECRET_REMOVALS: >-
+            OXY_SERVICE_API_KEY
+            OXY_SERVICE_API_SECRET
+        run: bash .github/scripts/deploy-ecs-image.sh
