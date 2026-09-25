@@ -1,0 +1,222 @@
+{
+  "app": {
+    "name": "Oxy Move"
+  },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "loading": "Loading",
+    "loadError": "We couldn't load this. Check your connection and try again.",
+    "genericError": "Something went wrong. Please try again.",
+    "keepGoing": "Keep going"
+  },
+  "auth": {
+    "subtitle": "Sign in with your Oxy account to bring your profile, the people you follow and your posts with you."
+  },
+  "home": {
+    "title": "Bring your digital life to Oxy",
+    "subtitle": "Connect the account you're leaving. Move brings your profile and the people you follow to Oxy, and your posts to Mention.",
+    "actions": "Move actions",
+    "signOut": "Sign out",
+    "inProgress": "In progress",
+    "openProgress": "Open the {{platform}} move",
+    "loadingPlatforms": "Loading platforms"
+  },
+  "platformNames": {
+    "mastodon": "Mastodon",
+    "bluesky": "Bluesky",
+    "threads": "Threads",
+    "instagram": "Instagram",
+    "x": "X",
+    "medium": "Medium",
+    "substack": "Substack"
+  },
+  "platforms": {
+    "connect": "Connect",
+    "connectTo": "Connect {{name}}",
+    "soon": "Coming soon",
+    "brings": {
+      "profile": "Profile",
+      "graph": "People you follow",
+      "posts": "Posts",
+      "articles": "Articles"
+    }
+  },
+  "connect": {
+    "title": "Connect {{name}}",
+    "unknownTitle": "This platform isn't available",
+    "unknownBody": "Go back and pick one of the platforms Move supports.",
+    "intro": {
+      "mastodon": "Sign in to your Mastodon server once, so Oxy knows the account is yours. Move never keeps access to it.",
+      "bluesky": "Sign in to Bluesky once, so Oxy knows the account is yours. Move never keeps access to it."
+    },
+    "alreadyConnected": "Already connected",
+    "use": "Use",
+    "useAccount": "Move from {{handle}}",
+    "unlink": "Unlink",
+    "unlinkAccount": "Unlink {{handle}}",
+    "unlinkTitle": "Unlink {{handle}}?",
+    "unlinkBody": "Oxy will stop treating this account as yours. Anything you already moved stays.",
+    "unlinked": "{{handle}} unlinked",
+    "loadingAccounts": "Checking your connected accounts",
+    "inputLabel": {
+      "mastodon": "Your Mastodon account or server",
+      "bluesky": "Your Bluesky handle"
+    },
+    "inputPlaceholder": {
+      "mastodon": "@you@mastodon.social",
+      "bluesky": "you.bsky.social"
+    },
+    "inputHint": {
+      "mastodon": "Your full handle (@you@mastodon.social) or just the server (mastodon.social).",
+      "bluesky": "Your handle, like you.bsky.social, or your own domain."
+    },
+    "inputInvalid": {
+      "mastodon": "That doesn't look like a Mastodon handle or server.",
+      "bluesky": "That doesn't look like a Bluesky handle."
+    },
+    "startFailed": {
+      "mastodon": "We couldn't reach that Mastodon server. Check the address and try again.",
+      "bluesky": "We couldn't find that Bluesky account. Check the handle and try again."
+    },
+    "submit": "Sign in to {{name}}",
+    "privacy": "You'll sign in on {{name}}'s own page. Oxy only learns which account it is, then discards the access."
+  },
+  "linkErrors": {
+    "access_denied": "You cancelled the sign-in. Nothing was connected.",
+    "already_linked": "That account is already connected to another Oxy account.",
+    "verification_failed": "We couldn't verify that account. Please try again.",
+    "provider_unavailable": "That server couldn't be reached right now. Please try again later.",
+    "unknown": "Connecting didn't finish. Please try again."
+  },
+  "linked": {
+    "title": "Connect account",
+    "successTitle": "Account connected",
+    "successBody": "{{handle}} is now connected to your Oxy account.",
+    "successBodyGeneric": "Your account is now connected to Oxy.",
+    "signInToContinue": "Sign in to Oxy to continue your move.",
+    "continue": "Continue",
+    "errorTitle": "We couldn't connect that account",
+    "tryAgain": "Try again",
+    "nothingTitle": "Nothing to show here",
+    "nothingBody": "This page finishes connecting an account. Start from the home screen.",
+    "home": "Go to home"
+  },
+  "confirm": {
+    "title": "Review your move",
+    "loading": "Looking at your account",
+    "whatMoves": "What moves",
+    "profile": "Your profile",
+    "profileHint": "Name, bio, picture and links, onto your Oxy profile.",
+    "posts_one": "{{formatted}} post",
+    "posts_other": "{{formatted}} posts",
+    "postsUnknown": "Your posts",
+    "postsHint": "Imported to Mention with their original dates.",
+    "dateRange": "From {{oldest}} to {{newest}}, onto Mention with their original dates.",
+    "following_one": "{{formatted}} account you follow",
+    "following_other": "{{formatted}} accounts you follow",
+    "followingUnknown": "The accounts you follow",
+    "followingHidden": "The accounts you follow are hidden",
+    "followingHint": "Everyone who is also on Oxy is followed for you.",
+    "followers": "Move my followers",
+    "followersHint": "After your posts arrive, one step on Mastodon sends your followers to your new account.",
+    "options": "Options",
+    "includeBoosts": "Include boosts",
+    "includeBoostsHint": "Bring the posts you boosted, as links to the originals.",
+    "includeReplies": "Include replies to others",
+    "includeRepliesHint": "Your own threads always come along.",
+    "submit": "Move to Oxy",
+    "undoNote": "You can undo the whole move later from your history.",
+    "blocks": "The accounts you block",
+    "blocksHint": "Everyone you block on Bluesky who is also on Oxy is blocked for you."
+  },
+  "jobErrors": {
+    "linked_account_not_owned": "That account isn't connected to your Oxy account anymore. Connect it again.",
+    "source_requires_authorized_fetch": "Your server only shares posts with servers it trusts, so Move can't read them yet.",
+    "source_unavailable": "Your account's server isn't responding right now. Please try again later.",
+    "active_job_exists": "You already have a move from this account in progress. Open it from your history."
+  },
+  "progress": {
+    "title": "Moving",
+    "loading": "Loading your move",
+    "from": "From {{platform}}",
+    "phases": "Steps",
+    "queued": "Your move is queued and will start in a moment.",
+    "paused": "Paused to respect rate limits. It continues on its own around {{until}}.",
+    "soon": "soon",
+    "failed": "The move stopped: {{error}}",
+    "done": "Everything is here. Welcome to Oxy!",
+    "cancelled": "This move was stopped.",
+    "undone": "This move was undone.",
+    "profileWaiting": "Waiting for your profile",
+    "profileApplying": "Updating your Oxy profile",
+    "profileApplied": "Your Oxy profile is updated",
+    "graphCounts": "{{resolved}} of {{read}} found on Oxy · {{followed}} followed",
+    "followMeter": "People followed",
+    "batches": "{{applied}} of {{total}} groups followed",
+    "contentCounts": "{{imported}} imported of {{read}} read · {{skipped}} skipped · {{media}} media",
+    "contentFailed_one": "{{count}} post couldn't be imported.",
+    "contentFailed_other": "{{count}} posts couldn't be imported.",
+    "applyFailed": "We couldn't finish updating your Oxy account. Your progress is saved.",
+    "viewOnMention": "See your posts on Mention",
+    "cancel": "Stop the move",
+    "cancelTitle": "Stop this move?",
+    "cancelBody": "What already arrived stays. You can undo it from your history.",
+    "blocks": "{{applied}} of {{total}} blocked on Oxy"
+  },
+  "phases": {
+    "profile": "Profile",
+    "graph": "People you follow",
+    "content": "Posts",
+    "blocks": "Blocks"
+  },
+  "status": {
+    "queued": "Queued",
+    "running": "Moving",
+    "paused": "Paused",
+    "done": "Done",
+    "failed": "Failed",
+    "cancelled": "Stopped",
+    "undone": "Undone"
+  },
+  "phaseStatus": {
+    "pending": "Waiting",
+    "running": "In progress",
+    "done": "Done",
+    "skipped": "Skipped"
+  },
+  "mastodonMove": {
+    "title": "Bring your followers",
+    "notYet": "Once your posts are in, one step on Mastodon sends your followers to your new account.",
+    "body": "Your posts are in. Now tell Mastodon you moved, and your followers will follow your new account.",
+    "steps": "Open Mastodon → Settings → Account → Move to a different account, and enter this handle:",
+    "targetLabel": "Your new handle",
+    "copy": "Copy handle",
+    "copyLabel": "Copy {{handle}}",
+    "copied": "Handle copied",
+    "open": "Open Mastodon",
+    "openLabel": "Open Mastodon's account migration settings"
+  },
+  "history": {
+    "title": "History",
+    "loading": "Loading your moves",
+    "emptyTitle": "No moves yet",
+    "emptyBody": "When you move an account, it shows up here, and you can undo it.",
+    "start": "Start a move",
+    "startedOn": "Started {{date}}",
+    "summary": "{{posts}} posts imported · {{follows}} people found",
+    "details": "Details",
+    "viewOnMention": "View on Mention",
+    "undo": "Undo",
+    "retryUndo": "Finish undoing",
+    "undoLabel": "Undo the {{platform}} move",
+    "undoTitle": "Undo the {{platform}} move?",
+    "undoBody": "The imported posts are deleted from Mention, the people Move followed or blocked for you are unfollowed or unblocked, and your profile goes back to how it was.",
+    "undone": "Move undone: {{posts}} posts removed, {{follows}} unfollowed, {{blocks}} unblocked.",
+    "undoPartial_one": "{{count}} post couldn't be removed yet. Try undoing again.",
+    "undoPartial_other": "{{count}} posts couldn't be removed yet. Try undoing again.",
+    "undoKept": "Your profile was changed by an older version of Move without a record of how it was, so it was left as it is.",
+    "undoFailed": "We couldn't undo this move. Please try again."
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "app": {
+    "name": "Oxy Move"
+  },
+  "common": {
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "loading": "Cargando",
+    "loadError": "No hemos podido cargar esto. Comprueba tu conexión y vuelve a intentarlo.",
+    "genericError": "Algo ha fallado. Vuelve a intentarlo.",
+    "keepGoing": "Seguir"
+  },
+  "auth": {
+    "subtitle": "Inicia sesión con tu cuenta de Oxy para traerte tu perfil, la gente a la que sigues y tus publicaciones."
+  },
+  "home": {
+    "title": "Trae tu vida digital a Oxy",
+    "subtitle": "Conecta la cuenta que dejas. Move trae tu perfil y la gente a la que sigues a Oxy, y tus publicaciones a Mention.",
+    "actions": "Acciones de Move",
+    "signOut": "Cerrar sesión",
+    "inProgress": "En curso",
+    "openProgress": "Abrir la mudanza de {{platform}}",
+    "loadingPlatforms": "Cargando plataformas"
+  },
+  "platformNames": {
+    "mastodon": "Mastodon",
+    "bluesky": "Bluesky",
+    "threads": "Threads",
+    "instagram": "Instagram",
+    "x": "X",
+    "medium": "Medium",
+    "substack": "Substack"
+  },
+  "platforms": {
+    "connect": "Conectar",
+    "connectTo": "Conectar {{name}}",
+    "soon": "Pronto",
+    "brings": {
+      "profile": "Perfil",
+      "graph": "Gente a la que sigues",
+      "posts": "Publicaciones",
+      "articles": "Artículos"
+    }
+  },
+  "connect": {
+    "title": "Conectar {{name}}",
+    "unknownTitle": "Esta plataforma no está disponible",
+    "unknownBody": "Vuelve atrás y elige una de las plataformas que admite Move.",
+    "intro": {
+      "mastodon": "Inicia sesión una vez en tu servidor de Mastodon para que Oxy sepa que la cuenta es tuya. Move nunca guarda acceso a ella.",
+      "bluesky": "Inicia sesión una vez en Bluesky para que Oxy sepa que la cuenta es tuya. Move nunca guarda acceso a ella."
+    },
+    "alreadyConnected": "Ya conectadas",
+    "use": "Usar",
+    "useAccount": "Mudarse desde {{handle}}",
+    "unlink": "Desvincular",
+    "unlinkAccount": "Desvincular {{handle}}",
+    "unlinkTitle": "¿Desvincular {{handle}}?",
+    "unlinkBody": "Oxy dejará de considerar tuya esta cuenta. Lo que ya hayas traído se queda.",
+    "unlinked": "{{handle}} desvinculada",
+    "loadingAccounts": "Comprobando tus cuentas conectadas",
+    "inputLabel": {
+      "mastodon": "Tu cuenta o servidor de Mastodon",
+      "bluesky": "Tu usuario de Bluesky"
+    },
+    "inputPlaceholder": {
+      "mastodon": "@tu@mastodon.social",
+      "bluesky": "tu.bsky.social"
+    },
+    "inputHint": {
+      "mastodon": "Tu usuario completo (@tu@mastodon.social) o solo el servidor (mastodon.social).",
+      "bluesky": "Tu usuario, como tu.bsky.social, o tu propio dominio."
+    },
+    "inputInvalid": {
+      "mastodon": "Eso no parece un usuario ni un servidor de Mastodon.",
+      "bluesky": "Eso no parece un usuario de Bluesky."
+    },
+    "startFailed": {
+      "mastodon": "No hemos podido contactar con ese servidor de Mastodon. Revisa la dirección y vuelve a intentarlo.",
+      "bluesky": "No hemos encontrado esa cuenta de Bluesky. Revisa el usuario y vuelve a intentarlo."
+    },
+    "submit": "Iniciar sesión en {{name}}",
+    "privacy": "Iniciarás sesión en la propia página de {{name}}. Oxy solo sabe qué cuenta es y descarta el acceso."
+  },
+  "linkErrors": {
+    "access_denied": "Has cancelado el inicio de sesión. No se ha conectado nada.",
+    "already_linked": "Esa cuenta ya está conectada a otra cuenta de Oxy.",
+    "verification_failed": "No hemos podido verificar esa cuenta. Vuelve a intentarlo.",
+    "provider_unavailable": "Ahora mismo no se puede contactar con ese servidor. Inténtalo más tarde.",
+    "unknown": "La conexión no ha terminado. Vuelve a intentarlo."
+  },
+  "linked": {
+    "title": "Conectar cuenta",
+    "successTitle": "Cuenta conectada",
+    "successBody": "{{handle}} ya está conectada a tu cuenta de Oxy.",
+    "successBodyGeneric": "Tu cuenta ya está conectada a Oxy.",
+    "signInToContinue": "Inicia sesión en Oxy para continuar tu mudanza.",
+    "continue": "Continuar",
+    "errorTitle": "No hemos podido conectar esa cuenta",
+    "tryAgain": "Reintentar",
+    "nothingTitle": "Aquí no hay nada que mostrar",
+    "nothingBody": "Esta página termina de conectar una cuenta. Empieza desde el inicio.",
+    "home": "Ir al inicio"
+  },
+  "confirm": {
+    "title": "Revisa tu mudanza",
+    "loading": "Mirando tu cuenta",
+    "whatMoves": "Qué se muda",
+    "profile": "Tu perfil",
+    "profileHint": "Nombre, biografía, foto y enlaces, en tu perfil de Oxy.",
+    "posts_one": "{{formatted}} publicación",
+    "posts_other": "{{formatted}} publicaciones",
+    "postsUnknown": "Tus publicaciones",
+    "postsHint": "Se importan a Mention con sus fechas originales.",
+    "dateRange": "Del {{oldest}} al {{newest}}, en Mention con sus fechas originales.",
+    "following_one": "{{formatted}} cuenta a la que sigues",
+    "following_other": "{{formatted}} cuentas a las que sigues",
+    "followingUnknown": "Las cuentas a las que sigues",
+    "followingHidden": "Las cuentas a las que sigues están ocultas",
+    "followingHint": "Seguimos por ti a todas las que también están en Oxy.",
+    "followers": "Mudar a mis seguidores",
+    "followersHint": "Cuando lleguen tus publicaciones, un paso en Mastodon envía a tus seguidores a tu nueva cuenta.",
+    "options": "Opciones",
+    "includeBoosts": "Incluir impulsos",
+    "includeBoostsHint": "Trae lo que impulsaste, como enlaces al original.",
+    "includeReplies": "Incluir respuestas a otros",
+    "includeRepliesHint": "Tus propios hilos siempre vienen.",
+    "submit": "Mudarme a Oxy",
+    "undoNote": "Puedes deshacer toda la mudanza más tarde desde tu historial.",
+    "blocks": "Las cuentas que bloqueas",
+    "blocksHint": "Bloqueamos por ti a todas las que bloqueas en Bluesky y también están en Oxy."
+  },
+  "jobErrors": {
+    "linked_account_not_owned": "Esa cuenta ya no está conectada a tu cuenta de Oxy. Vuelve a conectarla.",
+    "source_requires_authorized_fetch": "Tu servidor solo comparte publicaciones con servidores de confianza, así que Move aún no puede leerlas.",
+    "source_unavailable": "El servidor de tu cuenta no responde ahora mismo. Inténtalo más tarde.",
+    "active_job_exists": "Ya tienes una mudanza en curso desde esta cuenta. Ábrela desde tu historial."
+  },
+  "progress": {
+    "title": "Mudándote",
+    "loading": "Cargando tu mudanza",
+    "from": "Desde {{platform}}",
+    "phases": "Pasos",
+    "queued": "Tu mudanza está en cola y empezará enseguida.",
+    "paused": "En pausa para respetar los límites. Continuará sola hacia {{until}}.",
+    "soon": "pronto",
+    "failed": "La mudanza se ha detenido: {{error}}",
+    "done": "Ya está todo aquí. ¡Bienvenido a Oxy!",
+    "cancelled": "Esta mudanza se detuvo.",
+    "undone": "Esta mudanza se deshizo.",
+    "profileWaiting": "Esperando tu perfil",
+    "profileApplying": "Actualizando tu perfil de Oxy",
+    "profileApplied": "Tu perfil de Oxy está actualizado",
+    "graphCounts": "{{resolved}} de {{read}} encontradas en Oxy · {{followed}} seguidas",
+    "followMeter": "Gente seguida",
+    "batches": "{{applied}} de {{total}} grupos seguidos",
+    "contentCounts": "{{imported}} importadas de {{read}} leídas · {{skipped}} omitidas · {{media}} archivos",
+    "contentFailed_one": "{{count}} publicación no se ha podido importar.",
+    "contentFailed_other": "{{count}} publicaciones no se han podido importar.",
+    "applyFailed": "No hemos podido terminar de actualizar tu cuenta de Oxy. Tu progreso está guardado.",
+    "viewOnMention": "Ver tus publicaciones en Mention",
+    "cancel": "Detener la mudanza",
+    "cancelTitle": "¿Detener esta mudanza?",
+    "cancelBody": "Lo que ya ha llegado se queda. Puedes deshacerlo desde tu historial.",
+    "blocks": "{{applied}} de {{total}} bloqueadas en Oxy"
+  },
+  "phases": {
+    "profile": "Perfil",
+    "graph": "Gente a la que sigues",
+    "content": "Publicaciones",
+    "blocks": "Bloqueos"
+  },
+  "status": {
+    "queued": "En cola",
+    "running": "Mudando",
+    "paused": "En pausa",
+    "done": "Hecho",
+    "failed": "Error",
+    "cancelled": "Detenida",
+    "undone": "Deshecha"
+  },
+  "phaseStatus": {
+    "pending": "Esperando",
+    "running": "En curso",
+    "done": "Hecho",
+    "skipped": "Omitido"
+  },
+  "mastodonMove": {
+    "title": "Tráete a tus seguidores",
+    "notYet": "Cuando lleguen tus publicaciones, un paso en Mastodon envía a tus seguidores a tu nueva cuenta.",
+    "body": "Tus publicaciones ya están aquí. Ahora dile a Mastodon que te has mudado y tus seguidores seguirán a tu nueva cuenta.",
+    "steps": "Abre Mastodon → Preferencias → Cuenta → Mudarse a otra cuenta, e introduce este usuario:",
+    "targetLabel": "Tu nuevo usuario",
+    "copy": "Copiar usuario",
+    "copyLabel": "Copiar {{handle}}",
+    "copied": "Usuario copiado",
+    "open": "Abrir Mastodon",
+    "openLabel": "Abrir los ajustes de migración de cuenta de Mastodon"
+  },
+  "history": {
+    "title": "Historial",
+    "loading": "Cargando tus mudanzas",
+    "emptyTitle": "Aún no hay mudanzas",
+    "emptyBody": "Cuando mudes una cuenta aparecerá aquí, y podrás deshacerla.",
+    "start": "Empezar una mudanza",
+    "startedOn": "Empezada el {{date}}",
+    "summary": "{{posts}} publicaciones importadas · {{follows}} personas encontradas",
+    "details": "Detalles",
+    "viewOnMention": "Ver en Mention",
+    "undo": "Deshacer",
+    "retryUndo": "Terminar de deshacer",
+    "undoLabel": "Deshacer la mudanza de {{platform}}",
+    "undoTitle": "¿Deshacer la mudanza de {{platform}}?",
+    "undoBody": "Las publicaciones importadas se borran de Mention, dejas de seguir o desbloqueas a quien Move siguió o bloqueó por ti y tu perfil vuelve a como estaba.",
+    "undone": "Mudanza deshecha: {{posts}} publicaciones borradas, {{follows}} dejadas de seguir, {{blocks}} desbloqueadas.",
+    "undoPartial_one": "{{count}} publicación aún no se ha podido borrar. Vuelve a deshacer.",
+    "undoPartial_other": "{{count}} publicaciones aún no se han podido borrar. Vuelve a deshacer.",
+    "undoKept": "Una versión anterior de Move cambió tu perfil sin guardar cómo estaba, así que se ha dejado como está.",
+    "undoFailed": "No hemos podido deshacer esta mudanza. Vuelve a intentarlo."
+  }
+}

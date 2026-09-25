@@ -1,0 +1,11 @@
+{
+  "//": "Typecheck-only view of the unit tests. They import `bun:test`, whose types (and Node's, which they pull in) must not leak into the app program (`setTimeout` would return a Timeout there); so the app tsconfig excludes __tests__ and this one checks them with Bun's types.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "types": ["bun"]
+  },
+  "include": ["__tests__/**/*.ts"],
+  "exclude": ["node_modules", "dist", ".expo"]
+}

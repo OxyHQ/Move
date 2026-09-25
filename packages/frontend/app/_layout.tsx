@@ -1,0 +1,105 @@
+// Tailwind v4 + NativeWind entry. Importing it here is what makes react-native-css
+// compile the utility stylesheet for the web build, so className layout utilities
+// (from this app and @oxy.so/services) render on web instead of falling through to
+// react-native-web's base View reset. Pairs with postcss.config.mjs.
+import '../global.css';
+
+import type { ReactNode } from 'react';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { OxyProvider, useOxy } from '@oxy.so/services';
+import { BloomThemeProvider } from '@oxy.so/bloom/theme';
+import { ImageResolverProvider } from '@oxy.so/bloom/image-resolver';
+import { ConnectionStatusToasts } from '@oxy.so/bloom/connection-status';
+import { OXY_API_URL, OXY_CLIENT_ID } from '@/lib/config';
+import { queryClient } from '@/lib/queryClient';
+import { THEME_PERSIST_KEY, themeStorage } from '@/lib/themePersistence';
+import { FALLBACK_LOCALE, SUPPORTED_LOCALES, setLanguage } from '@/lib/i18n';
+import { MoveApiProvider } from '@/lib/moveApiContext';
+import { ErrorFallback } from '@/components/error-fallback';
+
+// On web, the linked-account OAuth runs in a popup that lands back on this app
+// (`/linked`). This hands the popup's URL to the `openAuthSessionAsync` waiting
+// in the opener and closes the popup, before any route renders. No-op on native
+// and in a window that is not such a popup.
+WebBrowser.maybeCompleteAuthSession();
+
+const LANGUAGE = { supportedLocales: SUPPORTED_LOCALES, fallbackLocale: FALLBACK_LOCALE, onChange: setLanguage };
+
+/**
+ * Top-level error boundary. expo-router renders this whenever a render error
+ * escapes a nested route, so an unexpected crash falls back to a branded retry
+ * screen instead of a blank white screen.
+ */
+export function ErrorBoundary(props: { error: Error; retry: () => void }) {
+  return <ErrorFallback {...props} />;
+}
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <SafeAreaProvider>
+          {/* BloomThemeProvider is the outermost theming authority — it must wrap
+              every render branch, including any pre-auth backdrop. OxyProvider is
+              the single session authority (web + native); it owns the QueryClient
+              and never redirects to an external login. */}
+          <BloomThemeProvider persistKey={THEME_PERSIST_KEY} storage={themeStorage}>
+            <ConnectionStatusToasts />
+            <OxyProvider
+              baseURL={OXY_API_URL}
+              clientId={OXY_CLIENT_ID}
+              queryClient={queryClient}
+              language={LANGUAGE}
+            >
+              <AppImageResolver>
+                <MoveApiProvider>
+                  <AuthRouter />
+                  <StatusBar style="auto" />
+                </MoveApiProvider>
+              </AppImageResolver>
+            </OxyProvider>
+          </BloomThemeProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+/**
+ * Registers the Oxy `ImageResolver` so every Bloom `Avatar` resolves a bare file
+ * id to a variant-aware URL. Must live inside OxyProvider so `useOxy()` has a
+ * client.
+ */
+function AppImageResolver({ children }: { children: ReactNode }) {
+  const { oxyServices } = useOxy();
+  return (
+    <ImageResolverProvider value={(id, variant) => oxyServices.getFileDownloadUrl(id, variant ?? 'thumb')}>
+      {children}
+    </ImageResolverProvider>
+  );
+}
+
+/**
+ * The root Stack is the SOLE authority for the `(auth)`↔`(app)` group swap,
+ * keyed purely on session. Until cold boot resolves (`isAuthResolved === false`)
+ * we treat the user as needing auth; once resolved, `isAuthenticated` drives it.
+ */
+function AuthRouter() {
+  const { isAuthenticated, isAuthResolved } = useOxy();
+  const needsAuth = isAuthResolved ? !isAuthenticated : true;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(app)" redirect={needsAuth} />
+      <Stack.Screen name="(auth)" redirect={!needsAuth} />
+      {/* Outside both groups: the linked-account return must survive a cold
+          boot that has not resolved the session yet, so it handles auth itself. */}
+      <Stack.Screen name="linked" />
+    </Stack>
+  );
+}
