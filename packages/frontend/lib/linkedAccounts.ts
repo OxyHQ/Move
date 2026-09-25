@@ -39,10 +39,12 @@ export interface LinkedAccount {
   createdAt: string;
 }
 
-/** The codes Oxy's callback appends to `returnTo` as `?link_error=<code>`. */
+/**
+ * The codes Oxy's callback appends to `returnTo` as `?link_error=<code>`. An
+ * account already linked to someone else is reported by `/complete` (409).
+ */
 export const LINKED_ACCOUNT_CALLBACK_ERRORS = [
   'access_denied',
-  'already_linked',
   'verification_failed',
   'provider_unavailable',
 ] as const;
@@ -50,6 +52,12 @@ export type LinkedAccountCallbackError = (typeof LINKED_ACCOUNT_CALLBACK_ERRORS)
 
 export interface LinkedAccountsApi {
   startLinkedAccount(network: LinkedAccountNetwork, options: StartLinkedAccountRequest): Promise<StartLinkedAccountResponse>;
+  /**
+   * Finish a link with the callback's `link_code`, as the user who started it:
+   * 403 for anyone else (the code is burned), 404 unknown/expired, 409 when the
+   * account is already someone else's link.
+   */
+  completeLinkedAccount(code: string): Promise<LinkedAccount>;
   listLinkedAccounts(): Promise<LinkedAccount[]>;
   revokeLinkedAccount(linkedAccountId: string): Promise<void>;
 }
@@ -60,6 +68,12 @@ export function linkedAccounts(oxy: Pick<OxyServices, 'makeRequest'>): LinkedAcc
       oxy.makeRequest<StartLinkedAccountResponse>('POST', `/linked-accounts/${encodeURIComponent(network)}/start`, options, {
         cache: false,
       }),
+    completeLinkedAccount: async (code) =>
+      (
+        await oxy.makeRequest<{ linkedAccount: LinkedAccount }>('POST', '/linked-accounts/complete', { code }, {
+          cache: false,
+        })
+      ).linkedAccount,
     listLinkedAccounts: async () =>
       (await oxy.makeRequest<{ linkedAccounts: LinkedAccount[] }>('GET', '/linked-accounts', undefined, { cache: false })).linkedAccounts,
     revokeLinkedAccount: async (linkedAccountId) => {

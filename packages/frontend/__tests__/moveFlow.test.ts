@@ -10,7 +10,8 @@ import { describe, expect, test } from 'bun:test';
 import type { MigrationJobView, MigrationPlan, PlanAckRequest, PlanResponse } from '@move/shared-types';
 import { createMoveApi, errorCode, type MoveHttp } from '../lib/moveApi';
 import { applyPlan, planHasPendingWork, undoPlan, type PlanSdk } from '../lib/planApplier';
-import { mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle } from '../lib/handles';
+import type { OxyServices } from '@oxy.so/core';
+import { completeLink, mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle } from '../lib/handles';
 import { LINKED_ACCOUNT_CALLBACK_ERRORS } from '../lib/linkedAccounts';
 
 const PLAN: MigrationPlan = {
@@ -219,8 +220,11 @@ describe('connect helpers', () => {
     expect(normalizeSourceInput('bluesky', 'ada')).toBeNull();
   });
 
-  test('the return route reads ?linked= and every callback ?link_error= code', () => {
-    expect(outcomeFromParams({ linked: 'la-9' })).toEqual({ kind: 'linked', linkedAccountId: 'la-9' });
+  test('the return route reads ?link_code= and every callback ?link_error= code', () => {
+    expect(outcomeFromParams({ link_code: 'c-9' })).toEqual({ kind: 'code', code: 'c-9' });
+    expect(outcomeFromParams({ link_code: '' })).toBeNull();
+    // The callback no longer creates the link, so `?linked=` means nothing.
+    expect(outcomeFromParams({ linked: 'la-9' } as never)).toBeNull();
     for (const code of LINKED_ACCOUNT_CALLBACK_ERRORS) {
       expect(outcomeFromParams({ link_error: code })).toEqual({ kind: 'error', code });
     }
@@ -228,6 +232,26 @@ describe('connect helpers', () => {
     // `error` is the SDK's OAuth parameter (and stripped on web): not ours.
     expect(outcomeFromParams({ error: 'access_denied' } as never)).toBeNull();
     expect(outcomeFromParams({})).toBeNull();
+  });
+
+  test('a code becomes the link only through POST /linked-accounts/complete, and each refusal is named', async () => {
+    const calls: Array<{ method: string; url: string; data: unknown }> = [];
+    const oxy = (failWith?: number): Pick<OxyServices, 'makeRequest'> => ({
+      makeRequest: (async (method: string, url: string, data: unknown) => {
+        calls.push({ method, url, data });
+        if (failWith) throw Object.assign(new Error(`HTTP ${failWith}`), { status: failWith });
+        return { linkedAccount: { id: 'la-1' } };
+      }) as Pick<OxyServices, 'makeRequest'>['makeRequest'],
+    });
+
+    expect(await completeLink(oxy(), 'c-1')).toEqual({ kind: 'linked', linkedAccountId: 'la-1' });
+    expect(calls).toEqual([{ method: 'POST', url: '/linked-accounts/complete', data: { code: 'c-1' } }]);
+
+    expect(await completeLink(oxy(409), 'c-2')).toEqual({ kind: 'error', code: 'already_linked' });
+    // 403: another user started the flow (the code is now burned); 404: expired or used.
+    expect(await completeLink(oxy(403), 'c-3')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
+    expect(await completeLink(oxy(404), 'c-4')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
+    expect(await completeLink(oxy(500), 'c-5')).toEqual({ kind: 'error', code: 'unknown' });
   });
 
   test('the Mastodon move step targets the Mention handle and the source instance', () => {

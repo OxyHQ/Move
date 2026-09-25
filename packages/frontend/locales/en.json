@@ -86,6 +86,7 @@
   "linkErrors": {
     "access_denied": "You cancelled the sign-in. Nothing was connected.",
     "already_linked": "That account is already connected to another Oxy account.",
+    "expired_or_foreign": "That link has expired or was started from another Oxy account. Please start again.",
     "verification_failed": "We couldn't verify that account. Please try again.",
     "provider_unavailable": "That server couldn't be reached right now. Please try again later.",
     "unknown": "Connecting didn't finish. Please try again."
@@ -95,7 +96,8 @@
     "successTitle": "Account connected",
     "successBody": "{{handle}} is now connected to your Oxy account.",
     "successBodyGeneric": "Your account is now connected to Oxy.",
-    "signInToContinue": "Sign in to Oxy to continue your move.",
+    "signInTitle": "Sign in to finish connecting",
+    "signInToContinue": "Sign in with the Oxy account you started from to finish connecting.",
     "continue": "Continue",
     "errorTitle": "We couldn't connect that account",
     "tryAgain": "Try again",

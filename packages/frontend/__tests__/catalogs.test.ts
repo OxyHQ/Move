@@ -27,6 +27,8 @@ test('every code and status the app renders has a message', () => {
   const english = new Set(keys(en as Catalog));
   const required = [
     ...LINKED_ACCOUNT_CALLBACK_ERRORS.map((code) => `linkErrors.${code}`),
+    'linkErrors.already_linked',
+    'linkErrors.expired_or_foreign',
     'linkErrors.unknown',
     ...JOB_STATUSES.map((status) => `status.${status}`),
     ...PHASE_STATUSES.map((status) => `phaseStatus.${status}`),

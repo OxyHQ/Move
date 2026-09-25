@@ -86,6 +86,7 @@
   "linkErrors": {
     "access_denied": "Has cancelado el inicio de sesión. No se ha conectado nada.",
     "already_linked": "Esa cuenta ya está conectada a otra cuenta de Oxy.",
+    "expired_or_foreign": "Ese enlace ha caducado o se inició desde otra cuenta de Oxy. Vuelve a empezar.",
     "verification_failed": "No hemos podido verificar esa cuenta. Vuelve a intentarlo.",
     "provider_unavailable": "Ahora mismo no se puede contactar con ese servidor. Inténtalo más tarde.",
     "unknown": "La conexión no ha terminado. Vuelve a intentarlo."
@@ -95,7 +96,8 @@
     "successTitle": "Cuenta conectada",
     "successBody": "{{handle}} ya está conectada a tu cuenta de Oxy.",
     "successBodyGeneric": "Tu cuenta ya está conectada a Oxy.",
-    "signInToContinue": "Inicia sesión en Oxy para continuar tu mudanza.",
+    "signInTitle": "Inicia sesión para terminar de conectar",
+    "signInToContinue": "Inicia sesión con la cuenta de Oxy desde la que empezaste para terminar de conectar.",
     "continue": "Continuar",
     "errorTitle": "No hemos podido conectar esa cuenta",
     "tryAgain": "Reintentar",

@@ -1,8 +1,9 @@
 /**
  * Proving ownership of an external account: Oxy's linked-account OAuth, opened
  * with `expo-web-browser`'s auth session (a popup on web, an in-app browser
- * session on native) and returned to `LINKED_RETURN_TO` with `?linked=<id>` or
- * `?link_error=<code>`.
+ * session on native) and returned to `LINKED_RETURN_TO` with `?link_code=<code>`
+ * or `?link_error=<code>`. The code becomes the link only when the signed-in
+ * user completes it (`completeLink`).
  */
 
 import * as Linking from 'expo-linking';
@@ -10,7 +11,7 @@ import * as WebBrowser from 'expo-web-browser';
 import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
 import { LINKED_RETURN_TO, MENTION_FEDERATION_DOMAIN, OXY_CLIENT_ID } from './config';
-import { PLATFORM_NETWORK, formatMentionHandle, outcomeFromParams, type LinkOutcome } from './handles';
+import { PLATFORM_NETWORK, completeLink, formatMentionHandle, outcomeFromParams, type LinkOutcome, type LinkResult } from './handles';
 import { linkedAccounts } from './linkedAccounts';
 
 let pendingAuthSession = false;
@@ -29,30 +30,34 @@ function outcomeFromUrl(url: string): LinkOutcome {
   return outcomeFromParams(queryParams ?? {}) ?? { kind: 'error', code: 'unknown' };
 }
 
+/** How a connect attempt ended: linked, refused, or closed by the user. */
+export type LinkAttempt = LinkResult | { kind: 'cancelled' };
+
 /**
- * Start the link and wait for the browser to come back. Throws only when Oxy
- * refuses to START (bad instance, unresolvable handle); the callback's own
- * failures come back as `{ kind: 'error' }`.
+ * Start the link, wait for the browser to come back, and complete it. Throws
+ * only when Oxy refuses to START (bad instance, unresolvable handle); every
+ * later failure comes back as `{ kind: 'error' }`.
  */
 export async function linkAccount(
   oxy: Pick<OxyServices, 'makeRequest'>,
   platform: MigrationPlatform,
   input: string,
-): Promise<LinkOutcome> {
+): Promise<LinkAttempt> {
   const network = PLATFORM_NETWORK[platform];
   const { authorizeUrl } = await linkedAccounts(oxy).startLinkedAccount(network, {
     ...(network === 'activitypub' ? { instance: input } : { handle: input }),
     clientId: OXY_CLIENT_ID,
     returnTo: LINKED_RETURN_TO,
   });
+  let outcome: LinkOutcome | { kind: 'cancelled' };
   pendingAuthSession = true;
   try {
     const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, LINKED_RETURN_TO);
-    if (result.type === 'success') return outcomeFromUrl(result.url);
-    return { kind: 'cancelled' };
+    outcome = result.type === 'success' ? outcomeFromUrl(result.url) : { kind: 'cancelled' };
   } finally {
     pendingAuthSession = false;
   }
+  return outcome.kind === 'code' ? completeLink(oxy, outcome.code) : outcome;
 }
 
 /** The signed-in user's handle on Mention, the target of a Mastodon account move. */

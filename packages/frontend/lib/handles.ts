@@ -3,8 +3,14 @@
  * Native imports, so the unit tests load them directly.
  */
 
+import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
-import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccountCallbackError, type LinkedAccountNetwork } from './linkedAccounts';
+import {
+  LINKED_ACCOUNT_CALLBACK_ERRORS,
+  linkedAccounts,
+  type LinkedAccountCallbackError,
+  type LinkedAccountNetwork,
+} from './linkedAccounts';
 
 /** The Oxy network a Move source platform proves ownership through. */
 export const PLATFORM_NETWORK: Record<MigrationPlatform, LinkedAccountNetwork> = {
@@ -20,19 +26,27 @@ function isLinkedAccountCallbackError(value: string): value is LinkedAccountCall
   return (LINKED_ACCOUNT_CALLBACK_ERRORS as readonly string[]).includes(value);
 }
 
-export type LinkOutcome =
-  | { kind: 'linked'; linkedAccountId: string }
-  | { kind: 'error'; code: LinkedAccountCallbackError | 'unknown' }
-  | { kind: 'cancelled' };
+/**
+ * Why a link did not happen: a callback code, or what `/complete` refused —
+ * `already_linked` (409: someone else's link) or `expired_or_foreign`
+ * (403/404: the code expired, was used, or another user started the flow).
+ */
+export type LinkError = LinkedAccountCallbackError | 'already_linked' | 'expired_or_foreign' | 'unknown';
+
+/** What the callback sent back: a one-time code to complete, or a failure. */
+export type LinkOutcome = { kind: 'code'; code: string } | { kind: 'error'; code: LinkError };
+
+/** The end of the flow: the link exists, or why not. */
+export type LinkResult = { kind: 'linked'; linkedAccountId: string } | { kind: 'error'; code: LinkError };
 
 /**
- * Read `?linked=` / `?link_error=` off a return URL's query or a route's params.
- * Oxy reports a failed link as `link_error`, not `error`, because
+ * Read `?link_code=` / `?link_error=` off a return URL's query or a route's
+ * params. Oxy reports a failed link as `link_error`, not `error`, because
  * `@oxy.so/services` strips any `?error=` (an OAuth error) on web cold boot.
  */
-export function outcomeFromParams(params: { linked?: unknown; link_error?: unknown }): LinkOutcome | null {
-  if (typeof params.linked === 'string' && params.linked.length > 0) {
-    return { kind: 'linked', linkedAccountId: params.linked };
+export function outcomeFromParams(params: { link_code?: unknown; link_error?: unknown }): LinkOutcome | null {
+  if (typeof params.link_code === 'string' && params.link_code.length > 0) {
+    return { kind: 'code', code: params.link_code };
   }
   const code = params.link_error;
   if (typeof code === 'string' && code.length > 0) {
@@ -41,8 +55,29 @@ export function outcomeFromParams(params: { linked?: unknown; link_error?: unkno
   return null;
 }
 
-/** The i18n key for a callback error code. */
-export function linkErrorKey(code: LinkedAccountCallbackError | 'unknown'): string {
+function httpStatus(error: unknown): number | undefined {
+  const status = (error as { status?: unknown } | null)?.status;
+  return typeof status === 'number' ? status : undefined;
+}
+
+/**
+ * Turn the callback's one-time code into the link, as the signed-in user —
+ * the ONLY place that does. Never throws: a refusal comes back as an error.
+ */
+export async function completeLink(oxy: Pick<OxyServices, 'makeRequest'>, code: string): Promise<LinkResult> {
+  try {
+    const account = await linkedAccounts(oxy).completeLinkedAccount(code);
+    return { kind: 'linked', linkedAccountId: account.id };
+  } catch (error) {
+    const status = httpStatus(error);
+    if (status === 409) return { kind: 'error', code: 'already_linked' };
+    if (status === 403 || status === 404) return { kind: 'error', code: 'expired_or_foreign' };
+    return { kind: 'error', code: 'unknown' };
+  }
+}
+
+/** The i18n key for a link error code. */
+export function linkErrorKey(code: LinkError): string {
   return `linkErrors.${code}`;
 }
 

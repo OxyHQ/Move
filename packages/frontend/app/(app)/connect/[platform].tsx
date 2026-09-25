@@ -17,8 +17,8 @@ import { toast } from '@oxy.so/bloom/toast';
 import { Lead, Text } from '@oxy.so/bloom/typography';
 import { isMigrationPlatform, type MigrationPlatform } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
-import { linkAccount } from '@/lib/connect';
-import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput, type LinkOutcome } from '@/lib/handles';
+import { linkAccount, type LinkAttempt } from '@/lib/connect';
+import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput } from '@/lib/handles';
 import { linkedAccounts, type LinkedAccount } from '@/lib/linkedAccounts';
 import { queryKeys } from '@/lib/moveApiContext';
 
@@ -58,7 +58,7 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
   const goToConfirm = (linkedAccountId: string) =>
     router.push({ pathname: '/confirm', params: { platform, linkedAccountId } });
 
-  const onOutcome = (outcome: LinkOutcome) => {
+  const onOutcome = (outcome: LinkAttempt) => {
     if (outcome.kind === 'linked') {
       void queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts });
       goToConfirm(outcome.linkedAccountId);
