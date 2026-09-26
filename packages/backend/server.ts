@@ -2,8 +2,7 @@ import 'dotenv/config';
 import http from 'node:http';
 import express from 'express';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
-import { oxyClient as oxy } from '@oxy.so/core';
-import { createOxyAuthMiddleware, createOxyCors, createOxyRateLimit } from '@oxy.so/core/server';
+import { OxyServer, createOxyAuthMiddleware, createOxyCors, createOxyRateLimit } from '@oxy.so/core/server';
 import { config } from './src/config';
 import { closePostgres, connectPostgres } from './src/db/postgres';
 import healthRoutes from './src/routes/health.routes';
@@ -20,6 +19,9 @@ import { logger } from './src/utils/logger';
 // createOxyCors; only the Expo dev server's origins are listed.
 const APP_ORIGINS = ['http://localhost:8081', 'http://localhost:19006'];
 
+// Verifies users' sessions; Move's own service identity is `getServiceOxyClient()`.
+const oxy = new OxyServer({ baseURL: config.oxyApiUrl });
+
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -35,7 +37,7 @@ const io = new SocketIOServer(server, {
 
 // Only authenticated sockets connect, and the room is the AUTHENTICATED user's
 // id, never a client-supplied one: `migration:progress` goes to `user:<id>`.
-io.use(oxy.authSocket());
+io.use(oxy.middleware.socket());
 io.on('connection', (socket: Socket & { user?: { id: string } }) => {
   const userId = socket.user?.id;
   if (!userId) {

@@ -131,11 +131,13 @@ class FakeOxy {
   linkedAccounts: Array<ServiceLinkedAccount & { ownerId: string }> = [];
   notifications: Array<Record<string, unknown>> = [];
   readonly client = {
-    getLinkedAccountsForUser: async (userId: string): Promise<ServiceLinkedAccountListResponse> => ({
-      userId,
-      linkedAccounts: this.linkedAccounts.filter((account) => account.ownerId === userId).map(({ ownerId: _, ...account }) => account),
-    }),
-    makeServiceRequest: async <R,>(method: string, path: string, body?: unknown): Promise<R> => (await this.serviceRequest(method, path, body)) as R,
+    linkedAccounts: {
+      forUser: async (userId: string): Promise<ServiceLinkedAccountListResponse> => ({
+        userId,
+        linkedAccounts: this.linkedAccounts.filter((account) => account.ownerId === userId).map(({ ownerId: _, ...account }) => account),
+      }),
+    },
+    serviceRequest: async <R,>(method: string, path: string, body?: unknown): Promise<R> => (await this.serviceRequest(method, path, body)) as R,
   } satisfies OxyServiceClient;
   private async serviceRequest(method: string, path: string, body?: unknown): Promise<unknown> {
     if (method === 'POST' && path === '/federation/identities/lookup') {
@@ -514,20 +516,26 @@ class FakeOxyAccount {
 
   session(): PlanSdk {
     return {
-      getCurrentUser: async () => structuredClone(this.profile),
-      updateProfile: async (update: ProfileUpdate) => {
-        if (update.name) this.profile.name = { ...update.name };
-        if (update.bio !== undefined) this.profile.bio = update.bio;
-        if (update.avatar !== undefined) this.profile.avatar = update.avatar;
-        if (update.links !== undefined) this.profile.links = update.links;
-        return this.profile;
+      users: {
+        me: async () => structuredClone(this.profile),
+        updateMe: async (update: ProfileUpdate) => {
+          if (update.name) this.profile.name = { ...update.name };
+          if (update.bio !== undefined) this.profile.bio = update.bio;
+          if (update.avatar !== undefined) this.profile.avatar = update.avatar;
+          if (update.links !== undefined) this.profile.links = update.links;
+          return this.profile;
+        },
       },
-      getFollowStatuses: async (ids) => Object.fromEntries(ids.map((id) => [id, this.following.has(id)])),
-      followUsers: async (ids) => ids.forEach((id) => this.following.add(id)),
-      unfollowUsers: async (ids) => ids.forEach((id) => this.following.delete(id)),
-      getBlockedUsers: async () => [...this.blocked].map((blockedId) => ({ blockedId })),
-      blockUser: async (id) => this.blocked.add(id),
-      unblockUser: async (id) => this.blocked.delete(id),
+      follows: {
+        statuses: async (ids) => Object.fromEntries(ids.map((id) => [id, this.following.has(id)])),
+        followMany: async (ids) => ids.forEach((id) => this.following.add(id)),
+        unfollowMany: async (ids) => ids.forEach((id) => this.following.delete(id)),
+      },
+      privacy: {
+        blocked: async () => [...this.blocked].map((blockedId) => ({ blockedId })),
+        block: async (id) => this.blocked.add(id),
+        unblock: async (id) => this.blocked.delete(id),
+      },
     };
   }
 }

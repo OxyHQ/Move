@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { SsrfRejection } from '@oxy.so/core/server';
-import type { OxyServices } from '@oxy.so/core';
+import { SsrfRejection, type OxyServer } from '@oxy.so/core/server';
 import {
   SourceAuthRequiredError,
   SourceRateLimitedError,
@@ -156,11 +155,11 @@ describe('signed reads through Oxy', () => {
   test('the signer asks Oxy to sign exactly that URL and returns the three headers', async () => {
     const requests: Array<{ method: string; url: string; data: unknown }> = [];
     const oxy = {
-      makeServiceRequest: async (method: string, url: string, data?: unknown) => {
+      serviceRequest: async (method: string, url: string, data?: unknown) => {
         requests.push({ method, url, data });
         return { keyId: 'https://oxy.so/ap/users/instance#main-key', headers: signedHeaders };
       },
-    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    } as unknown as Pick<OxyServer, 'serviceRequest'>;
     const headers = await createInstanceFetchSigner(oxy)('https://mastodon.example/users/ada/outbox?page=true');
     expect(headers).toEqual(signedHeaders);
     expect(requests).toEqual([
@@ -170,22 +169,22 @@ describe('signed reads through Oxy', () => {
 
   test("Oxy's 429 pauses the job; a malformed answer is not sent", async () => {
     const limited = {
-      makeServiceRequest: async () => {
+      serviceRequest: async () => {
         throw Object.assign(new Error('Too many requests'), { status: 429 });
       },
-    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    } as unknown as Pick<OxyServer, 'serviceRequest'>;
     await expect(createInstanceFetchSigner(limited)('https://m.example/a')).rejects.toBeInstanceOf(SourceRateLimitedError);
     const malformed = {
-      makeServiceRequest: async () => ({ keyId: 'https://oxy.so/ap/users/instance#main-key', headers: { ...signedHeaders, Digest: 'x' } }),
-    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+      serviceRequest: async () => ({ keyId: 'https://oxy.so/ap/users/instance#main-key', headers: { ...signedHeaders, Digest: 'x' } }),
+    } as unknown as Pick<OxyServer, 'serviceRequest'>;
     await expect(createInstanceFetchSigner(malformed)('https://m.example/a')).rejects.toThrow();
     // Before the scope is granted (or for a URL Oxy refuses) the read is simply
     // unsigned-refused, so the actor can still fall back to the REST lookup.
     const forbidden = {
-      makeServiceRequest: async () => {
+      serviceRequest: async () => {
         throw Object.assign(new Error('Missing required scope'), { status: 403 });
       },
-    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    } as unknown as Pick<OxyServer, 'serviceRequest'>;
     await expect(createInstanceFetchSigner(forbidden)('https://m.example/a')).rejects.toBeInstanceOf(SourceAuthRequiredError);
   });
 

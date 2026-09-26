@@ -64,9 +64,12 @@ function httpStatus(error: unknown): number | undefined {
  * Turn the callback's one-time code into the link, as the signed-in user —
  * the ONLY place that does. Never throws: a refusal comes back as an error.
  */
-export async function completeLink(oxy: Pick<OxyServices, 'completeLinkedAccount'>, code: string): Promise<LinkResult> {
+/** The part of the SDK that completes a link. */
+export type LinkCompleter = { linkedAccounts: Pick<OxyServices['linkedAccounts'], 'complete'> };
+
+export async function completeLink(oxy: LinkCompleter, code: string): Promise<LinkResult> {
   try {
-    const account = await oxy.completeLinkedAccount(code);
+    const account = await oxy.linkedAccounts.complete(code);
     return { kind: 'linked', linkedAccountId: account.id };
   } catch (error) {
     const status = httpStatus(error);
