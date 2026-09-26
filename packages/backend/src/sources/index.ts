@@ -7,17 +7,23 @@
 import { resolvePdsEndpoint } from '../connectors/atproto/xrpcClient';
 import { logger } from '../utils/logger';
 import { BlueskySource } from './bluesky';
-import { PLATFORM_BACKOFF, fetchPublicJson, withBackoff } from './http';
+import { PLATFORM_BACKOFF, createPublicJsonFetcher, fetchPublicJson, withBackoff, type RequestSigner } from './http';
 import { MastodonSource } from './mastodon';
 import type { Source, SourceAccount } from './types';
 
 export type SourceFactory = (account: SourceAccount) => Promise<Source>;
 
-export function createSourceFactory(): SourceFactory {
+/**
+ * @param signer signs an ActivityPub GET a server refused unsigned (Oxy's
+ *   instance actor, `createInstanceFetchSigner`). Without one, such a server
+ *   fails the job with `source-requires-authorized-fetch`.
+ */
+export function createSourceFactory(signer?: RequestSigner): SourceFactory {
+  const mastodonFetcher = createPublicJsonFetcher(signer);
   return async (account) => {
     switch (account.platform) {
       case 'mastodon':
-        return new MastodonSource(account, withBackoff(fetchPublicJson, PLATFORM_BACKOFF.mastodon));
+        return new MastodonSource(account, withBackoff(mastodonFetcher, PLATFORM_BACKOFF.mastodon));
       case 'bluesky': {
         let pdsEndpoint: string | undefined;
         try {

@@ -8,7 +8,7 @@ import { config } from '../config';
 import { getDb } from '../db/postgres';
 import { createMediaCopier, createUploadLimiter } from '../destinations/media';
 import { MentionDestination } from '../destinations/mention';
-import { OxyGateway } from '../destinations/oxy';
+import { OxyGateway, createInstanceFetchSigner } from '../destinations/oxy';
 import { enqueueMigrationRun } from '../queue/queues';
 import { createSourceFactory } from '../sources';
 import { getServiceOxyClient } from '../utils/oxyHelpers';
@@ -24,7 +24,7 @@ export function createPipelineDeps(): PipelineDeps {
     oxy: new OxyGateway(oxyClient),
     destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy: oxyClient }),
     media: createMediaCopier({ limiter: createUploadLimiter(config.media.uploadsPerMinute) }),
-    sourceFactory: createSourceFactory(),
+    sourceFactory: createSourceFactory(createInstanceFetchSigner(oxyClient)),
     progress: socketProgressSink,
   };
 }

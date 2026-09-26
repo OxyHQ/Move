@@ -1,0 +1,36 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1"
+  ],
+  "id": "https://mastodon.social/users/Gargron",
+  "type": "Person",
+  "following": "https://mastodon.social/users/Gargron/following",
+  "followers": "https://mastodon.social/users/Gargron/followers",
+  "inbox": "https://mastodon.social/users/Gargron/inbox",
+  "outbox": "https://mastodon.social/users/Gargron/outbox",
+  "preferredUsername": "Gargron",
+  "name": "Eugen Rochko",
+  "summary": "<p>Executive Strategy &amp; Product Advisor, Founder of <span class=\"h-card\" translate=\"no\"><a href=\"https://mastodon.social/@Mastodon\" class=\"u-url mention\">@<span>Mastodon</span></a></span>. Film photography, prog metal, Dota 2. Likes all things analog. Luddite.</p>",
+  "url": "https://mastodon.social/@Gargron",
+  "icon": {
+    "type": "Image",
+    "mediaType": "image/jpeg",
+    "url": "https://files.mastodon.social/accounts/avatars/000/000/001/original/6b2384b33799a0dd.png"
+  },
+  "attachment": [
+    {
+      "type": "PropertyValue",
+      "name": "GitHub",
+      "value": "<a href=\"https://github.com/Gargron\" target=\"_blank\" rel=\"nofollow noopener me\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">github.com/Gargron</span><span class=\"invisible\"></span></a>"
+    },
+    {
+      "type": "PropertyValue",
+      "name": "Portfolio",
+      "value": "<a href=\"https://eugenrochko.com\" target=\"_blank\" rel=\"nofollow noopener me\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">eugenrochko.com</span><span class=\"invisible\"></span></a>"
+    }
+  ],
+  "endpoints": {
+    "sharedInbox": "https://mastodon.social/inbox"
+  }
+}
