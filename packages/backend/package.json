@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@move/shared-types": "workspace:*",
-    "@oxy.so/contracts": "^2.1.0",
-    "@oxy.so/core": "^1.16.0",
+    "@oxy.so/contracts": "^2.2.0",
+    "@oxy.so/core": "^1.18.0",
     "@oxy.so/db": "^1.0.0",
     "@oxy.so/federation": "^2.1.1",
     "bullmq": "^6.3.8",
