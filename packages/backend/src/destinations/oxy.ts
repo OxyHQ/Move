@@ -13,14 +13,18 @@
  *   `notifications:write`. Not the SDK's `createNotification`: that sends the
  *   USER session, and this is a service call.
  * - (`utils/oxyHelpers.ts`) `POST /assets/service/user-media` — `files:user-media:write`.
+ * - `POST /federation/instance-fetch/sign` ({@link createInstanceFetchSigner}) —
+ *   `federation:instance-fetch`: Oxy's instance actor signs one ActivityPub GET
+ *   so an authorized-fetch Mastodon instance serves Move its public content.
  */
 
 import { z } from 'zod';
-import type { CreateOxyNotificationRequest, LinkedAccountNetwork } from '@oxy.so/contracts';
+import { instanceFetchSignResponseSchema, type CreateOxyNotificationRequest, type LinkedAccountNetwork } from '@oxy.so/contracts';
 import type { OxyServices } from '@oxy.so/core';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
+import { SourceAuthRequiredError, SourceRateLimitedError, type RequestSigner } from '../sources/http';
 
 /** The part of Move's service `OxyServices` client the gateway uses. */
 export type OxyServiceClient = Pick<OxyServices, 'getLinkedAccountsForUser' | 'makeServiceRequest'>;
@@ -136,4 +140,37 @@ export function toFollowBatches(userIds: Iterable<string>, size = FOLLOW_BATCH_S
   const batches: string[][] = [];
   for (let start = 0; start < unique.length; start += size) batches.push(unique.slice(start, start + size));
   return batches;
+}
+
+/** How long a job pauses when Oxy's per-app signing budget is spent. */
+const SIGNING_BUDGET_PAUSE_MS = 60_000;
+
+/**
+ * The {@link RequestSigner} for authorized-fetch sources: Oxy's instance actor
+ * (`https://oxy.so/ap/users/instance`) signs each GET, so Move holds no key and
+ * speaks as no person. Oxy's 429 (its per-app signing budget) pauses the job
+ * like a source 429; Oxy refusing to sign (400/401/403) is an unsigned
+ * refusal; anything else is transient and retried.
+ */
+export function createInstanceFetchSigner(oxy: Pick<OxyServices, 'makeServiceRequest'>): RequestSigner {
+  return async (url) => {
+    let raw: unknown;
+    try {
+      raw = await oxy.makeServiceRequest('POST', '/federation/instance-fetch/sign', { url });
+    } catch (error) {
+      const status = (error as { status?: unknown } | null)?.status;
+      if (status === 429) {
+        throw new SourceRateLimitedError('Oxy instance-fetch signing budget exhausted', SIGNING_BUDGET_PAUSE_MS);
+      }
+      // Oxy will not sign this (no scope, a URL it refuses): the read stays
+      // unsigned-refused, so the actor still falls back to the REST lookup and a
+      // collection fails as authorized-fetch rather than retrying forever.
+      if (status === 400 || status === 401 || status === 403) {
+        logger.warn('[oxy] instance-fetch signing refused', { status });
+        throw new SourceAuthRequiredError(`Oxy did not sign the read (${status})`, 401);
+      }
+      throw error;
+    }
+    return instanceFetchSignResponseSchema.parse(raw).headers;
+  };
 }

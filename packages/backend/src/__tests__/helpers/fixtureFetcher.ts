@@ -5,7 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { JsonFetcher, JsonResponse } from '../../sources/http';
+import { SourceAuthRequiredError, type JsonFetcher, type JsonRequest, type JsonResponse } from '../../sources/http';
 
 const FIXTURES = join(__dirname, '..', 'fixtures');
 
@@ -16,30 +16,47 @@ export function fixture(path: string): Record<string, unknown> {
 export type Route = { status: number; body?: unknown; headers?: Record<string, string> } | Record<string, unknown>;
 
 export interface FixtureFetcher extends JsonFetcher {
+  /** Every URL requested, unsigned or signed. */
   calls: string[];
+  /** The URLs requested SIGNED, in order. */
+  signedCalls: string[];
 }
 
 /**
  * `routes` maps an exact URL (or a URL prefix ending in `*`) to a fixture body
  * or an explicit `{ status }` answer. An unmapped URL is a TEST failure, not a
  * 404: a source reaching for something the test did not expect is a finding.
+ *
+ * `signedRoutes` is what the server answers a request signed by Oxy's instance
+ * actor (falling back to `routes`). Without it the fetcher has no signer and
+ * refuses a signed request exactly as `createPublicJsonFetcher()` does.
  */
-export function createFixtureFetcher(routes: Record<string, Route>): FixtureFetcher {
+export function createFixtureFetcher(routes: Record<string, Route>, signedRoutes?: Record<string, Route>): FixtureFetcher {
   const calls: string[] = [];
-  const fetcher = (async (url: string): Promise<JsonResponse> => {
+  const signedCalls: string[] = [];
+  const fetcher = (async (url: string, request?: JsonRequest): Promise<JsonResponse> => {
     calls.push(url);
+    if (request?.signed) {
+      if (!signedRoutes) throw new SourceAuthRequiredError('no signer in this test', 401);
+      signedCalls.push(url);
+      if (signedRoutes[url] !== undefined) return answer(signedRoutes[url]);
+    }
     const key = routes[url] !== undefined
       ? url
       : Object.keys(routes).find((candidate) => candidate.endsWith('*') && url.startsWith(candidate.slice(0, -1)));
     if (!key) throw new Error(`unexpected fetch in test: ${url}`);
-    const route = routes[key];
-    if (typeof route === 'object' && route !== null && 'status' in route && typeof route.status === 'number') {
-      return { status: route.status, headers: (route.headers as Record<string, string>) ?? {}, body: route.body };
-    }
-    return { status: 200, headers: {}, body: JSON.parse(JSON.stringify(route)) };
+    return answer(routes[key]);
   }) as unknown as FixtureFetcher;
   fetcher.calls = calls;
+  fetcher.signedCalls = signedCalls;
   return fetcher;
+}
+
+function answer(route: Route): JsonResponse {
+  if (typeof route === 'object' && route !== null && 'status' in route && typeof route.status === 'number') {
+    return { status: route.status, headers: (route.headers as Record<string, string>) ?? {}, body: route.body };
+  }
+  return { status: 200, headers: {}, body: JSON.parse(JSON.stringify(route)) };
 }
 
 export const GARGRON = 'https://mastodon.social/users/Gargron';

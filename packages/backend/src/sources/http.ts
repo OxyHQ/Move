@@ -23,7 +23,20 @@ export interface JsonResponse {
 
 export interface JsonRequest {
   accept: string;
+  /**
+   * Send the GET with an HTTP signature from Oxy's instance actor. Only a
+   * fetcher built with a {@link RequestSigner} can; the others refuse with
+   * {@link SourceAuthRequiredError}, which is what an unsigned 401 means.
+   */
+  signed?: boolean;
 }
+
+/**
+ * Headers that sign ONE GET of `url` (`Host`, `Date`, `Signature`). In
+ * production this is Oxy's `POST /federation/instance-fetch/sign`: the instance
+ * actor signs, Move holds no key.
+ */
+export type RequestSigner = (url: string) => Promise<Record<string, string>>;
 
 export type JsonFetcher = (url: string, request: JsonRequest) => Promise<JsonResponse>;
 
@@ -48,9 +61,11 @@ export class SourceUnavailableError extends Error {
 }
 
 /**
- * The remote refused an UNSIGNED read (401/403) and Move had no way to sign.
- * Mastodon answers this for every read when the instance runs in
- * authorized-fetch ("secure") mode.
+ * The remote refused the read (401/403) even when Oxy's instance actor signed
+ * it — the server blocks oxy.so, or federates only with an allow-list — or
+ * Move had no signer to try. Mastodon answers every unsigned read 401 when the
+ * instance runs in authorized-fetch ("secure") mode; that alone is retried
+ * signed and does not end here.
  */
 export class SourceAuthRequiredError extends Error {
   readonly status: number;
@@ -73,13 +88,27 @@ export class SourceHttpError extends Error {
 
 /**
  * The production {@link JsonFetcher}. Non-2xx responses are RETURNED, not
- * thrown, so the backoff layer can read their status and `Retry-After`.
+ * thrown, so the backoff layer can read their status and `Retry-After`. A
+ * `signed` request is signed per hop by `signer`; without one it is refused.
  */
-export const fetchPublicJson: JsonFetcher = async (url, request) => {
+export function createPublicJsonFetcher(signer?: RequestSigner): JsonFetcher {
+  return async (url, request) => {
+    if (request.signed && !signer) {
+      throw new SourceAuthRequiredError('the source needs a signed read and no signer is configured', 401);
+    }
+    return fetchJsonOnce(url, request, request.signed ? signer : undefined);
+  };
+}
+
+/** Unsigned reads only (Bluesky's public XRPC never needs a signature). */
+export const fetchPublicJson: JsonFetcher = createPublicJsonFetcher();
+
+async function fetchJsonOnce(url: string, request: JsonRequest, signer: RequestSigner | undefined): Promise<JsonResponse> {
   const { status, headers, body } = await publicGet(url, {
     accept: request.accept,
     maxBytes: SOURCE_JSON_MAX_BYTES,
     timeoutMs: SOURCE_TIMEOUT_MS,
+    ...(signer ? { signHeaders: signer } : {}),
   });
   const flat: Record<string, string | undefined> = {};
   for (const [key, value] of Object.entries(headers)) flat[key] = Array.isArray(value) ? value.join(', ') : value;
@@ -89,7 +118,7 @@ export const fetchPublicJson: JsonFetcher = async (url, request) => {
   } catch {
     throw new SourceHttpError('remote returned invalid JSON', status);
   }
-};
+}
 
 /** Parse `Retry-After` (seconds or HTTP date) into milliseconds from now. */
 export function parseRetryAfterMs(value: string | undefined, now: number = Date.now()): number | undefined {
@@ -168,7 +197,9 @@ export function withBackoff(
         response = await fetcher(url, request);
       } catch (error) {
         // Permanent: retrying cannot change the answer.
-        if (error instanceof SourceHttpError) throw error;
+        if (error instanceof SourceHttpError || error instanceof SourceAuthRequiredError) throw error;
+        // Oxy's signing budget, not the remote's: pause, never hammer.
+        if (error instanceof SourceRateLimitedError) throw error;
         if (error instanceof SsrfRejection) throw new SourceUnavailableError('source address is not public', 0);
         if (error instanceof ResponseTooLargeError) throw new SourceHttpError(error.message, 200);
         lastError = error;

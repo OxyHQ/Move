@@ -19,7 +19,7 @@ import { Lead, Text } from '@oxy.so/bloom/typography';
 import { isMigrationPlatform, type MigrationPlatform } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
 import { linkAccount, type LinkAttempt } from '@/lib/connect';
-import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput } from '@/lib/handles';
+import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput, startFailureKey } from '@/lib/handles';
 import { queryKeys } from '@/lib/moveApiContext';
 
 export default function ConnectScreen() {
@@ -73,9 +73,10 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
     setProblem(null);
     try {
       onOutcome(await linkAccount(oxyServices, platform, normalized));
-    } catch {
-      // Oxy refused to start: an unknown server or an unresolvable handle.
-      setProblem(t(`connect.startFailed.${platform}`));
+    } catch (error) {
+      // Oxy refused to start; its `details.reason` says whether the input or
+      // the other network is at fault.
+      setProblem(t(startFailureKey(platform, error), { name }));
     } finally {
       setBusy(false);
     }

@@ -31,7 +31,7 @@ Always **bun**; commit `bun.lock` with its `package.json`.
 - The Mention ingest contract lives only in `packages/backend/src/destinations/mentionContract.ts` (zod). Change it there.
 - A rate limit (source 429, Oxy media budget, Mention 429) PAUSES a job and re-enqueues it; it never fails it. Oxy media uploads go through the one shared limiter in `destinations/media.ts`.
 - Remote reads go through `publicGet` in `utils/safeUpstreamFetch.ts` (SSRF-safe, IP-pinned, byte-capped); never `fetch()` a URL a remote chose.
-- ActivityPub reads are unsigned; do not invent signing keys (see `sources/mastodon.ts`).
+- ActivityPub reads go unsigned, then on 401/403 signed by Oxy's instance actor (`federation:instance-fetch`); Move never holds a key.
 - Code copied from Mention carries a provenance header (path + commit). Keep it when editing.
 - Pipeline tests need `TEST_DATABASE_URL`; they never skip. Gates need a negative control (`scripts/test-gates.mjs`).
 - `packages/backend/server.ts` exports nothing: Bun auto-serves a server-shaped entry export and crashes.

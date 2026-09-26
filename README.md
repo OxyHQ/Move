@@ -150,10 +150,33 @@ in particular never on `federation:write`.
 | `linked-accounts:read` | `GET /linked-accounts/by-user/:userId` — ownership check before creating and before running a job |
 | `federation:identities:resolve` | `POST /federation/identities/lookup` and `/resolve` — followed accounts → Oxy user ids |
 | `files:user-media:write` | `POST /assets/service/user-media` — media copied into the user's files |
+| `federation:instance-fetch` | `POST /federation/instance-fetch/sign` — Oxy's instance actor signs a Mastodon GET that the server refused unsigned (authorized fetch); see [Reading Mastodon](#reading-mastodon) |
 | `notifications:write` | `POST /notifications` (`type: system`, `title` ≤ 120, `message` ≤ 500, top-level `url` to `https://move.oxy.so/jobs/:id`, `entityType: app` with `entityId` = the job id, so a second migration is not deduped into a 409) |
 
 Mention admits the same application by id (`MOVE_APPLICATION_ID`) for its
 import API; no Oxy scope is involved there.
+
+## Reading Mastodon
+
+Move reads a Mastodon account's PUBLIC ActivityPub surface: the actor, the
+outbox and `following`. It holds no key and no token.
+
+- **Unsigned first.** Measured 2026-09-25: mastodon.social and hachyderm.io
+  refuse the unsigned **actor** (401) but serve the collections unsigned.
+- **Then signed by Oxy.** A 401/403 is retried once with an HTTP signature from
+  Oxy's instance actor (`https://oxy.so/ap/users/instance`), which Oxy makes
+  for Move through `POST /federation/instance-fetch/sign` (GET only, the
+  instance key only, public https only; Oxy's
+  `docs/identity/instance-fetch.md`). Every redirect hop is signed again. Once
+  a COLLECTION of a host needed a signature (authorized-fetch mode), the rest
+  of that job signs its reads of the host straight away; a refused actor alone
+  does not switch it.
+- **A signed refusal fails the job** with `source-requires-authorized-fetch`
+  (the preview answers HTTP 422): the server blocks oxy.so, or federates only
+  with an allow-list. Without a signed actor document Move still falls back to
+  Mastodon's public REST lookup (`/api/v1/accounts/lookup`) for the profile.
+- Oxy's 429 on signing (1200 signatures a minute for the app) pauses the job
+  like a source 429.
 
 ## Known limitations
 
@@ -162,18 +185,6 @@ import API; no Oxy scope is involved there.
   Move cannot read it. Bluesky blocks are public repo records
   (`app.bsky.graph.block` via `com.atproto.repo.listRecords` on the user's PDS)
   and are moved; without a resolvable PDS they are skipped.
-
-- **`source-requires-authorized-fetch`.** Move reads Mastodon unsigned (F1 has no
-  signing identity). Measured 2026-09-25: mastodon.social and hachyderm.io refuse
-  the unsigned **actor** document (401) but serve the outbox, statuses and
-  `following` pages unsigned, so Move takes the profile from Mastodon's public
-  REST lookup (`/api/v1/accounts/lookup`) and reads everything else as usual.
-  An instance in full authorized-fetch mode also refuses the outbox; that job
-  fails with `source-requires-authorized-fetch` (and the preview with HTTP 422).
-  Move does not sign: Oxy's `POST /federation/sign` signs only for hosts in the
-  app's redirect URIs, and a signature is only useful if the remote can fetch
-  the key, which nothing serves for `move.oxy.so`. Signing is added the day both
-  exist, not before.
 - **Unlisted posts import as public.** Mention has no unlisted visibility for
   imports (`public` | `followers_only`); Mention's own ActivityPub ingest makes
   the same choice. Followers-only posts are not in the public outbox and are

@@ -3,7 +3,12 @@
  * Native imports, so the unit tests load them directly.
  */
 
-import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccountCallbackError, type LinkedAccountNetwork } from '@oxy.so/contracts';
+import {
+  LINKED_ACCOUNT_CALLBACK_ERRORS,
+  linkedAccountStartErrorDetailsSchema,
+  type LinkedAccountCallbackError,
+  type LinkedAccountNetwork,
+} from '@oxy.so/contracts';
 import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
 
@@ -69,6 +74,22 @@ export async function completeLink(oxy: Pick<OxyServices, 'completeLinkedAccount
     if (status === 403 || status === 404) return { kind: 'error', code: 'expired_or_foreign' };
     return { kind: 'error', code: 'unknown' };
   }
+}
+
+/**
+ * The i18n key for why Oxy refused to START a link, from the refusal's
+ * `details.reason` (`LINKED_ACCOUNT_START_ERROR_REASONS`). Only
+ * `handle_unresolvable` and the two `instance_*` reasons point at what the user
+ * typed; `provider_rejected` means the other network refused Oxy, and saying
+ * "we couldn't find that account" then sends the user to fix a handle that is
+ * fine. Anything without a reason (a network error, a client bug) is `unknown`.
+ * Interpolate `{ name }`, the platform's display name.
+ */
+export function startFailureKey(platform: MigrationPlatform, error: unknown): string {
+  const parsed = linkedAccountStartErrorDetailsSchema.safeParse((error as { details?: unknown } | null)?.details);
+  if (!parsed.success) return 'connect.startFailed.unknown';
+  const { reason } = parsed.data;
+  return reason === 'provider_rejected' ? `connect.startFailed.provider_rejected.${platform}` : `connect.startFailed.${reason}`;
 }
 
 /** The i18n key for a link error code. */

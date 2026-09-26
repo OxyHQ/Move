@@ -11,7 +11,7 @@ import type { MigrationJobView, MigrationPlan, PlanAckRequest, PlanResponse } fr
 import { createMoveApi, errorCode, type MoveHttp } from '../lib/moveApi';
 import { applyPlan, planHasPendingWork, undoPlan, type PlanSdk } from '../lib/planApplier';
 import type { OxyServices } from '@oxy.so/core';
-import { completeLink, mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle } from '../lib/handles';
+import { completeLink, mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle, startFailureKey } from '../lib/handles';
 import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccount } from '@oxy.so/contracts';
 
 const PLAN: MigrationPlan = {
@@ -252,6 +252,21 @@ describe('connect helpers', () => {
     expect(await completeLink(oxy(403), 'c-3')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
     expect(await completeLink(oxy(404), 'c-4')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
     expect(await completeLink(oxy(500), 'c-5')).toEqual({ kind: 'error', code: 'unknown' });
+  });
+
+  test("a refused start blames the handle only when Oxy says the handle did not resolve", () => {
+    // What `oxyServices.startLinkedAccount` throws for a 400: the SDK keeps the body's `details`.
+    const refusal = (reason: string) => Object.assign(new Error('Bad request'), { status: 400, details: { reason } });
+    expect(startFailureKey('bluesky', refusal('handle_unresolvable'))).toBe('connect.startFailed.handle_unresolvable');
+    // Bluesky refusing Oxy's client metadata is not "we couldn't find that account".
+    expect(startFailureKey('bluesky', refusal('provider_rejected'))).toBe('connect.startFailed.provider_rejected.bluesky');
+    expect(startFailureKey('mastodon', refusal('provider_rejected'))).toBe('connect.startFailed.provider_rejected.mastodon');
+    expect(startFailureKey('bluesky', refusal('provider_unavailable'))).toBe('connect.startFailed.provider_unavailable');
+    expect(startFailureKey('mastodon', refusal('instance_unreachable'))).toBe('connect.startFailed.instance_unreachable');
+    expect(startFailureKey('mastodon', refusal('instance_invalid'))).toBe('connect.startFailed.instance_invalid');
+    // No reason, or one this build does not know: never a guess at the input.
+    expect(startFailureKey('bluesky', new Error('Network error'))).toBe('connect.startFailed.unknown');
+    expect(startFailureKey('bluesky', refusal('something_new'))).toBe('connect.startFailed.unknown');
   });
 
   test('the Mastodon move step targets the Mention handle and the source instance', () => {

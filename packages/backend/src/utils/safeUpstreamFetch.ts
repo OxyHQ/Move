@@ -2,7 +2,8 @@
 // copied from OxyHQ/Mention packages/backend/src/utils/safeUpstreamFetch.ts and
 // connectors/shared/httpBody.ts @ f5ad90c9bbf6cc9f7f9b93e1378c4b011031812b
 // (origin/main). Trimmed to the one bounded GET Move needs; the media-proxy
-// extras, POST and the signed-fetch hop are Mention's.
+// extras and POST are Mention's. CHANGED: `signHeaders` re-signs each hop, for
+// the reads Oxy's instance actor signs (`sources/http.ts`).
 
 import http, { type IncomingHttpHeaders, type IncomingMessage } from 'node:http';
 import https from 'node:https';
@@ -38,6 +39,12 @@ export interface PublicGetOptions {
   /** Deadline for the response headers (time to first byte). Defaults to `timeoutMs`. */
   headersTimeoutMs?: number;
   headers?: Record<string, string>;
+  /**
+   * Headers to add to ONE hop, computed for that hop's URL — an HTTP signature
+   * is bound to the `(request-target)` and `host` of exactly one URL, so every
+   * redirect needs a fresh one. Called after the hop passed the SSRF guard.
+   */
+  signHeaders?: (url: string) => Promise<Record<string, string>>;
 }
 
 export interface PublicGetResult {
@@ -120,8 +127,9 @@ export async function publicGet(url: string, options: PublicGetOptions): Promise
     const guard = await assertSafePublicUrl(current);
     if (!guard.ok) throw new SsrfRejection(guard.reason);
     const target = new URL(current);
+    const hopHeaders = options.signHeaders ? { ...headers, ...(await options.signHeaders(current)) } : headers;
     const response = await fetchOnce(
-      buildRequestOptions(target, guard.ip, guard.family, headers, signal),
+      buildRequestOptions(target, guard.ip, guard.family, hopHeaders, signal),
       target.protocol === 'https:',
       options.headersTimeoutMs ?? options.timeoutMs,
     );

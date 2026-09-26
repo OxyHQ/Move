@@ -77,8 +77,15 @@
       "bluesky": "Eso no parece un usuario de Bluesky."
     },
     "startFailed": {
-      "mastodon": "No hemos podido contactar con ese servidor de Mastodon. Revisa la dirección y vuelve a intentarlo.",
-      "bluesky": "No hemos encontrado esa cuenta de Bluesky. Revisa el usuario y vuelve a intentarlo."
+      "instance_invalid": "Eso no parece un servidor de Mastodon. Revisa la dirección y vuelve a intentarlo.",
+      "instance_unreachable": "No hemos podido contactar con ese servidor de Mastodon. Revisa la dirección y vuelve a intentarlo.",
+      "handle_unresolvable": "No hemos encontrado esa cuenta de Bluesky. Revisa el usuario y vuelve a intentarlo.",
+      "provider_rejected": {
+        "mastodon": "Ese servidor no ha aceptado la conexión de Oxy. ¿Es un servidor compatible con Mastodon?",
+        "bluesky": "Bluesky no ha aceptado la conexión de Oxy. Tu usuario está bien; el problema es nuestro, así que vuelve a intentarlo más tarde."
+      },
+      "provider_unavailable": "{{name}} no responde ahora mismo. Vuelve a intentarlo en unos minutos.",
+      "unknown": "No hemos podido empezar a conectar con {{name}}. Vuelve a intentarlo."
     },
     "submit": "Iniciar sesión en {{name}}",
     "privacy": "Iniciarás sesión en la propia página de {{name}}. Oxy solo sabe qué cuenta es y descarta el acceso."
@@ -135,7 +142,7 @@
   },
   "jobErrors": {
     "linked_account_not_owned": "Esa cuenta ya no está conectada a tu cuenta de Oxy. Vuelve a conectarla.",
-    "source_requires_authorized_fetch": "Tu servidor solo comparte publicaciones con servidores de confianza, así que Move aún no puede leerlas.",
+    "source_requires_authorized_fetch": "Tu servidor no comparte publicaciones con Oxy. Puede que bloquee oxy.so o que solo hable con servidores aprobados; su administración puede cambiarlo.",
     "source_unavailable": "El servidor de tu cuenta no responde ahora mismo. Inténtalo más tarde.",
     "active_job_exists": "Ya tienes una mudanza en curso desde esta cuenta. Ábrela desde tu historial."
   },

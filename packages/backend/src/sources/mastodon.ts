@@ -5,9 +5,13 @@
  * (profile), its outbox (content) and its `following` collection (graph). No
  * token is involved — Oxy's OAuth proved ownership and discarded the token.
  *
- * Reads are UNSIGNED: Move has no actor whose key a remote could fetch, and a
- * signature the remote cannot verify is refused like none. An instance in
- * authorized-fetch mode answers 401/403, which becomes
+ * Reads go UNSIGNED first. A 401/403 is retried once SIGNED by Oxy's instance
+ * actor (`https://oxy.so/ap/users/instance`, through the fetcher's
+ * `RequestSigner`: Oxy signs, Move holds no key). Once a collection page of a
+ * host needed a signature — the instance runs in authorized-fetch mode — every
+ * later read of that host is signed straight away instead of paying a refused
+ * round trip each time. A refusal of the signed read too (the instance blocks
+ * oxy.so, or federates only with an allow-list) becomes
  * {@link SourceAuthRequiredError} (`source-requires-authorized-fetch`).
  *
  * Outbox paging and validation are Mention's (`outbox.service.ts`): every page
@@ -72,6 +76,10 @@ function restCount(actor: Record<string, unknown>, key: 'posts' | 'following' | 
   return typeof value === 'number' ? value : undefined;
 }
 
+function isRefusal(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
 interface PageRef {
   url: string;
   inline?: Record<string, unknown>;
@@ -80,6 +88,8 @@ interface PageRef {
 export class MastodonSource implements Source<CollectionCursor, CollectionCursor> {
   readonly platform: MigrationPlatform = 'mastodon';
   private actorDocument: Record<string, unknown> | null = null;
+  /** Hosts whose collections answered only a signed read (authorized-fetch mode). */
+  private readonly signedHosts = new Set<string>();
 
   constructor(
     private readonly account: SourceAccount,
@@ -87,9 +97,19 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
   ) {}
 
   private async getJson(url: string): Promise<Record<string, unknown>> {
-    const response = await this.fetchJson(url, { accept: AP_ACCEPT });
-    if (response.status === 401 || response.status === 403) {
-      throw new SourceAuthRequiredError('the instance requires authorized (signed) fetch', response.status);
+    const host = new URL(url).host;
+    const signFirst = this.signedHosts.has(host);
+    let response = await this.fetchJson(url, { accept: AP_ACCEPT, signed: signFirst });
+    if (!signFirst && isRefusal(response.status)) {
+      // Throws SourceAuthRequiredError itself when the fetcher cannot sign.
+      response = await this.fetchJson(url, { accept: AP_ACCEPT, signed: true });
+      // MEASURED 2026-09-25: mastodon.social refuses the unsigned ACTOR while
+      // serving its collections unsigned, so only a collection read that
+      // needed a signature switches the host to signing everything.
+      if (!isRefusal(response.status) && !actorUrisMatch(url, this.account.actor)) this.signedHosts.add(host);
+    }
+    if (isRefusal(response.status)) {
+      throw new SourceAuthRequiredError('the instance refused the read, signed by Oxy too', response.status);
     }
     if (response.status < 200 || response.status >= 300) {
       throw new SourceHttpError(`ActivityPub GET answered ${response.status}`, response.status);

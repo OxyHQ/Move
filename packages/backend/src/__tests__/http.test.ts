@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { SsrfRejection } from '@oxy.so/core/server';
+import type { OxyServices } from '@oxy.so/core';
 import {
+  SourceAuthRequiredError,
   SourceRateLimitedError,
   SourceUnavailableError,
+  createPublicJsonFetcher,
   parseRetryAfterMs,
   withBackoff,
   DEFAULT_BACKOFF,
@@ -11,6 +14,7 @@ import {
 } from '../sources/http';
 import { createMediaCopier, createMemoryUploadLimiter, MediaRateLimitedError } from '../destinations/media';
 import { OxyUploadError } from '../utils/oxyHelpers';
+import { createInstanceFetchSigner } from '../destinations/oxy';
 
 function scripted(responses: Array<Partial<JsonResponse>>): JsonFetcher & { calls: number } {
   const fetcher = (async () => {
@@ -139,5 +143,65 @@ describe('media copy behind the shared upload limiter', () => {
       sleep: noSleep,
     });
     expect(await copier.copy('u1', media)).toEqual([]);
+  });
+});
+
+describe('signed reads through Oxy', () => {
+  const signedHeaders = {
+    Host: 'mastodon.example',
+    Date: 'Sat, 26 Sep 2026 00:00:00 GMT',
+    Signature: 'keyId="https://oxy.so/ap/users/instance#main-key",algorithm="rsa-sha256",headers="(request-target) host date",signature="c2ln"',
+  };
+
+  test('the signer asks Oxy to sign exactly that URL and returns the three headers', async () => {
+    const requests: Array<{ method: string; url: string; data: unknown }> = [];
+    const oxy = {
+      makeServiceRequest: async (method: string, url: string, data?: unknown) => {
+        requests.push({ method, url, data });
+        return { keyId: 'https://oxy.so/ap/users/instance#main-key', headers: signedHeaders };
+      },
+    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    const headers = await createInstanceFetchSigner(oxy)('https://mastodon.example/users/ada/outbox?page=true');
+    expect(headers).toEqual(signedHeaders);
+    expect(requests).toEqual([
+      { method: 'POST', url: '/federation/instance-fetch/sign', data: { url: 'https://mastodon.example/users/ada/outbox?page=true' } },
+    ]);
+  });
+
+  test("Oxy's 429 pauses the job; a malformed answer is not sent", async () => {
+    const limited = {
+      makeServiceRequest: async () => {
+        throw Object.assign(new Error('Too many requests'), { status: 429 });
+      },
+    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    await expect(createInstanceFetchSigner(limited)('https://m.example/a')).rejects.toBeInstanceOf(SourceRateLimitedError);
+    const malformed = {
+      makeServiceRequest: async () => ({ keyId: 'https://oxy.so/ap/users/instance#main-key', headers: { ...signedHeaders, Digest: 'x' } }),
+    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    await expect(createInstanceFetchSigner(malformed)('https://m.example/a')).rejects.toThrow();
+    // Before the scope is granted (or for a URL Oxy refuses) the read is simply
+    // unsigned-refused, so the actor can still fall back to the REST lookup.
+    const forbidden = {
+      makeServiceRequest: async () => {
+        throw Object.assign(new Error('Missing required scope'), { status: 403 });
+      },
+    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    await expect(createInstanceFetchSigner(forbidden)('https://m.example/a')).rejects.toBeInstanceOf(SourceAuthRequiredError);
+  });
+
+  test('a fetcher with no signer refuses a signed read as authorized-fetch, before any network', async () => {
+    await expect(createPublicJsonFetcher()('https://m.example/a', { accept: '*/*', signed: true })).rejects.toBeInstanceOf(SourceAuthRequiredError);
+  });
+
+  test('the backoff never retries an authorized-fetch refusal or a paused signing budget', async () => {
+    for (const failure of [new SourceAuthRequiredError('refused', 401), new SourceRateLimitedError('budget', 60_000)]) {
+      let calls = 0;
+      const failing: JsonFetcher = async () => {
+        calls++;
+        throw failure;
+      };
+      await expect(withBackoff(failing, policy, noSleep)('https://m.example/a', { accept: '*/*', signed: true })).rejects.toBe(failure);
+      expect(calls).toBe(1);
+    }
   });
 });
