@@ -77,8 +77,15 @@
       "bluesky": "That doesn't look like a Bluesky handle."
     },
     "startFailed": {
-      "mastodon": "We couldn't reach that Mastodon server. Check the address and try again.",
-      "bluesky": "We couldn't find that Bluesky account. Check the handle and try again."
+      "instance_invalid": "That doesn't look like a Mastodon server. Check the address and try again.",
+      "instance_unreachable": "We couldn't reach that Mastodon server. Check the address and try again.",
+      "handle_unresolvable": "We couldn't find that Bluesky account. Check the handle and try again.",
+      "provider_rejected": {
+        "mastodon": "That server didn't accept a connection from Oxy. Is it a Mastodon-compatible server?",
+        "bluesky": "Bluesky didn't accept the connection from Oxy. Your handle is fine; this is on our side, so please try again later."
+      },
+      "provider_unavailable": "{{name}} isn't responding right now. Please try again in a few minutes.",
+      "unknown": "We couldn't start connecting to {{name}}. Please try again."
     },
     "submit": "Sign in to {{name}}",
     "privacy": "You'll sign in on {{name}}'s own page. Oxy only learns which account it is, then discards the access."
@@ -135,7 +142,7 @@
   },
   "jobErrors": {
     "linked_account_not_owned": "That account isn't connected to your Oxy account anymore. Connect it again.",
-    "source_requires_authorized_fetch": "Your server only shares posts with servers it trusts, so Move can't read them yet.",
+    "source_requires_authorized_fetch": "Your server doesn't share posts with Oxy. It may block oxy.so or only talk to servers it has approved; its admins can change that.",
     "source_unavailable": "Your account's server isn't responding right now. Please try again later.",
     "active_job_exists": "You already have a move from this account in progress. Open it from your history."
   },
