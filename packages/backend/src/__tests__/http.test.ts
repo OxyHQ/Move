@@ -179,6 +179,14 @@ describe('signed reads through Oxy', () => {
       makeServiceRequest: async () => ({ keyId: 'https://oxy.so/ap/users/instance#main-key', headers: { ...signedHeaders, Digest: 'x' } }),
     } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
     await expect(createInstanceFetchSigner(malformed)('https://m.example/a')).rejects.toThrow();
+    // Before the scope is granted (or for a URL Oxy refuses) the read is simply
+    // unsigned-refused, so the actor can still fall back to the REST lookup.
+    const forbidden = {
+      makeServiceRequest: async () => {
+        throw Object.assign(new Error('Missing required scope'), { status: 403 });
+      },
+    } as unknown as Pick<OxyServices, 'makeServiceRequest'>;
+    await expect(createInstanceFetchSigner(forbidden)('https://m.example/a')).rejects.toBeInstanceOf(SourceAuthRequiredError);
   });
 
   test('a fetcher with no signer refuses a signed read as authorized-fetch, before any network', async () => {

@@ -24,7 +24,7 @@ import type { OxyServices } from '@oxy.so/core';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
-import { SourceRateLimitedError, type RequestSigner } from '../sources/http';
+import { SourceAuthRequiredError, SourceRateLimitedError, type RequestSigner } from '../sources/http';
 
 /** The part of Move's service `OxyServices` client the gateway uses. */
 export type OxyServiceClient = Pick<OxyServices, 'getLinkedAccountsForUser' | 'makeServiceRequest'>;
@@ -149,7 +149,8 @@ const SIGNING_BUDGET_PAUSE_MS = 60_000;
  * The {@link RequestSigner} for authorized-fetch sources: Oxy's instance actor
  * (`https://oxy.so/ap/users/instance`) signs each GET, so Move holds no key and
  * speaks as no person. Oxy's 429 (its per-app signing budget) pauses the job
- * like a source 429; any other failure is transient and retried.
+ * like a source 429; Oxy refusing to sign (400/401/403) is an unsigned
+ * refusal; anything else is transient and retried.
  */
 export function createInstanceFetchSigner(oxy: Pick<OxyServices, 'makeServiceRequest'>): RequestSigner {
   return async (url) => {
@@ -157,8 +158,16 @@ export function createInstanceFetchSigner(oxy: Pick<OxyServices, 'makeServiceReq
     try {
       raw = await oxy.makeServiceRequest('POST', '/federation/instance-fetch/sign', { url });
     } catch (error) {
-      if ((error as { status?: unknown } | null)?.status === 429) {
+      const status = (error as { status?: unknown } | null)?.status;
+      if (status === 429) {
         throw new SourceRateLimitedError('Oxy instance-fetch signing budget exhausted', SIGNING_BUDGET_PAUSE_MS);
+      }
+      // Oxy will not sign this (no scope, a URL it refuses): the read stays
+      // unsigned-refused, so the actor still falls back to the REST lookup and a
+      // collection fails as authorized-fetch rather than retrying forever.
+      if (status === 400 || status === 401 || status === 403) {
+        logger.warn('[oxy] instance-fetch signing refused', { status });
+        throw new SourceAuthRequiredError(`Oxy did not sign the read (${status})`, 401);
       }
       throw error;
     }
