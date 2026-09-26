@@ -2,7 +2,6 @@ import 'dotenv/config';
 import http from 'node:http';
 import express from 'express';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
-import { oxyClient as oxy } from '@oxy.so/core';
 import { createOxyAuthMiddleware, createOxyCors, createOxyRateLimit } from '@oxy.so/core/server';
 import { config } from './src/config';
 import { closePostgres, connectPostgres } from './src/db/postgres';
@@ -15,10 +14,14 @@ import { scheduleStalledSweep } from './src/queue/queues';
 import { startWorkers } from './src/queue/workers';
 import { markRuntimeReady } from './src/utils/runtimeHealth';
 import { logger } from './src/utils/logger';
+import { getServiceOxyClient } from './src/utils/oxyHelpers';
 
 // The Oxy apex family (*.oxy.so, including move.oxy.so) is allowed by
 // createOxyCors; only the Expo dev server's origins are listed.
 const APP_ORIGINS = ['http://localhost:8081', 'http://localhost:19006'];
+
+// Verifies Oxy sessions on requests and sockets, as Move.
+const oxy = getServiceOxyClient();
 
 const app = express();
 app.disable('x-powered-by');
@@ -35,7 +38,7 @@ const io = new SocketIOServer(server, {
 
 // Only authenticated sockets connect, and the room is the AUTHENTICATED user's
 // id, never a client-supplied one: `migration:progress` goes to `user:<id>`.
-io.use(oxy.authSocket());
+io.use(oxy.middleware.socket());
 io.on('connection', (socket: Socket & { user?: { id: string } }) => {
   const userId = socket.user?.id;
   if (!userId) {

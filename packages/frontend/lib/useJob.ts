@@ -37,7 +37,7 @@ export function useJob(jobId: string) {
   useEffect(() => {
     if (!active) return undefined;
     const socket = io(API_URL, {
-      auth: (cb) => cb({ token: oxyServices.getAccessToken() }),
+      auth: (cb) => cb({ token: oxyServices.session.accessToken }),
       transports: ['websocket', 'polling'],
     });
     socket.on('connect', () => setSocketConnected(true));
@@ -46,7 +46,7 @@ export function useJob(jobId: string) {
       queryClient.setQueryData(queryKeys.job(view.id), view);
     });
     // A rotated token re-runs the handshake with the fresh one.
-    const unsubscribe = oxyServices.onTokensChanged((token) => {
+    const unsubscribe = oxyServices.session.onChange((token) => {
       if (token && !socket.connected) socket.connect();
     });
     return () => {

@@ -44,7 +44,7 @@ export default function LinkedScreen() {
 
   const accounts = useQuery({
     queryKey: queryKeys.linkedAccounts,
-    queryFn: () => oxyServices.listLinkedAccounts(),
+    queryFn: () => oxyServices.linkedAccounts.list(),
     enabled: isAuthenticated && linkedAccountId !== null,
   });
   const account = accounts.data?.find((candidate) => candidate.id === linkedAccountId);

@@ -119,14 +119,20 @@ function fakeClient(plan: MigrationPlan) {
     },
   };
   const sdk: PlanSdk = {
-    getCurrentUser: async () => ({ name: { displayName: 'Old' }, bio: 'old', avatar: null, links: [] }),
-    updateProfile: async (update) => void log.push(`updateProfile ${JSON.stringify(update)}`),
-    getFollowStatuses: async (ids) => Object.fromEntries(ids.map((id) => [id, id === 'u2'])),
-    followUsers: async (ids) => void log.push(`follow ${ids.join(',')}`),
-    unfollowUsers: async (ids) => void log.push(`unfollow ${ids.join(',')}`),
-    getBlockedUsers: async () => [{ blockedId: { _id: 'b1' } }],
-    blockUser: async (id) => void log.push(`block ${id}`),
-    unblockUser: async (id) => void log.push(`unblock ${id}`),
+    users: {
+      me: async () => ({ name: { displayName: 'Old' }, bio: 'old', avatar: null, links: [] }),
+      updateMe: async (update) => void log.push(`updateProfile ${JSON.stringify(update)}`),
+    },
+    follows: {
+      statuses: async (ids) => Object.fromEntries(ids.map((id) => [id, id === 'u2'])),
+      followMany: async (ids) => void log.push(`follow ${ids.join(',')}`),
+      unfollowMany: async (ids) => void log.push(`unfollow ${ids.join(',')}`),
+    },
+    privacy: {
+      blocked: async () => [{ blockedId: { _id: 'b1' } }],
+      block: async (id) => void log.push(`block ${id}`),
+      unblock: async (id) => void log.push(`unblock ${id}`),
+    },
   };
   return { api, sdk, log, state };
 }
@@ -234,13 +240,15 @@ describe('connect helpers', () => {
     expect(outcomeFromParams({})).toBeNull();
   });
 
-  test('a code becomes the link only through completeLinkedAccount, and each refusal is named', async () => {
+  test('a code becomes the link only through linkedAccounts.complete, and each refusal is named', async () => {
     const codes: string[] = [];
-    const oxy = (failWith?: number): Pick<OxyServices, 'completeLinkedAccount'> => ({
-      completeLinkedAccount: async (code) => {
-        codes.push(code);
-        if (failWith) throw Object.assign(new Error(`HTTP ${failWith}`), { status: failWith });
-        return { id: 'la-1' } as LinkedAccount;
+    const oxy = (failWith?: number): { linkedAccounts: Pick<OxyServices['linkedAccounts'], 'complete'> } => ({
+      linkedAccounts: {
+        complete: async (code) => {
+          codes.push(code);
+          if (failWith) throw Object.assign(new Error(`HTTP ${failWith}`), { status: failWith });
+          return { id: 'la-1' } as LinkedAccount;
+        },
       },
     });
 
@@ -255,7 +263,7 @@ describe('connect helpers', () => {
   });
 
   test("a refused start blames the handle only when Oxy says the handle did not resolve", () => {
-    // What `oxyServices.startLinkedAccount` throws for a 400: the SDK keeps the body's `details`.
+    // What `oxyServices.linkedAccounts.start` throws for a 400: the SDK keeps the body's `details`.
     const refusal = (reason: string) => Object.assign(new Error('Bad request'), { status: 400, details: { reason } });
     expect(startFailureKey('bluesky', refusal('handle_unresolvable'))).toBe('connect.startFailed.handle_unresolvable');
     // Bluesky refusing Oxy's client metadata is not "we couldn't find that account".

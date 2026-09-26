@@ -38,12 +38,12 @@ export type LinkAttempt = LinkResult | { kind: 'cancelled' };
  * later failure comes back as `{ kind: 'error' }`.
  */
 export async function linkAccount(
-  oxy: Pick<OxyServices, 'startLinkedAccount' | 'completeLinkedAccount'>,
+  oxy: { linkedAccounts: Pick<OxyServices['linkedAccounts'], 'start' | 'complete'> },
   platform: MigrationPlatform,
   input: string,
 ): Promise<LinkAttempt> {
   const network = PLATFORM_NETWORK[platform];
-  const { authorizeUrl } = await oxy.startLinkedAccount(network, {
+  const { authorizeUrl } = await oxy.linkedAccounts.start(network, {
     ...(network === 'activitypub' ? { instance: input } : { handle: input }),
     clientId: OXY_CLIENT_ID,
     returnTo: LINKED_RETURN_TO,

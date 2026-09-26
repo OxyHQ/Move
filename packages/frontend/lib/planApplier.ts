@@ -26,14 +26,20 @@ import type {
 
 /** The Oxy SDK methods the plan needs — all run with the user's own session. */
 export interface PlanSdk {
-  getCurrentUser(): Promise<{ name?: { displayName?: string } | null; bio?: string; avatar?: string | null; links?: string[] }>;
-  updateProfile(update: ProfileUpdate): Promise<unknown>;
-  getFollowStatuses(userIds: string[]): Promise<Record<string, boolean>>;
-  followUsers(userIds: string[]): Promise<unknown>;
-  unfollowUsers(userIds: string[]): Promise<unknown>;
-  getBlockedUsers(): Promise<Array<{ blockedId: string | { _id: string } }>>;
-  blockUser(userId: string): Promise<unknown>;
-  unblockUser(userId: string): Promise<unknown>;
+  users: {
+    me(): Promise<{ name?: { displayName?: string } | null; bio?: string; avatar?: string | null; links?: string[] }>;
+    updateMe(update: ProfileUpdate): Promise<unknown>;
+  };
+  follows: {
+    statuses(userIds: string[]): Promise<Record<string, boolean>>;
+    followMany(userIds: string[]): Promise<unknown>;
+    unfollowMany(userIds: string[]): Promise<unknown>;
+  };
+  privacy: {
+    blocked(): Promise<Array<{ blockedId: string | { _id: string } }>>;
+    block(userId: string): Promise<unknown>;
+    unblock(userId: string): Promise<unknown>;
+  };
 }
 
 /**
@@ -89,7 +95,7 @@ function profileUpdateFor(plan: ProfilePlan): ProfileUpdate | null {
 /** The current values of exactly the fields `update` is about to overwrite. */
 function snapshotFor(
   update: ProfileUpdate,
-  me: Awaited<ReturnType<PlanSdk['getCurrentUser']>>,
+  me: Awaited<ReturnType<PlanSdk['users']['me']>>,
 ): ProfileSnapshot {
   const before: ProfileSnapshot = {};
   if (update.name) before.displayName = me.name?.displayName ?? '';
@@ -164,9 +170,9 @@ export async function applyPlan(
   const update = plan.profile ? profileUpdateFor(plan.profile) : null;
   if (update && !ack.profileApplied) {
     if (!facts.profileBefore) {
-      await deps.api.ack(jobId, { profileBefore: snapshotFor(update, await deps.sdk.getCurrentUser()) });
+      await deps.api.ack(jobId, { profileBefore: snapshotFor(update, await deps.sdk.users.me()) });
     }
-    await deps.sdk.updateProfile(update);
+    await deps.sdk.users.updateMe(update);
     await deps.api.ack(jobId, { profileApplied: true });
     ack.profileApplied = true;
     report();
@@ -177,11 +183,11 @@ export async function applyPlan(
     if (ack.followBatchesApplied.includes(index)) continue;
     const batch = follows[index];
     if (!facts.alreadyFollowing?.[index]) {
-      const statuses = batch.length > 0 ? await deps.sdk.getFollowStatuses(batch) : {};
+      const statuses = batch.length > 0 ? await deps.sdk.follows.statuses(batch) : {};
       const already = batch.filter((userId) => statuses[userId] === true);
       await deps.api.ack(jobId, { alreadyFollowing: { [index]: already } });
     }
-    if (batch.length > 0) await deps.sdk.followUsers(batch);
+    if (batch.length > 0) await deps.sdk.follows.followMany(batch);
     await deps.api.ack(jobId, { followBatchesApplied: [index] });
     ack.followBatchesApplied.push(index);
     report();
@@ -193,7 +199,7 @@ export async function applyPlan(
     if (ack.blockBatchesApplied.includes(index)) continue;
     const batch = blocks[index];
     // Read once per run, before this run blocks anyone.
-    blockedNow ??= new Set((await deps.sdk.getBlockedUsers()).map(blockedIdOf));
+    blockedNow ??= new Set((await deps.sdk.privacy.blocked()).map(blockedIdOf));
     const current = blockedNow;
     const recordedAlready = facts.alreadyBlocked?.[index];
     if (!recordedAlready) {
@@ -201,7 +207,7 @@ export async function applyPlan(
     }
     // The SDK blocks one account per call; skip who is blocked already.
     for (const userId of batch) {
-      if (!current.has(userId)) await deps.sdk.blockUser(userId);
+      if (!current.has(userId)) await deps.sdk.privacy.block(userId);
     }
     await deps.api.ack(jobId, { blockBatchesApplied: [index] });
     ack.blockBatchesApplied.push(index);
@@ -253,18 +259,18 @@ export async function undoPlan(
 
   const toUnfollow = created(plan.graph?.followBatches ?? [], ack?.followBatchesApplied, undoFacts?.alreadyFollowing);
   for (let start = 0; start < toUnfollow.length; start += UNFOLLOW_CHUNK) {
-    await deps.sdk.unfollowUsers(toUnfollow.slice(start, start + UNFOLLOW_CHUNK));
+    await deps.sdk.follows.unfollowMany(toUnfollow.slice(start, start + UNFOLLOW_CHUNK));
   }
   result.unfollowed = toUnfollow.length;
 
   const toUnblock = created(plan.blocks?.blockBatches ?? [], ack?.blockBatchesApplied, undoFacts?.alreadyBlocked);
-  for (const userId of toUnblock) await deps.sdk.unblockUser(userId);
+  for (const userId of toUnblock) await deps.sdk.privacy.unblock(userId);
   result.unblocked = toUnblock.length;
 
   if (ack?.profileApplied && plan.profile && profileUpdateFor(plan.profile)) {
     if (undoFacts?.profileBefore) {
       const restore = restoreFrom(undoFacts.profileBefore);
-      if (Object.keys(restore).length > 0) await deps.sdk.updateProfile(restore);
+      if (Object.keys(restore).length > 0) await deps.sdk.users.updateMe(restore);
       result.profileRestored = true;
     } else {
       result.profileKept = true;

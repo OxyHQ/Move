@@ -10,7 +10,7 @@ Always **bun**; commit `bun.lock` with its `package.json`.
 - All Expo config comes from `@oxy.so/app-preset`; fix the preset, never copy config back into the app.
 - Theming is NativeWind via `BloomThemeProvider`; never hardcode brand colors.
 - Gate private API calls on `useAuth().canUsePrivateApi`; the root `Stack` alone swaps `(auth)`↔`(app)`.
-- Backend auth is `@oxy.so/core/server` only (`createOxyAuthMiddleware`, `createOxyCors`, `createOxyRateLimit`, `authSocket`); no app-local auth, bearer parsing or CORS. Call your own API via `oxyServices.createLinkedClient({ baseURL })`.
+- Backend auth is `@oxy.so/core/server` only (`OxyServer`, `createOxyAuthMiddleware`, `createOxyCors`, `createOxyRateLimit`, `middleware.socket()`); no app-local auth, bearer parsing or CORS. Call your own API via `oxyServices.createLinkedClient({ baseURL })`.
 
 ## Database (drizzle)
 
@@ -26,7 +26,6 @@ Always **bun**; commit `bun.lock` with its `package.json`.
 - Move stores ONLY migration state (`migration_jobs`, `migration_items`). Identity, linked accounts, profile, follows, blocks and files are Oxy's; posts are Mention's.
 - Never hold a third-party token. Oxy's OAuth proves ownership and discards it; sources read PUBLIC data only.
 - Profile, follows and blocks are written by the CLIENT with the user's session (Oxy refuses service tokens there). The backend only builds the plan.
-- `frontend/lib/linkedAccounts.ts` is the ONLY caller of `/linked-accounts` until `@oxy.so/core` ships those methods; then delete it.
 - Verify the linked account through Oxy (`GET /linked-accounts/by-user/:id`) before creating AND before running a job.
 - The Mention ingest contract lives only in `packages/backend/src/destinations/mentionContract.ts` (zod). Change it there.
 - A rate limit (source 429, Oxy media budget, Mention 429) PAUSES a job and re-enqueues it; it never fails it. Oxy media uploads go through the one shared limiter in `destinations/media.ts`.
