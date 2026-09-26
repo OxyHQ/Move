@@ -49,7 +49,7 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
 
   const linked = useQuery({
     queryKey: queryKeys.linkedAccounts,
-    queryFn: () => oxyServices.listLinkedAccounts(),
+    queryFn: () => oxyServices.linkedAccounts.list(),
   });
   const accounts = (linked.data ?? []).filter((account) => account.network === PLATFORM_NETWORK[platform]);
   const normalized = normalizeSourceInput(platform, input);
@@ -84,7 +84,7 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
 
   const unlink = async (account: LinkedAccount) => {
     try {
-      await oxyServices.revokeLinkedAccount(account.id);
+      await oxyServices.linkedAccounts.revoke(account.id);
       await queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts });
       toast.success(t('connect.unlinked', { handle: account.handle }));
     } catch {

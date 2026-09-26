@@ -8,7 +8,7 @@
  * plus the user id header; Mention checks the token belongs to Oxy Move.
  */
 
-import type { OxyServices } from '@oxy.so/core';
+import type { OxyServer } from '@oxy.so/core/server';
 import { parseRetryAfterMs } from '../sources/http';
 import {
   MENTION_BATCH_MAX_ITEMS,
@@ -38,7 +38,7 @@ import {
 export interface MentionDestinationDeps {
   baseUrl: string;
   /** The Oxy client whose service token authenticates Move. */
-  oxy: Pick<OxyServices, 'getServiceToken'>;
+  oxy: Pick<OxyServer, 'serviceToken'>;
   fetch?: typeof fetch;
 }
 
@@ -94,7 +94,7 @@ export class MentionDestination implements ContentDestination {
   }
 
   private async request(method: string, path: string, oxyUserId: string, body?: unknown): Promise<unknown> {
-    const token = await this.deps.oxy.getServiceToken();
+    const token = await this.deps.oxy.serviceToken();
     const response = await this.fetchImpl(`${this.deps.baseUrl}${path}`, {
       method,
       headers: {

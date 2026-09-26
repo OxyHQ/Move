@@ -6,31 +6,31 @@
 // HTTP status and `Retry-After`, because Move's media limiter must tell a 429
 // (pause the job) from any other failure.
 
-import { OxyServices } from '@oxy.so/core';
-import { canAttestWorkloadIdentity } from '@oxy.so/core/server';
+import { OxyServer, canAttestWorkloadIdentity } from '@oxy.so/core/server';
 import { config } from '../config';
 import { logger } from './logger';
 
 /**
- * The OxyServices instance authenticated as Oxy Move. In ECS there is no key
+ * The OxyServer instance authenticated as Oxy Move. In ECS there is no key
  * pair: the SDK attests the task role (`oxy-move-task`, oxy ADR 0026). Locally
  * an `OXY_SERVICE_API_KEY`/`SECRET` pair is honoured when present.
  */
-let serviceClient: OxyServices | null = null;
+let serviceClient: OxyServer | null = null;
 
-export function getServiceOxyClient(): OxyServices {
+export function getServiceOxyClient(): OxyServer {
   if (serviceClient) return serviceClient;
-  const client = new OxyServices({ baseURL: config.oxyApiUrl });
   const { apiKey, apiSecret } = config.oxyServiceCredentials;
-  if (apiKey && apiSecret) {
-    client.configureServiceAuth(apiKey, apiSecret);
-  } else if (canAttestWorkloadIdentity()) {
-    logger.info('[oxyHelpers] no service key pair; the Oxy client attests this task role instead');
-  } else {
-    logger.warn(
-      '[oxyHelpers] no Oxy service identity: neither a key pair nor an attestable task role. Calls needing one will fail.',
-    );
+  const serviceAuth = apiKey && apiSecret ? { apiKey, apiSecret } : undefined;
+  if (!serviceAuth) {
+    if (canAttestWorkloadIdentity()) {
+      logger.info('[oxyHelpers] no service key pair; the Oxy client attests this task role instead');
+    } else {
+      logger.warn(
+        '[oxyHelpers] no Oxy service identity: neither a key pair nor an attestable task role. Calls needing one will fail.',
+      );
+    }
   }
+  const client = new OxyServer({ baseURL: config.oxyApiUrl, serviceAuth });
   serviceClient = client;
   return client;
 }
@@ -59,8 +59,8 @@ export async function uploadServiceUserMedia(params: {
   fileName: string;
 }): Promise<{ fileId: string }> {
   const client = getServiceOxyClient();
-  const token = await client.getServiceToken();
-  const baseUrl = client.getBaseURL().replace(/\/+$/, '');
+  const token = await client.serviceToken();
+  const baseUrl = client.baseURL.replace(/\/+$/, '');
   const response = await fetch(`${baseUrl}/assets/service/user-media`, {
     method: 'POST',
     headers: {

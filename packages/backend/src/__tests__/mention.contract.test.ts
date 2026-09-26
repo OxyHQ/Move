@@ -141,7 +141,7 @@ describe('the Mention client', () => {
       requests.push({ url, bytes: raw ? Buffer.byteLength(raw) : 0, body });
       return new Response(JSON.stringify(respond(body, url)), { status: 200 });
     }) as unknown as typeof fetch;
-    const destination = new MentionDestination({ baseUrl: 'https://api.mention.test', oxy: { getServiceToken: async () => 'tok' }, fetch: fakeFetch });
+    const destination = new MentionDestination({ baseUrl: 'https://api.mention.test', oxy: { serviceToken: async () => 'tok' }, fetch: fakeFetch });
     return { destination, requests };
   }
   const created = (body?: { items: Array<{ sourceId: string }> }) => ({

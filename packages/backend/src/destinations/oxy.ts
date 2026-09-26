@@ -6,7 +6,7 @@
  * the user's own session, so the Move CLIENT applies them from the plan.
  *
  * Contracts, and the privileged scope each needs on Move's Oxy application:
- * - `getLinkedAccountsForUser` (`GET /linked-accounts/by-user/:userId`) — `linked-accounts:read`.
+ * - `linkedAccounts.forUser` (`GET /linked-accounts/by-user/:userId`) — `linked-accounts:read`.
  * - `POST /federation/identities/lookup` (batch ≤ 100, no remote discovery) and
  *   `POST /federation/identities/resolve` (one actor) — `federation:identities:resolve`.
  * - `POST /notifications` (`CreateOxyNotificationRequest`, `type: 'system'`) —
@@ -20,14 +20,17 @@
 
 import { z } from 'zod';
 import { instanceFetchSignResponseSchema, type CreateOxyNotificationRequest, type LinkedAccountNetwork } from '@oxy.so/contracts';
-import type { OxyServices } from '@oxy.so/core';
+import type { OxyServer } from '@oxy.so/core/server';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
 import { SourceAuthRequiredError, SourceRateLimitedError, type RequestSigner } from '../sources/http';
 
-/** The part of Move's service `OxyServices` client the gateway uses. */
-export type OxyServiceClient = Pick<OxyServices, 'getLinkedAccountsForUser' | 'makeServiceRequest'>;
+/** The part of Move's service `OxyServer` client the gateway uses. */
+export type OxyServiceClient = {
+  linkedAccounts: Pick<OxyServer['linkedAccounts'], 'forUser'>;
+  serviceRequest: OxyServer['serviceRequest'];
+};
 
 /** Oxy proves ownership per protocol; each Move platform is one of them. */
 const PLATFORM_NETWORK: Record<MigrationPlatform, LinkedAccountNetwork> = {
@@ -64,7 +67,7 @@ export class OxyGateway {
    * an account the user has not proven they own.
    */
   async verifyLinkedAccount(oxyUserId: string, linkedAccountId: string, platform: MigrationPlatform): Promise<SourceAccount> {
-    const { linkedAccounts } = await this.oxy.getLinkedAccountsForUser(oxyUserId);
+    const { linkedAccounts } = await this.oxy.linkedAccounts.forUser(oxyUserId);
     const account = linkedAccounts.find((entry) => entry.id === linkedAccountId);
     if (!account || account.network !== PLATFORM_NETWORK[platform]) throw new ForeignLinkedAccountError();
     const usable = platform === 'bluesky' ? account.actorUri.startsWith('did:') : /^https:\/\//i.test(account.actorUri);
@@ -81,7 +84,7 @@ export class OxyGateway {
     const resolved = new Map<string, string>();
     const actors = [...new Set(accounts.map((account) => account.actor))];
     for (let start = 0; start < actors.length; start += LOOKUP_BATCH) {
-      const raw = await this.oxy.makeServiceRequest('POST', '/federation/identities/lookup', { identifiers: actors.slice(start, start + LOOKUP_BATCH) });
+      const raw = await this.oxy.serviceRequest('POST', '/federation/identities/lookup', { identifiers: actors.slice(start, start + LOOKUP_BATCH) });
       for (const identity of lookupResponseSchema.parse(raw).identities) {
         if (identity.userId) resolved.set(identity.identifier, identity.userId);
       }
@@ -93,7 +96,7 @@ export class OxyGateway {
       while (next < misses.length) {
         const actorUri = misses[next++];
         try {
-          const raw = await this.oxy.makeServiceRequest('POST', '/federation/identities/resolve', {
+          const raw = await this.oxy.serviceRequest('POST', '/federation/identities/resolve', {
             actorUri,
             protocol: actorUri.startsWith('did:') ? 'atproto' : 'activitypub',
           });
@@ -130,7 +133,7 @@ export class OxyGateway {
       url: `https://move.oxy.so/jobs/${encodeURIComponent(params.jobId)}`,
       data: { app: 'move', jobId: params.jobId, platform: params.platform },
     };
-    await this.oxy.makeServiceRequest('POST', '/notifications', notification);
+    await this.oxy.serviceRequest('POST', '/notifications', notification);
   }
 }
 
@@ -152,11 +155,11 @@ const SIGNING_BUDGET_PAUSE_MS = 60_000;
  * like a source 429; Oxy refusing to sign (400/401/403) is an unsigned
  * refusal; anything else is transient and retried.
  */
-export function createInstanceFetchSigner(oxy: Pick<OxyServices, 'makeServiceRequest'>): RequestSigner {
+export function createInstanceFetchSigner(oxy: Pick<OxyServer, 'serviceRequest'>): RequestSigner {
   return async (url) => {
     let raw: unknown;
     try {
-      raw = await oxy.makeServiceRequest('POST', '/federation/instance-fetch/sign', { url });
+      raw = await oxy.serviceRequest('POST', '/federation/instance-fetch/sign', { url });
     } catch (error) {
       const status = (error as { status?: unknown } | null)?.status;
       if (status === 429) {
