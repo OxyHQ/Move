@@ -3,6 +3,12 @@ name: CI
 # Modelled on OxyHQ/Mention's CI: every check is a named job, and `ci-complete`
 # is the ONE required check, failing unless every job actually passed — a job
 # that was skipped by a future `if:` edit reads as a failure, not a pass.
+#
+# The one sanctioned skip: on a PULL REQUEST, `tests` and `web` run only when
+# the `changes` job says the diff reaches them. Push to main and
+# workflow_dispatch always run everything, and `ci-complete` accepts a skip ONLY
+# when `changes` itself succeeded and said "not affected" — any other skip, and
+# a failed `changes`, is still a failure.
 
 on:
   push:
@@ -25,6 +31,40 @@ env:
   BUN_VERSION: '1.4.2'
 
 jobs:
+  # PR-only. Shared inputs (lockfile, root manifests, tsconfig, shared-types,
+  # anything under .github/) mark every job affected. `bun run test` runs the
+  # FRONTEND suite as well as the backend one, so `tests` is affected by both.
+  changes:
+    name: Affected paths
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      tests: ${{ steps.filter.outputs.tests }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            shared: &shared
+              - bun.lock
+              - package.json
+              - bunfig.toml
+              - tsconfig.json
+              - 'packages/shared-types/**'
+              - '.github/**'
+            tests:
+              - *shared
+              - 'packages/backend/**'
+              - 'packages/frontend/**'
+            web:
+              - *shared
+              - 'packages/frontend/**'
+
   quality:
     name: Gates, typecheck, lint and build
     runs-on: ubuntu-latest
@@ -64,6 +104,8 @@ jobs:
 
   tests:
     name: Backend tests (real Postgres)
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -100,6 +142,8 @@ jobs:
 
   web:
     name: Web export honours the static hosting contract
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.web == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -124,7 +168,7 @@ jobs:
 
   ci-complete:
     name: CI complete
-    needs: [quality, lockfile, tests, web]
+    needs: [changes, quality, lockfile, tests, web]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -132,14 +176,31 @@ jobs:
       - name: Require every CI job to have passed
         env:
           RESULTS: ${{ toJSON(needs) }}
+          IS_PR: ${{ github.event_name == 'pull_request' }}
         run: |
           set -euo pipefail
           failures=()
+          result_of() { jq -r --arg job "$1" '.[$job].result' <<<"$RESULTS"; }
+          changes="$(result_of changes)"
+          if [ "$IS_PR" = true ]; then
+            [ "$changes" = success ] || failures+=("changes did not pass: $changes")
+          elif [ "$changes" != skipped ]; then
+            failures+=("changes ran outside a pull request: $changes")
+          fi
           for job in quality lockfile tests web; do
-            result="$(jq -r --arg job "$job" '.[$job].result' <<<"$RESULTS")"
-            if [ "$result" != success ]; then
-              failures+=("$job did not pass: $result")
+            result="$(result_of "$job")"
+            affected=true
+            if [ "$IS_PR" = true ] && [ "$changes" = success ]; then
+              case "$job" in
+                tests|web) affected="$(jq -r --arg job "$job" '.changes.outputs[$job] // "true"' <<<"$RESULTS")" ;;
+              esac
             fi
+            if [ "$result" = success ]; then continue; fi
+            if [ "$result" = skipped ] && [ "$affected" = false ]; then
+              echo "$job skipped: the pull request does not reach it"
+              continue
+            fi
+            failures+=("$job did not pass: $result")
           done
           if [ ${#failures[@]} -gt 0 ]; then
             for failure in "${failures[@]}"; do echo "::error::$failure"; done
