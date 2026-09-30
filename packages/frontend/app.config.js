@@ -38,8 +38,9 @@ module.exports = {
           dark: { backgroundColor: '#100d10' },
         },
       ],
-      // Shared Oxy native config: android:sharedUserId, iOS keychain group,
-      // expo-build-properties defaults, and the shared-identity reader.
+      // Shared Oxy native config: iOS keychain group, expo-build-properties
+      // defaults, and the Oxy signature permissions (withOxySharedPermissions)
+      // that let this app ask Commons for the identity. Own Android UID.
       ['@oxy.so/app-preset', {}],
     ],
     extra: {

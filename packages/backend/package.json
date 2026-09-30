@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "@move/shared-types": "workspace:*",
-    "@oxy.so/contracts": "^3.0.0",
-    "@oxy.so/core": "^3.0.0",
+    "@oxy.so/contracts": "^4.4.0",
+    "@oxy.so/core": "^4.0.0",
     "@oxy.so/db": "^1.0.0",
-    "@oxy.so/federation": "^2.1.2",
+    "@oxy.so/federation": "^2.2.1",
     "bullmq": "^6.3.8",
     "dotenv": "^16.4.7",
     "drizzle-orm": "0.45.2",
