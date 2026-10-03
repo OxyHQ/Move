@@ -1,0 +1,22 @@
+$ bun test __tests__
+bun test v1.4.2 (744846f84)
+
+__tests__/catalogs.test.ts:
+(pass) en and es carry exactly the same keys [0.59ms]
+(pass) every code and status the app renders has a message [0.95ms]
+
+__tests__/moveFlow.test.ts:
+(pass) confirm → progress → undo > Confirm sends a dry-run preview, then creates the job with the chosen options [0.34ms]
+(pass) confirm → progress → undo > every undo fact is acked BEFORE the write it describes, and each write after it is acked [1.12ms]
+(pass) confirm → progress → undo > a batch applied without a recorded fact is left alone rather than guessed [0.05ms]
+(pass) connect helpers > Mastodon input accepts a handle, a bare server or a URL [0.15ms]
+(pass) connect helpers > Bluesky input takes a handle (with or without @) or a DID [0.02ms]
+(pass) connect helpers > the return route reads ?link_code= and every callback ?link_error= code [0.06ms]
+(pass) connect helpers > a code becomes the link only through linkedAccounts.complete, and each refusal is named [0.19ms]
+(pass) connect helpers > a refused start blames the handle only when Oxy says the handle did not resolve [0.20ms]
+(pass) connect helpers > the Mastodon move step targets the Mention handle and the source instance [0.06ms]
+
+ 11 pass
+ 0 fail
+ 50 expect() calls
+Ran 11 tests across 2 files. [36.00ms]

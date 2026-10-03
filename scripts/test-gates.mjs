@@ -35,3 +35,6 @@ expect('wrangler-action fails', checkWorkflowText('w.yml', '- uses: cloudflare/w
 
 if (failures > 0) process.exit(1);
 console.log('gate self-tests: all controls behaved');
+
+// Closed manual source/CI admission, including adversarial workflow mutations.
+await import('./test-manual-frontend-workflow.mjs');

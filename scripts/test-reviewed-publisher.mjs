@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import yaml from 'js-yaml';
+
+const workflow = yaml.load(readFileSync('.github/workflows/publish-reviewed-images.yml', 'utf8'));
+const config = JSON.parse(readFileSync('.github/scripts/reviewed-images.json', 'utf8'));
+assert.equal(config.repository, 'OxyHQ/Move');
+assert.equal(config.recipes.length, 1);
+const recipe = config.recipes[0];
+assert.equal(recipe.name, 'move');
+assert.deepEqual(recipe.services, ['move']);
+assert.equal(recipe.ecrRepository, 'oxy/move');
+assert.equal(recipe.dockerfile, 'packages/backend/Dockerfile');
+assert.equal(recipe.dockerfileSha256, createHash('sha256').update(readFileSync(recipe.dockerfile)).digest('hex'));
+assert.equal(recipe.target, null);
+assert.equal(recipe.tagSuffix, '');
+assert.deepEqual(Object.keys(workflow.on), ['workflow_dispatch']);
+assert.deepEqual(workflow.permissions, { contents: 'read' });
+assert.deepEqual(Object.keys(workflow.jobs), ['move']);
+const job = workflow.jobs.move;
+assert.equal(job['runs-on'], 'ubuntu-24.04-arm');
+assert.equal(job.if, "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'OxyHQ/Move'");
+assert.deepEqual(job.permissions, { contents: 'read', 'id-token': 'write' });
+assert.equal(job.env.EXPECTED_SOURCE_SHA, '${{ inputs.expected_source_sha }}');
+assert.equal(job.steps[0].with.ref, '${{ github.sha }}');
+assert.equal(job.steps[2].with['role-to-assume'], 'arn:aws:iam::237343248947:role/oxy-move-github-deploy');
+const build = job.steps.find((step) => step.name === 'Build and publish exact source image').with;
+assert.equal(build.platforms, 'linux/arm64');
+assert.equal(build.tags, '237343248947.dkr.ecr.us-west-2.amazonaws.com/oxy/move:${{ github.sha }}');
+assert.equal(build.file, recipe.dockerfile);
+assert.equal(build.push, true);
+assert.equal(build['cache-from'], 'type=gha,scope=move-backend');
+for (const step of job.steps) {
+  assert.ok(!/\b(?:ecs|ssm|seed|migrate|deploy-ecs)\b/i.test(step.run ?? ''), 'Publisher must not deploy/migrate/seed');
+}
+const deploy = yaml.load(readFileSync('.github/workflows/deploy-aws.yml', 'utf8'));
+assert.ok(deploy.jobs.deploy.if.startsWith("vars.OXY_1519_ROLLOUT_HOLD != 'true' && ("));
+assert.ok(deploy.jobs.deploy.if.includes("github.event.workflow_run.conclusion == 'success'"));
+assert.equal(readFileSync('packages/backend/drizzle/meta/_journal.json', 'utf8').includes('0000'), true);
+console.log('Move publisher: closed ARM/main/role/source recipe and automatic deployment hold PASS');

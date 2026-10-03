@@ -1,0 +1,16 @@
+$ NODE_ENV=test bun test src/__tests__/strictReceiver.test.ts
+bun test v1.4.2 (744846f84)
+
+src/__tests__/strictReceiver.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find package 'jwt-decode' from '/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/dist/esm/server/OxyServer.js'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [58.00ms]
+error: script "test" exited with code 1

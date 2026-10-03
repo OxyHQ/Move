@@ -1,0 +1,68 @@
+$ NODE_ENV=test bun test src/__tests__/strictReceiver.test.ts
+bun test v1.4.2 (744846f84)
+
+src/__tests__/strictReceiver.test.ts:
+2026-10-03T22:34:45.155Z WARN [oxy.auth] Token rejected — claimed user does not own the session {
+  component: "auth",
+  method: "auth",
+  claimedUserId: "other-fixture",
+  validatedUserId: "user-fixture",
+}
+2026-10-03T22:34:45.155Z WARN [oxy.auth] refused SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T22:34:45.155Z WARN [oxy.auth] 401 after refusal SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+}
+2026-10-03T22:34:45.161Z WARN [oxy.auth] refused SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T22:34:45.161Z WARN [oxy.auth] 401 after refusal SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+}
+(pass) Move installed receiver versus strict-format claims > human session reaches HTTP and socket room; claim mismatch and withdrawal refuse [29.65ms]
+2026-10-03T22:34:45.166Z WARN [oxy.auth] Service token rejected — no delegation grant {
+  component: "auth",
+  method: "auth.serviceToken",
+  appId: "move-fixture",
+  attemptedUserId: "user-fixture",
+}
+2026-10-03T22:34:45.166Z WARN [oxy.auth] refused SERVICE_ACTING_AS_UNAUTHORIZED: No delegation grant for app move-fixture acting as user-fixture (or this verifier could not reach the grant check) {
+  component: "auth",
+  method: "auth",
+  code: "SERVICE_ACTING_AS_UNAUTHORIZED",
+  stage: "service-token",
+  reason: "No delegation grant for app move-fixture acting as user-fixture (or this verifier could not reach the grant check)",
+  status: 403,
+  optional: true,
+  path: "/private",
+}
+(pass) Move installed receiver versus strict-format claims > signed internal service token plus user header cannot enter the human API without delegated authority [3.11ms]
+(pass) Move installed receiver versus strict-format claims > app-only service token is not a human, and service token cannot open a human socket [2.28ms]
+
+ 3 pass
+ 0 fail
+ 16 expect() calls
+Ran 3 tests across 1 file. [172.00ms]
