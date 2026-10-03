@@ -1,0 +1,260 @@
+{
+  "kind": "move-strict-receiver-candidate-proof",
+  "sourceHead": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+  "liveBase": "b2fbf7ad2677819945249bb0fd81c3078ea357b6",
+  "candidateOnly": true,
+  "registryReady": false,
+  "liveRestored": false,
+  "sources": [
+    {
+      "path": ".github/scripts/publish-reviewed-image.py",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "4c20fa31ef8bcd5f18e8e894d6fd35157e7bcce1ef9392f70c21cdd6aa86f17e",
+      "bytes": 8523
+    },
+    {
+      "path": ".github/scripts/reviewed-images.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "d8a4c7c1c0d86f54a8c0a4c24dac4823279f90dfb2ff533e66aeca81621c962d",
+      "bytes": 391
+    },
+    {
+      "path": ".github/workflows/deploy-aws.yml",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "9e4c1c0eaf669c2a01aff8ade8a3afeb8f34b243c5bc18aeb807e2253c6a7b79",
+      "bytes": 6969
+    },
+    {
+      "path": ".github/workflows/publish-reviewed-images.yml",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "32e6abf92b93c7b8bd74be17e23840da1965f364daf38404f1a641990b6bffeb",
+      "bytes": 3304
+    },
+    {
+      "path": "bun.lock",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "833323eaf3e622a86644afa8ff577eb1dee16ce01218dfec3193f051c16b6847",
+      "bytes": 353834
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/README.md",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "8050bf8c660ee6ddc398d5620fc4ac55d6823ccb2da6445dee57008a62acfc82",
+      "bytes": 4949
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/manifest-patch.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "c035ca0d87ed02f3036fd46efb3572c1a3220bf31659c41b1ad1ca299a08aab9",
+      "bytes": 7265
+    },
+    {
+      "path": "package.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "d146adf0bc847b50a41d11595e02c24fe8cf4a7d984cc73ffbee12af87a1b227",
+      "bytes": 1660
+    },
+    {
+      "path": "packages/backend/Dockerfile",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "0dd64c236688e07404fd3a2a4e5d76a7a7ca37ffd1cbdf55a120c12c62c40004",
+      "bytes": 2734
+    },
+    {
+      "path": "packages/backend/drizzle/meta/_journal.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "44999fd0f6efc20e4614d6ecc5dcfca0cb79aa79b3c239c05eca32b60ccd73a0",
+      "bytes": 208
+    },
+    {
+      "path": "packages/backend/package.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "45be72228495b9b86bb05860c7add8ac48761594b281e9764952c4b11eba114d",
+      "bytes": 1171
+    },
+    {
+      "path": "packages/backend/server.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "651ee6cae899458a1778846d787d21364a33f5904ac1ef769cfcb2bb884461ba",
+      "bytes": 2998
+    },
+    {
+      "path": "packages/backend/src/__tests__/pipeline.integration.test.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "fcbfe345d0ae13ba45d461c32ea88c7e04ea68b150aa11112092502652a9f063",
+      "bytes": 35122
+    },
+    {
+      "path": "packages/backend/src/__tests__/strictReceiver.test.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "6da6fad9973a06f96f4a14a7cebb39d24a748982516cfd74c525dcc6901574b8",
+      "bytes": 6197
+    },
+    {
+      "path": "packages/backend/src/destinations/mention.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "4ee5499806c8bf0ac51696cfec9f8f35af172fd7c84c848f75308c7d224a7256",
+      "bytes": 7912
+    },
+    {
+      "path": "packages/backend/src/destinations/types.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "2cc3dd1219e5f4c9f2051e3d1ff7660ef8cf96847e957a3da2dc8b0273d2451e",
+      "bytes": 2669
+    },
+    {
+      "path": "packages/backend/src/pipeline/errors.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "78c60456a65a22494db7ba06c67d1cd9887a7fb3d13e974cfa72a3d83346ee01",
+      "bytes": 2894
+    },
+    {
+      "path": "packages/backend/src/pipeline/runner.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "7493180599fbe21fc6b335d03fd60b234ee5c8dcb74e638214f39f62f0e1fe80",
+      "bytes": 25723
+    },
+    {
+      "path": "packages/backend/src/queue/workers.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "08b1282933ae42c0eca534c9986c4814422a2c468dd4b06d6b8082b5a2ab2042",
+      "bytes": 3928
+    },
+    {
+      "path": "packages/backend/src/routes/health.routes.ts",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "8a627f07e2552f4505e51c6f580a4e5286dffaa5f7dd4e50caabb547353e81fe",
+      "bytes": 2037
+    },
+    {
+      "path": "packages/frontend/package.json",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "f23409adde3bbb713c136c9b7f40c638cacc602da2216e05bbd40868cfb465e3",
+      "bytes": 2645
+    },
+    {
+      "path": "scripts/test-reviewed-publisher.mjs",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "48ae61231a0e076249476d87483a64e7e5eacd9e5948103900b150c7d3cde717",
+      "bytes": 2590
+    },
+    {
+      "path": "scripts/test-strict-receiver-pg.py",
+      "sourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+      "sha256": "fe35c6b5539b1929699d24ed0313d3d4999b65dba3c0b44ba21b0a7d7b33d64d",
+      "bytes": 2982
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/audits/2026-10-04-move-strict/old-receiver-red.log",
+      "sha256": "d9145beeaaa6ef7a04e8e73a8b2aa5adab99e4d8866164634ef9f5305a8e475a",
+      "bytes": 492
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/candidate-receiver.log",
+      "sha256": "fdabdfaa4ebec01904d63e017cdaac9ab89b96449ca0f77dc57cd508a8f64fcc",
+      "bytes": 2829
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/pg-backend.log",
+      "sha256": "7bd9e3f17072c4eefea0cee730cc64baae062ee2026ab37101ac3e456b283bcf",
+      "bytes": 16147
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/build.log",
+      "sha256": "71a73199954ccdcac236975668cb29c335e50fd6eb27d69eb1d1aa525c4349bb",
+      "bytes": 183
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/backend-types.log",
+      "sha256": "1056aced506bb9777985834f2a6435ae29f4ec4029bd05592c1404a8f8706886",
+      "bytes": 33
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-tests.log",
+      "sha256": "4b6213c29653e2b17c5b59a29a316c3b23f6d9da51ee71cbe37d6ded1d267e5a",
+      "bytes": 1322
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-types.log",
+      "sha256": "6720f63521493609fd64926be4ec9872f8875c7c5cd3070a7f881303ee3bc74e",
+      "bytes": 150
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/gates.log",
+      "sha256": "465c4c48918f6dfc2be1bbbd67e22d6a4c91e35463e6f1a6e47c34f6a1ff6a96",
+      "bytes": 239
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/publisher.log",
+      "sha256": "cb17c5deab4aaea1f64412daabda0806238e91dc518538bc3c1775b822eba70e",
+      "bytes": 86
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/candidate-inputs.json",
+      "sha256": "3d6f984d80f302b9f90474318d251a6bcd36a83ab6cd253f3fe390300e7e627e",
+      "bytes": 147834
+    }
+  ],
+  "oldInstalledReceiver": {
+    "version": "4.0.0",
+    "files": [
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/package.json",
+        "sha256": "54a90317940f1d3d8ab66c8ce5e21ffeac0e90f767fc30ee984786f11cfbea0c",
+        "bytes": 6534
+      },
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/dist/esm/server/middleware.js",
+        "sha256": "1ec5625c55037ed7a198d85d88b1ecfa09c6317bec96d4be15538a288e5dadfd",
+        "bytes": 55299
+      },
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/dist/esm/server/OxyServer.js",
+        "sha256": "9e45a00e07bca42fa46bf3d8636357102983465241ebebf475bf85b16791ea14",
+        "bytes": 24546
+      },
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/dist/esm/server/auth.js",
+        "sha256": "842f4fdae5bf0a04a527ff092c02809c8648f410edc0a6edb7e6603f46768b00",
+        "bytes": 6576
+      },
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/dist/esm/api/session.js",
+        "sha256": "bc2bb6ddb5554aff7be48046afc330dc51bd7edb4cca03c419becaf7bfff16fb",
+        "bytes": 7016
+      },
+      {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/original-packages/core/src/server/middleware.ts",
+        "sha256": "34642f81d65de0be321c08c4aa81b27959ecc37502d64b758c188905759fd256",
+        "bytes": 59996
+      }
+    ]
+  },
+  "results": {
+    "sameFixtureOldReceiver": "2 PASS / 1 FAIL, denial expected but HTTP200",
+    "sameFixtureCandidateReceiver": "3 PASS",
+    "backendOwnPackage": "82 PASS across6 files; own PG process stopped, PID absent, per pg-backend.log",
+    "frontendOwnPackage": "11 PASS",
+    "backendBuild": "PASS",
+    "backendTypes": "PASS",
+    "frontendTypes": "PASS",
+    "gates": "PASS",
+    "publisherContract": "PASS"
+  },
+  "limits": [
+    "synthetic loopback authority/key/session responses, not a live issuer or workload attestation",
+    "actual old and candidate installed package middleware with Express and Socket.IO",
+    "real destination HTTP 401/403 + owned PostgreSQL job/item storage, Oxy/source/media fixtures",
+    "failed preserved intent, not automatic resumption",
+    "manifest delta unapplied until actual registry releases; unchanged baseline bun.lock",
+    "publisher prepared only; no AWS/SQL/provider writes or restoration"
+  ],
+  "helperReuse": {
+    "sourceRepository": "OxyHQ/oxy",
+    "sourcePath": "scripts/operations/consumer-publishers/publish-reviewed-image.py",
+    "sourceCommit": "a05d731e1f5e99c54b4ec37a65f9c1883b68e759",
+    "copiedSha256": "4c20fa31ef8bcd5f18e8e894d6fd35157e7bcce1ef9392f70c21cdd6aa86f17e"
+  }
+}
