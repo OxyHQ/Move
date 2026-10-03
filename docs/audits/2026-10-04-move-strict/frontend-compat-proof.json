@@ -1,0 +1,120 @@
+{
+  "kind": "move-frontend-peer-candidate-followup",
+  "sourceHead": "36e806385b747a091faf80c300d4ca2bd83dc52e",
+  "previousProof": "proof.json",
+  "candidateOnly": true,
+  "registryReady": false,
+  "manifestsAndLockUnchanged": true,
+  "changes": "Unapplied registry patch only: Services ^11.1.0; Bloom exact6.2.1 including root overrides/resolutions.",
+  "sources": [
+    {
+      "path": "docs/audits/2026-10-04-move-strict/README.md",
+      "bytes": 5985,
+      "sha256": "b87ff0cc49732569409ae420d2fd630bcc832f944717927fe6dbc4c1a6260be4",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/manifest-patch.json",
+      "bytes": 7262,
+      "sha256": "12d6a4544ccda8ce1a29be4777abb13f217931a0ac4cdca0028164509a46d976",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1660,
+      "sha256": "d146adf0bc847b50a41d11595e02c24fe8cf4a7d984cc73ffbee12af87a1b227",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "packages/frontend/package.json",
+      "bytes": 2645,
+      "sha256": "f23409adde3bbb713c136c9b7f40c638cacc602da2216e05bbd40868cfb465e3",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "packages/frontend/tsconfig.json",
+      "bytes": 317,
+      "sha256": "1caa214f74140153685b22d6df0851b12d94a33a0993ed31c9ab56435604a9e0",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "packages/frontend/tsconfig.test.json",
+      "bytes": 493,
+      "sha256": "8bfecb24aa82918efe623e6bb5776f623f8be78b0b9b7df7f87b5c751b9aced2",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    },
+    {
+      "path": "packages/frontend/app/_layout.tsx",
+      "bytes": 4512,
+      "sha256": "2472295316d4ce33b6659cd6d408a56533fe7df513064e2581454e7a68951cfd",
+      "sourceCommit": "36e806385b747a091faf80c300d4ca2bd83dc52e"
+    }
+  ],
+  "archives": [
+    {
+      "path": "/home/nate/Oxy/.agent-evidence/i04-consumer-final-200134-packs/oxy.so-services-11.1.0.tgz",
+      "bytes": 4262700,
+      "sha256": "b8d232cb04d934ac38c8be303dbbcf9819d444bec8458628c8478cbbf2155c9c",
+      "name": "services",
+      "installedDirectory": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package",
+      "filesVerifiedByteEqual": 2418,
+      "unpackedBytesVerified": 11487232,
+      "installedCensus": {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/frontend-compat/services-installed-files.json",
+        "bytes": 365444,
+        "sha256": "17366dcecad5e048a814a96f6590eff0ebc5aad04449c031ce9bf04645421db0"
+      },
+      "candidateOnly": true
+    },
+    {
+      "path": "/home/nate/Oxy/.agent-evidence/root-1519-20261003/bloom621-publication/oxy-so-bloom-6.2.1.tgz",
+      "bytes": 19928269,
+      "sha256": "edf4cfe3d8597e4bf86f997bceacf332f7fce4a8f92c541b3cd375decbce3a0a",
+      "name": "bloom",
+      "installedDirectory": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/frontend-compat/bloom/package",
+      "filesVerifiedByteEqual": 20940,
+      "unpackedBytesVerified": 69266709,
+      "installedCensus": {
+        "path": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/frontend-compat/bloom-installed-files.json",
+        "bytes": 3028339,
+        "sha256": "86c2581be9f3dedae2394badc98ee78c703e135f11b4e1fff800d55bbd608223"
+      },
+      "candidateOnly": false
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-compat/frontend-test.log",
+      "bytes": 1322,
+      "sha256": "297578a61eb6d77d27b393af5bc6521da1be8a5e5d29207c8c65fd5043e1e60a"
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-compat/frontend-typecheck.log",
+      "bytes": 1188,
+      "sha256": "83113d2b48abc31288267c4ab6595b6d607f8442f08c65d8431470e594d66bf5"
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-compat/frontend-typecheck-final.log",
+      "bytes": 1188,
+      "sha256": "83113d2b48abc31288267c4ab6595b6d607f8442f08c65d8431470e594d66bf5"
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/frontend-compat/frontend-typecheck-clean.log",
+      "bytes": 150,
+      "sha256": "6720f63521493609fd64926be4ec9872f8875c7c5cd3070a7f881303ee3bc74e"
+    }
+  ],
+  "validation": {
+    "frontendTests": "11 PASS / 2 files / 50 assertions",
+    "strictTypecheck": "normal frontend command PASS, app + test programs, preset skipLibCheck unchanged",
+    "initialDiagnostics": "6 TS7006 from cached incremental overlay state; preserved. Fresh compiler resolved contextual types; normal command passed after moving generated tsconfig.tsbuildinfo.",
+    "newBundle": "not run",
+    "backend": "prior exact core4.2 receiver and 82 tests remain historical; no backend source delta"
+  },
+  "limits": [
+    "Services tarball is candidate, not registry availability.",
+    "Bloom archive is registry verified from prior root publication proof.",
+    "No candidate manifest/lock, provider/AWS/SQL requests, device operation or restoration.",
+    "Final registry install/typecheck/web build performed by coordinated adoption runner."
+  ]
+}
