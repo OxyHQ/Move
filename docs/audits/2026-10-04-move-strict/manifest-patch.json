@@ -5,7 +5,7 @@
     {
       "path": "package.json",
       "beforeSha256": "d146adf0bc847b50a41d11595e02c24fe8cf4a7d984cc73ffbee12af87a1b227",
-      "afterSha256": "bc586783b8ee3f6c6cca2d920233bad573424b9a82590bebfabfe26c730b65d7",
+      "afterSha256": "e96b7c1ce7c21c48cd69161f49ccdd353eb297d313675557a82772fc4eafc324",
       "after": {
         "name": "move",
         "version": "0.1.0",
@@ -35,12 +35,12 @@
         "overrides": {
           "@oxy.so/contracts": "^4.9.0",
           "@oxy.so/core": "^4.2.0",
-          "@oxy.so/bloom": "^6.3.0"
+          "@oxy.so/bloom": "6.2.1"
         },
         "resolutions": {
           "@oxy.so/contracts": "^4.9.0",
           "@oxy.so/core": "^4.2.0",
-          "@oxy.so/bloom": "^6.3.0"
+          "@oxy.so/bloom": "6.2.1"
         }
       }
     },
@@ -96,7 +96,7 @@
     {
       "path": "packages/frontend/package.json",
       "beforeSha256": "f23409adde3bbb713c136c9b7f40c638cacc602da2216e05bbd40868cfb465e3",
-      "afterSha256": "403608d5d7224027b6e96e3f42e48f608f100ad52c9743ad339bfe611155285b",
+      "afterSha256": "6b236df4655e74dd135ced8bb50e796290cc75141ce87ac3c39ca3e7d53e52ee",
       "after": {
         "name": "@move/frontend",
         "version": "0.1.0",
@@ -117,10 +117,10 @@
           "@expo/vector-icons": "^15.1.1",
           "@move/shared-types": "workspace:*",
           "@oxy.so/app-preset": "^3.0.0",
-          "@oxy.so/bloom": "^6.3.0",
+          "@oxy.so/bloom": "6.2.1",
           "@oxy.so/contracts": "^4.9.0",
           "@oxy.so/core": "^4.2.0",
-          "@oxy.so/services": "^11.0.0",
+          "@oxy.so/services": "^11.1.0",
           "@react-native-async-storage/async-storage": "2.2.0",
           "@tanstack/query-async-storage-persister": "^5.101.0",
           "@tanstack/react-query": "^5.101.0",
