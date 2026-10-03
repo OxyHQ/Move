@@ -1,0 +1,8 @@
+$ bun ../../scripts/generate-router-types.mjs && tsc --noEmit && tsc --noEmit -p tsconfig.test.json
+typed routes: 7 routes -> .expo/types/router.d.ts
+../../../../../.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package/src/ui/components/authChooser/AccountsMenuView.tsx(482,27): error TS7006: Parameter 'bytes' implicitly has an 'any' type.
+../../../../../.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package/src/ui/components/authChooser/AccountsMenuView.tsx(482,34): error TS7006: Parameter 'percent' implicitly has an 'any' type.
+../../../../../.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package/src/ui/components/signIn/accountFlowParts.tsx(299,25): error TS7006: Parameter 'step' implicitly has an 'any' type.
+../../../../../.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package/src/ui/components/signIn/accountFlowParts.tsx(299,31): error TS7006: Parameter 'total' implicitly has an 'any' type.
+app/_layout.tsx(81,36): error TS7006: Parameter 'id' implicitly has an 'any' type.
+app/_layout.tsx(81,40): error TS7006: Parameter 'variant' implicitly has an 'any' type.
