@@ -195,6 +195,21 @@
       "path": "docs/audits/2026-10-04-move-strict/candidate-inputs.json",
       "sha256": "3d6f984d80f302b9f90474318d251a6bcd36a83ab6cd253f3fe390300e7e627e",
       "bytes": 147834
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/old-receiver-real-red.log",
+      "sha256": "4d37007d84a632d231cf79ab1e62cf99a29be0448bbcb1991e7f45b76045a2b5",
+      "bytes": 2937
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/setup-missing-dependency.log",
+      "sha256": "eebe2c5f7c5a8185e9770beef7de93edda8084547dab5e2548f7fb57409050b7",
+      "bytes": 492
+    },
+    {
+      "path": "docs/audits/2026-10-04-move-strict/setup-telemetry-old-baseline.log",
+      "sha256": "66d99fbea58e1aa2a70be12a4846d2ed7584e264c295174e4d817f9c3c26ea62",
+      "bytes": 420
     }
   ],
   "oldInstalledReceiver": {
@@ -241,7 +256,8 @@
     "backendTypes": "PASS",
     "frontendTypes": "PASS",
     "gates": "PASS",
-    "publisherContract": "PASS"
+    "publisherContract": "PASS",
+    "oldReceiver": "Real reproduced core4.0: 2 PASS/1 FAIL, signed service+user header received200; same final fixture SHA6da6fad9973a06f96f4a14a7cebb39d24a748982516cfd74c525dcc6901574b8. Old old-receiver-red.log is setup only."
   },
   "limits": [
     "synthetic loopback authority/key/session responses, not a live issuer or workload attestation",
@@ -256,5 +272,25 @@
     "sourcePath": "scripts/operations/consumer-publishers/publish-reviewed-image.py",
     "sourceCommit": "a05d731e1f5e99c54b4ec37a65f9c1883b68e759",
     "copiedSha256": "4c20fa31ef8bcd5f18e8e894d6fd35157e7bcce1ef9392f70c21cdd6aa86f17e"
+  },
+  "historicalSetupFailure": {
+    "path": "docs/audits/2026-10-04-move-strict/old-receiver-red.log",
+    "sha256": "d9145beeaaa6ef7a04e8e73a8b2aa5adab99e4d8866164634ef9f5305a8e475a",
+    "bytes": 492,
+    "classification": "0 PASS/1 FAIL missing jwt-decode setup; incorrectly labelled as product RED in prior handoff, superseded by correction below."
+  },
+  "redCorrection": {
+    "actualRedRecord": {
+      "path": "docs/audits/2026-10-04-move-strict/old-receiver-real-red.log",
+      "sha256": "4d37007d84a632d231cf79ab1e62cf99a29be0448bbcb1991e7f45b76045a2b5",
+      "bytes": 2937
+    },
+    "fixtureSourceCommit": "fbe081ad2209b55dc21498ad835ffa7e21589d4f",
+    "fixtureSha256": "6da6fad9973a06f96f4a14a7cebb39d24a748982516cfd74c525dcc6901574b8",
+    "runAt": "2026-10-03T23:09:21Z",
+    "packages": "Unchanged original core4.0/contracts4.4/protocol baseline bytes; missing external dependency resolution repaired by explicit local links. jwt-decode4 from original Move node_modules; telemetry1.2 from WT baseline (canonical Move checkout held older1.1.1 and caused another setup failure).",
+    "candidateOverlayRestored": true,
+    "rerunReason": "Parent found wrong retained RED record; no valid previous functional stdout was retained. Focal replay only, no source/policy changes.",
+    "candidateGreenRecord": "candidate-receiver.log, same frozen fixture preserved; no unrelated suite rerun."
   }
 }
