@@ -1,0 +1,2 @@
+$ bun run --cwd packages/backend build
+$ tsc -p tsconfig.json

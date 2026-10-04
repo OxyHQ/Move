@@ -1,0 +1,66 @@
+$ NODE_ENV=test bun test src/__tests__/strictReceiver.test.ts
+bun test v1.4.2 (744846f84)
+
+src/__tests__/strictReceiver.test.ts:
+2026-10-03T23:09:21.409Z WARN [oxy.auth] Token rejected — claimed user does not own the session {
+  component: "auth",
+  method: "auth",
+  claimedUserId: "other-fixture",
+  validatedUserId: "user-fixture",
+}
+2026-10-03T23:09:21.409Z WARN [oxy.auth] refused SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T23:09:21.409Z WARN [oxy.auth] 401 after refusal SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+}
+2026-10-03T23:09:21.414Z WARN [oxy.auth] refused SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T23:09:21.414Z WARN [oxy.auth] 401 after refusal SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+}
+(pass) Move installed receiver versus strict-format claims > human session reaches HTTP and socket room; claim mismatch and withdrawal refuse [29.50ms]
+91 |     expect(validationCalls).toBe(6);
+92 |   });
+93 |   test('signed internal service token plus user header cannot enter the human API without delegated authority', async () => {
+94 |     const response = await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${token(serviceClaims)}`, 'X-Oxy-User-Id': 'user-fixture' } });
+95 |     // This is the strict contract; core4.0's internal-tier bypass makes this RED.
+96 |     expect(response.status).toBeGreaterThanOrEqual(400);
+                                 ^
+error: expect(received).toBeGreaterThanOrEqual(expected)
+
+Expected: >= 400
+Received: 200
+
+      at <anonymous> (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/__tests__/strictReceiver.test.ts:96:29)
+(fail) Move installed receiver versus strict-format claims > signed internal service token plus user header cannot enter the human API without delegated authority [2.51ms]
+(pass) Move installed receiver versus strict-format claims > app-only service token is not a human, and service token cannot open a human socket [2.73ms]
+
+ 2 pass
+ 1 fail
+ 10 expect() calls
+Ran 3 tests across 1 file. [158.00ms]
+error: script "test" exited with code 1

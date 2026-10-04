@@ -1,0 +1,5 @@
+$ bun run build:shared-types && bun run build:backend
+$ bun run --cwd packages/shared-types build
+$ tsc -p tsconfig.json
+$ bun run --cwd packages/backend build
+$ tsc -p tsconfig.json

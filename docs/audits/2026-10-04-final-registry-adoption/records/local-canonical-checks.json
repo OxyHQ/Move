@@ -1,0 +1,78 @@
+[
+  {
+    "name": "canonical-backend-realdb",
+    "cwd": ".",
+    "argv": [
+      "python3",
+      "scripts/test-strict-receiver-pg.py"
+    ],
+    "exitCode": 0,
+    "seconds": 3.022
+  },
+  {
+    "name": "canonical-frontend-tests",
+    "cwd": "packages/frontend",
+    "argv": [
+      "bun",
+      "run",
+      "test"
+    ],
+    "exitCode": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "canonical-backend-types",
+    "cwd": "packages/backend",
+    "argv": [
+      "bun",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "seconds": 2.32
+  },
+  {
+    "name": "canonical-frontend-types",
+    "cwd": "packages/frontend",
+    "argv": [
+      "bun",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "seconds": 5.979
+  },
+  {
+    "name": "canonical-backend-build",
+    "cwd": ".",
+    "argv": [
+      "bun",
+      "run",
+      "build:backend"
+    ],
+    "exitCode": 0,
+    "seconds": 2.37
+  },
+  {
+    "name": "canonical-frontend-export",
+    "cwd": ".",
+    "argv": [
+      "bun",
+      "run",
+      "build:frontend"
+    ],
+    "exitCode": 0,
+    "seconds": 13.621
+  },
+  {
+    "name": "canonical-gates",
+    "cwd": ".",
+    "argv": [
+      "bun",
+      "run",
+      "validate:gates"
+    ],
+    "exitCode": 0,
+    "seconds": 0.032
+  }
+]

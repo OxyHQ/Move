@@ -1,0 +1,69 @@
+{
+  "worktree": "/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004",
+  "output": "/home/nate/Oxy/.agent-evidence/i04-consumer-final-prs/registry-Move-20261004",
+  "receipt": "local-canonical-checks.json",
+  "jobs": [
+    {
+      "name": "canonical-backend-realdb",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "scripts/test-strict-receiver-pg.py"
+      ]
+    },
+    {
+      "name": "canonical-frontend-tests",
+      "cwd": "packages/frontend",
+      "argv": [
+        "bun",
+        "run",
+        "test"
+      ]
+    },
+    {
+      "name": "canonical-backend-types",
+      "cwd": "packages/backend",
+      "argv": [
+        "bun",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "name": "canonical-frontend-types",
+      "cwd": "packages/frontend",
+      "argv": [
+        "bun",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "name": "canonical-backend-build",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "build:backend"
+      ]
+    },
+    {
+      "name": "canonical-frontend-export",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "build:frontend"
+      ]
+    },
+    {
+      "name": "canonical-gates",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "validate:gates"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "scope": "workflow preparation only",
+  "sources": [
+    {
+      "path": ".github/workflows/deploy-frontends.yml",
+      "sha256": "07ea80c00aa2f87ffdc1ce40118e6f10a730b01900d101345ff56013d05e24f1"
+    },
+    {
+      "path": ".github/scripts/verify-manual-frontend.py",
+      "sha256": "76ddd8121702f4b20b5c4da817da2ea3c211974566e14e9cffb5ee27b6964317"
+    },
+    {
+      "path": "scripts/test-manual-frontend.py",
+      "sha256": "e10a9e459f119ba4f0f9c1b1636658ef12c5f56e6fb86778d788f6f61d74f49d"
+    },
+    {
+      "path": "scripts/test-manual-frontend-workflow.mjs",
+      "sha256": "684ed45b18c499a1f9207a47023be36f8fe0f3d26875ed6803d5c73170c4b1bd"
+    },
+    {
+      "path": "scripts/test-gates.mjs",
+      "sha256": "639345ab720f6c2d0dc55ef9ce0c82a2c657598a6f6877e4b0e0996756dbd63d"
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/audits/2026-10-04-manual-frontend/README.md",
+      "sha256": "c6c8f221fc677fc15bbd265e50336524849c556cd350b146e51d50746769ee10"
+    },
+    {
+      "path": "docs/audits/2026-10-04-manual-frontend/helper-tests.log",
+      "sha256": "888a0c0ed615e57d32cf72be501b0c355f33b8613c81dfdaa99db33d7959487e"
+    },
+    {
+      "path": "docs/audits/2026-10-04-manual-frontend/workflow-tests.log",
+      "sha256": "bd53ddbb9c61b71e5d634c0b21316716770270be260483b4fa588929a935d7a6"
+    }
+  ],
+  "canonicalHelperSha256": "76ddd8121702f4b20b5c4da817da2ea3c211974566e14e9cffb5ee27b6964317",
+  "liveOperation": false
+}

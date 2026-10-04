@@ -23,6 +23,7 @@ import {
   type PreparedItem,
 } from '../destinations/types';
 import { OxyUploadError } from '../utils/oxyHelpers';
+import { MentionDestination } from '../destinations/mention';
 import { runMigrationJob, type PipelineDeps, type ProgressSink } from '../pipeline/runner';
 import { JobConflictError, JobService } from '../pipeline/jobService';
 import { processMigrationMessage } from '../queue/workers';
@@ -252,6 +253,53 @@ beforeEach(async () => {
 });
 
 describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
+  for (const deniedStatus of [401, 403]) {
+    test(`Mention HTTP ${deniedStatus} preserves the stored intent and finishes without rescheduling`, async () => {
+      const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
+      await database.db.update(migrationJobs).set({
+        phases: { profile: { status: 'done' }, graph: { status: 'done' }, content: { status: 'running' } },
+        plan: { profile: { displayName: 'Preserve this plan' }, graph: { followBatches: [['target-fixture']], unresolved: 0, hidden: false }, blocks: null },
+      }).where(eq(migrationJobs.id, created.id));
+      let before: MigrationJob | undefined;
+      let itemsBefore: Array<typeof migrationItems.$inferSelect> = [];
+      let calls = 0;
+      const denied = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
+        calls++;
+        expect(request.method).toBe('POST');
+        expect(new URL(request.url).pathname).toBe('/imports/v1/posts:batch');
+        expect(request.headers.get('X-Oxy-User-Id')).toBe(USER);
+        expect(request.headers.get('Authorization')).toBe('Bearer fixture-service-token');
+        before = await job(created.id);
+        itemsBefore = await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id));
+        expect(itemsBefore.length).toBeGreaterThan(0);
+        return Response.json({ code: 'SERVICE_ACTING_AS_UNAUTHORIZED' }, { status: deniedStatus });
+      } });
+      const destination = new MentionDestination({ baseUrl: `http://127.0.0.1:${denied.port}`, oxy: { serviceToken: async () => 'fixture-service-token' } });
+      const deniedDeps = { ...deps, destination };
+      const rescheduled: unknown[] = [];
+      try {
+        await processMigrationMessage({ data: { jobId: created.id }, attemptsMade: 0 }, deniedDeps, async (...args) => { rescheduled.push(args); });
+        expect(calls).toBe(1);
+        expect(rescheduled).toEqual([]);
+        expect(before).toBeDefined();
+        if (!before) throw new Error('The actual destination request was not reached');
+        const failed = await job(created.id);
+        expect(failed.status).toBe('failed');
+        expect(failed.error).toContain('destination-rejected');
+        expect(failed.finishedAt).not.toBeNull();
+        expect(emitted.filter((event) => event.id === created.id && event.status === 'failed')).toHaveLength(1);
+        for (const field of ['cursor', 'plan', 'counters', 'phases', 'options', 'planAck', 'undoFacts', 'sourceActor', 'linkedAccountId', 'oxyUserId'] as const) {
+          expect(failed[field]).toEqual(before[field]);
+        }
+        expect(await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id))).toEqual(itemsBefore);
+        // A duplicate queue delivery observes terminal failure and creates no retry/effect.
+        await processMigrationMessage({ data: { jobId: created.id }, attemptsMade: 1 }, deniedDeps, async (...args) => { rescheduled.push(args); });
+        expect(calls).toBe(1);
+        expect(rescheduled).toEqual([]);
+        expect(await job(created.id)).toEqual(failed);
+      } finally { denied.stop(true); }
+    });
+  }
   test('a full run imports every public own post, parents before children, and plans profile + graph', async () => {
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(enqueued).toEqual([created.id]);

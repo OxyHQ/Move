@@ -1,0 +1,16 @@
+$ NODE_ENV=test bun test src/__tests__/strictReceiver.test.ts
+bun test v1.4.2 (744846f84)
+
+src/__tests__/strictReceiver.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: export 'peekBrowserEdgeRegionHeader' not found in '@oxy.so/telemetry/browser'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [93.00ms]
+error: script "test" exited with code 1

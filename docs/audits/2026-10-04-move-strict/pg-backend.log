@@ -1,0 +1,167 @@
+waiting for server to start.... done
+server started
+{"verifiedOwnPostgresPid": 166750, "dataDirectory": "/home/nate/Oxy/.agent-evidence/move-pg-my8qoto5/data", "port": 5613, "liveAccess": false}
+$ NODE_ENV=test bun test
+bun test v1.4.2 (744846f84)
+
+src/__tests__/http.test.ts:
+(pass) per-platform backoff > a short 429 is retried inline, honouring Retry-After [0.47ms]
+(pass) per-platform backoff > a long 429 pauses the job instead of holding the worker [0.12ms]
+(pass) per-platform backoff > 404/410 are permanent [0.05ms]
+(pass) per-platform backoff > 5xx is retried up to the attempt budget [0.05ms]
+(pass) per-platform backoff > a non-public address is permanent, never retried [0.10ms]
+(pass) per-platform backoff > parseRetryAfterMs reads seconds and HTTP dates [0.03ms]
+(pass) media copy behind the shared upload limiter > the window caps uploads; an exhausted window pauses instead of failing [0.49ms]
+(pass) media copy behind the shared upload limiter > Oxy 429 blocks the whole limiter until Retry-After and pauses [0.13ms]
+(pass) media copy behind the shared upload limiter > what Mention cannot import is dropped before it is downloaded [0.06ms]
+(pass) media copy behind the shared upload limiter > a file that can never be copied (gone, too large) is dropped [0.06ms]
+(pass) signed reads through Oxy > the signer asks Oxy to sign exactly that URL and returns the three headers [0.68ms]
+{"level":"warn","time":"2026-10-03T22:32:41.577Z","pid":166760,"hostname":"SuperPC","status":403,"msg":"[oxy] instance-fetch signing refused"}
+(pass) signed reads through Oxy > Oxy's 429 pauses the job; a malformed answer is not sent [1.18ms]
+(pass) signed reads through Oxy > a fetcher with no signer refuses a signed read as authorized-fetch, before any network [0.06ms]
+(pass) signed reads through Oxy > the backoff never retries an authorized-fetch refusal or a paused signing budget [0.09ms]
+
+src/__tests__/sources.bluesky.test.ts:
+(pass) Bluesky source (recorded public AppView responses) > profile maps getProfile [0.79ms]
+(pass) Bluesky source (recorded public AppView responses) > images and video are the ORIGINAL blobs from the PDS, with alt text and MIME [0.99ms]
+(pass) Bluesky source (recorded public AppView responses) > without a PDS, images fall back to the CDN and video (HLS only) is dropped [0.48ms]
+(pass) Bluesky source (recorded public AppView responses) > reposts off, replies to others skipped — including a self-reply under someone else's root [0.50ms]
+(pass) Bluesky source (recorded public AppView responses) > a self-thread keeps its parent; the parent arrives later (newest first) [0.40ms]
+(pass) Bluesky source (recorded public AppView responses) > a quote of someone else becomes a link; a self-quote keeps its source id [0.71ms]
+(pass) Bluesky source (recorded public AppView responses) > an adult self-label becomes the content warning [0.47ms]
+(pass) Bluesky source (recorded public AppView responses) > reposts become a link to the original when asked [0.46ms]
+(pass) Bluesky source (recorded public AppView responses) > resuming from a cursor continues exactly after the last yielded item, across pages [1.24ms]
+(pass) Bluesky source (recorded public AppView responses) > graph reads getFollows, then the public block records from the PDS [0.67ms]
+(pass) Bluesky source (recorded public AppView responses) > graph resumes inside the blocks without re-reading the follows [1.12ms]
+(pass) Bluesky source (recorded public AppView responses) > without a PDS there is nowhere public to read blocks: follows only [0.29ms]
+(pass) Bluesky source (recorded public AppView responses) > a refused or missing block read loses only the blocks; a 429 still pauses [0.86ms]
+
+src/__tests__/mention.contract.test.ts:
+(pass) Mention responses, copied literally from Mention's tests > batch results: existing, deferred, failed [0.51ms]
+(pass) Mention responses, copied literally from Mention's tests > undo: { deleted, failed } [0.70ms]
+(pass) Mention responses, copied literally from Mention's tests > lookup: { imported, federated } — Move reads `imported` [0.37ms]
+(pass) requests Move builds pass Mention's own schema > plain [1.07ms]
+(pass) requests Move builds pass Mention's own schema > unlisted becomes public [0.06ms]
+(pass) requests Move builds pass Mention's own schema > content warning clamped to 500 [0.05ms]
+(pass) requests Move builds pass Mention's own schema > sensitive without a warning [0.09ms]
+(pass) requests Move builds pass Mention's own schema > media: assetId + alt only, alt clamped [0.24ms]
+(pass) requests Move builds pass Mention's own schema > eleven links clamped to ten, non-http dropped [0.09ms]
+(pass) requests Move builds pass Mention's own schema > article: body moves out of text [0.17ms]
+(pass) requests Move builds pass Mention's own schema > self-reply and self-quote [0.03ms]
+(pass) requests Move builds pass Mention's own schema > text over the limit clamped, links included [0.04ms]
+(pass) requests Move builds pass Mention's own schema > mapped values [0.06ms]
+(pass) the Mention client > splits 50 large items into requests under Mention's 1 MB body limit, in order [3.59ms]
+(pass) the Mention client > negative control: small items stay in ONE request [0.56ms]
+(pass) the Mention client > deferred passes through; an item missing from the response is a failure [0.21ms]
+(pass) the Mention client > lookup sends `sourceIds` and reads `imported` [0.25ms]
+
+src/__tests__/sources.mastodon.test.ts:
+(pass) Mastodon source (recorded mastodon.social responses) > profile falls back to the public REST lookup when the actor needs a signature [7.38ms]
+(pass) Mastodon source (recorded mastodon.social responses) > negative control: a REST lookup for ANOTHER account is refused [0.28ms]
+(pass) Mastodon source (recorded mastodon.social responses) > without a signer, an instance that refuses the outbox unsigned fails as authorized-fetch, not as empty [0.44ms]
+(pass) Mastodon source (recorded mastodon.social responses) > maps the recorded outbox: boosts off, replies to others skipped, self-thread and self-quote kept [5.91ms]
+(pass) Mastodon source (recorded mastodon.social responses) > content warning, sensitivity, mentions and media survive the mapping [1.79ms]
+(pass) Mastodon source (recorded mastodon.social responses) > boosts are imported as a link to the original only when asked [1.73ms]
+(pass) Mastodon source (recorded mastodon.social responses) > resuming from a cursor continues exactly after the last yielded item, across pages [2.78ms]
+(pass) Mastodon source (recorded mastodon.social responses) > negative control: a cross-origin `next` page is never followed [1.33ms]
+(pass) Mastodon source (recorded mastodon.social responses) > graph reads the following collection [0.72ms]
+(pass) Mastodon source on an authorized-fetch instance (signed by Oxy) > reads the outbox and the graph once Oxy signs, where unsigned it got nothing [2.50ms]
+(pass) Mastodon source on an authorized-fetch instance (signed by Oxy) > once a collection needed a signature, the host is signed straight away [1.55ms]
+(pass) Mastodon source on an authorized-fetch instance (signed by Oxy) > a refused unsigned ACTOR alone (mastodon.social) does not switch the collections to signing [1.00ms]
+(pass) Mastodon source on an authorized-fetch instance (signed by Oxy) > a server that refuses the signed read too fails as authorized-fetch [0.19ms]
+
+src/__tests__/strictReceiver.test.ts:
+2026-10-03T22:32:41.765Z WARN [oxy.auth] Token rejected — claimed user does not own the session {
+  component: "auth",
+  method: "auth",
+  claimedUserId: "other-fixture",
+  validatedUserId: "user-fixture",
+}
+2026-10-03T22:32:41.765Z WARN [oxy.auth] refused SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T22:32:41.765Z WARN [oxy.auth] 401 after refusal SESSION_USER_MISMATCH: Token user claim does not own the presented session {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_USER_MISMATCH",
+  stage: "session",
+  reason: "Token user claim does not own the presented session",
+}
+2026-10-03T22:32:41.769Z WARN [oxy.auth] refused SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "auth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+  status: 401,
+  optional: true,
+  path: "/private",
+}
+2026-10-03T22:32:41.769Z WARN [oxy.auth] 401 after refusal SESSION_VALIDATION_ERROR: Session validation call failed (Error) {
+  component: "auth",
+  method: "requireOxyAuth",
+  code: "SESSION_VALIDATION_ERROR",
+  stage: "session",
+  reason: "Session validation call failed (Error)",
+}
+(pass) Move installed receiver versus strict-format claims > human session reaches HTTP and socket room; claim mismatch and withdrawal refuse [26.89ms]
+2026-10-03T22:32:41.775Z WARN [oxy.auth] Service token rejected — no delegation grant {
+  component: "auth",
+  method: "auth.serviceToken",
+  appId: "move-fixture",
+  attemptedUserId: "user-fixture",
+}
+2026-10-03T22:32:41.775Z WARN [oxy.auth] refused SERVICE_ACTING_AS_UNAUTHORIZED: No delegation grant for app move-fixture acting as user-fixture (or this verifier could not reach the grant check) {
+  component: "auth",
+  method: "auth",
+  code: "SERVICE_ACTING_AS_UNAUTHORIZED",
+  stage: "service-token",
+  reason: "No delegation grant for app move-fixture acting as user-fixture (or this verifier could not reach the grant check)",
+  status: 403,
+  optional: true,
+  path: "/private",
+}
+(pass) Move installed receiver versus strict-format claims > signed internal service token plus user header cannot enter the human API without delegated authority [4.27ms]
+(pass) Move installed receiver versus strict-format claims > app-only service token is not a human, and service token cannot open a human socket [2.51ms]
+
+src/__tests__/pipeline.integration.test.ts:
+{"level":"info","time":"2026-10-03T22:32:41.916Z","pid":166760,"hostname":"SuperPC","msg":"Connected to PostgreSQL"}
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > Mention HTTP 401 preserves the stored intent and finishes without rescheduling [56.99ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > Mention HTTP 403 preserves the stored intent and finishes without rescheduling [41.24ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a full run imports every public own post, parents before children, and plans profile + graph [73.87ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > an Oxy 429 on media pauses the job (never fails it) and the next run resumes to done [106.49ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a hidden follow list is recorded with the profile, so the graph is never read [56.81ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a Mention 429 also pauses [73.24ms]
+{"level":"warn","time":"2026-10-03T22:32:42.373Z","pid":166760,"hostname":"SuperPC","name":"Error","message":"Mention POST answered 503","stack":"Error: Mention POST answered 503\n    at deliver (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/__tests__/pipeline.integration.test.ts:87:41)\n    at deliver (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:317:49)\n    at async contentPhase (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:411:20)\n    at async run (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:123:48)\n    at async runMigrationJob (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:546:15)\n    at async <anonymous> (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/__tests__/pipeline.integration.test.ts:396:25)\n    at processTicksAndRejections (native:7:39)","msg":"[pipeline] transient failure; the attempt will be retried from the last checkpoint"}
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a transient failure resumes from the saved cursor, not from the start [79.64ms]
+{"level":"warn","time":"2026-10-03T22:32:42.447Z","pid":166760,"hostname":"SuperPC","name":"Error","message":"socket hang up after Mention committed","stack":"Error: socket hang up after Mention committed\n    at deliver (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/__tests__/pipeline.integration.test.ts:105:45)\n    at deliver (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:317:49)\n    at async contentPhase (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:419:16)\n    at async run (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:123:48)\n    at async runMigrationJob (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/pipeline/runner.ts:546:15)\n    at async <anonymous> (/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend/src/__tests__/pipeline.integration.test.ts:414:19)\n    at processTicksAndRejections (native:7:39)","msg":"[pipeline] transient failure; the attempt will be retried from the last checkpoint"}
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a lost response is resent idempotently: nothing is duplicated [83.73ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a self-reply whose parent never arrives imports STANDALONE with a link to the parent [64.56ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a parent imported by an EARLIER job is kept as the reply target (lookup, not standalone) [58.68ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > an item Mention answers `deferred` is kept and resent, never counted as failed [63.25ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > undo surfaces the posts Mention failed to delete, and a second undo retries them [77.55ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > undo deletes Mention's batch, marks items undone and returns the plan for the client [68.39ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a linked account that is not the caller's is rejected before any job exists [3.41ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a linked account revoked after creation fails the run with a stable code [10.67ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > at most one active job per user and platform, enforced by the database [124.58ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > a cancelled job is never run [9.05ms]
+(pass) migration pipeline (real Postgres, Mention and Oxy faked) > another user cannot read, cancel or undo a job [6.11ms]
+(pass) the client plan: resumable and undoable from any device (real JobService) > a Bluesky run plans the profile, the follows and the PUBLIC blocks [67.54ms]
+(pass) the client plan: resumable and undoable from any device (real JobService) > undo on a second device restores the profile and removes only what Move created [105.73ms]
+(pass) the client plan: resumable and undoable from any device (real JobService) > the client sees no follow or block batch while the graph is still being built [65.39ms]
+(pass) the client plan: resumable and undoable from any device (real JobService) > the ack refuses facts that do not belong to the plan, and keeps the first of each [80.38ms]
+
+ 82 pass
+ 0 fail
+ 333 expect() calls
+Ran 82 tests across 6 files. [1.87s]
+waiting for server to shut down.... done
+server stopped
+{"ownedPostgresStopped": true, "pidAbsent": true, "record": "/home/nate/Oxy/.agent-evidence/move-pg-my8qoto5"}

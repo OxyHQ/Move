@@ -25,13 +25,13 @@
     "test": "bun run build:shared-types && bun run --cwd packages/frontend test && bun run --cwd packages/backend test"
   },
   "overrides": {
-    "@oxy.so/contracts": "^4.4.0",
-    "@oxy.so/core": "^4.0.0",
-    "@oxy.so/bloom": "^6.3.0"
+    "@oxy.so/contracts": "^4.9.0",
+    "@oxy.so/core": "^4.2.0",
+    "@oxy.so/bloom": "6.2.1"
   },
   "resolutions": {
-    "@oxy.so/contracts": "^4.4.0",
-    "@oxy.so/core": "^4.0.0",
-    "@oxy.so/bloom": "^6.3.0"
+    "@oxy.so/contracts": "^4.9.0",
+    "@oxy.so/core": "^4.2.0",
+    "@oxy.so/bloom": "6.2.1"
   }
 }

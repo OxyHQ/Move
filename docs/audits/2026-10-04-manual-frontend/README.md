@@ -1,0 +1,5 @@
+# Closed manual frontend release admission
+
+Move uses the same reviewed read-only frontend provenance helper as the six existing consumer templates. Manual dispatch requires main, exact current-main/checkout/event SHA and a completed successful push CI run from the same repository and ci.yml. It checks again before the deployment effect, preserving the existing current-main guards. Both modes honor OXY_1519_ROLLOUT_HOLD. Automatic workflow_run also requires its head SHA to equal github.sha; stale completions skip before checkout. Checkout uses only github.sha.
+
+Five helper tests cover valid proof, wrong event/branch/hold/checkout/inputs, stale main, foreign or unsuccessful CI and failed API reads. The normal validate:gates command now includes the parsed workflow positive plus six mutation controls and an exact helper hash, preserving its existing gates. All pass locally. No dispatch, registry install, permission mutation or deployment has run. Runtime and product manifests are unchanged; registry adoption and exact main CI remain required.

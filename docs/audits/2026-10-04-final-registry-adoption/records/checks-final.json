@@ -1,0 +1,78 @@
+{
+  "worktree": "/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004",
+  "output": "/home/nate/Oxy/.agent-evidence/i04-consumer-final-prs/registry-Move-20261004",
+  "receipt": "local-final-checks.json",
+  "jobs": [
+    {
+      "name": "shared-build",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "build:shared-types"
+      ]
+    },
+    {
+      "name": "backend-realdb",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "scripts/test-strict-receiver-pg.py"
+      ]
+    },
+    {
+      "name": "frontend-tests",
+      "cwd": "packages/frontend",
+      "argv": [
+        "bun",
+        "run",
+        "test"
+      ]
+    },
+    {
+      "name": "backend-types",
+      "cwd": "packages/backend",
+      "argv": [
+        "bun",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "name": "frontend-types",
+      "cwd": "packages/frontend",
+      "argv": [
+        "bun",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "name": "backend-build",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "build:backend"
+      ]
+    },
+    {
+      "name": "frontend-export",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "build:frontend"
+      ]
+    },
+    {
+      "name": "gates",
+      "cwd": ".",
+      "argv": [
+        "bun",
+        "run",
+        "validate:gates"
+      ]
+    }
+  ]
+}

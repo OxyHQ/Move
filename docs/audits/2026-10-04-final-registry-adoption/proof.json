@@ -1,0 +1,177 @@
+{
+  "source": "1ea2afdbc25807eb72296c032c81e16777e2dec1",
+  "sources": [
+    {
+      "path": "package.json",
+      "sha256": "e96b7c1ce7c21c48cd69161f49ccdd353eb297d313675557a82772fc4eafc324"
+    },
+    {
+      "path": "packages/backend/package.json",
+      "sha256": "07af8736d2243826716e081edc141da22dd84e3be40f3c23fd79a46ae1179025"
+    },
+    {
+      "path": "packages/frontend/package.json",
+      "sha256": "6b236df4655e74dd135ced8bb50e796290cc75141ce87ac3c39ca3e7d53e52ee"
+    },
+    {
+      "path": "bun.lock",
+      "sha256": "47a6e0c11612e456a03b9f9c60be9004772265763ec604e7face56e32042fdab"
+    }
+  ],
+  "records": [
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/Move-frozen.log",
+      "sha256": "1959fc71aefd3b910a6954c23f10e0566e3c12efdd35a30f087a0521db6a37b8",
+      "bytes": 196
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/Move-installed.json",
+      "sha256": "da5b29cd537d41942982a98a39dd80a62afb8437e2464980d9a873621392078e",
+      "bytes": 3023
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/Move-resolve.log",
+      "sha256": "fe5a191643c6e5c884e1fa76c7c2da9f36454b8ffa66cb12601f28d786d43a4f",
+      "bytes": 432
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/backend-realdb.log",
+      "sha256": "daf66c3e9e2c877371a54008b7209c679e4e8c8c40d19bb4f3c86b90d0339f17",
+      "bytes": 17378
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/bloom-final-importers.json",
+      "sha256": "8010845a9520ab2e24a0aca4f9003dd1575d140d4a0cbed5d57ecf328ca972e1",
+      "bytes": 357
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-backend-build.log",
+      "sha256": "fe7b67c5793de3404a67ca0d041dae0298a189b7aaf145dae0d8d5effefb80de",
+      "bytes": 62
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-backend-realdb.log",
+      "sha256": "e248d2e61cf25906d1507356a478bacb4ce0c8915e5740a9c4093654adf1038d",
+      "bytes": 16145
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-backend-types.log",
+      "sha256": "1056aced506bb9777985834f2a6435ae29f4ec4029bd05592c1404a8f8706886",
+      "bytes": 33
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-frontend-export.log",
+      "sha256": "dff3332290ab209ce4e720e9c533a13666e58ba98f18849d072085297db171ab",
+      "bytes": 8858
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-frontend-tests.log",
+      "sha256": "243f5ad0164d0bd815ef2690df9c2856ffe807f5efaafe3401427f7154d551c9",
+      "bytes": 1322
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-frontend-types.log",
+      "sha256": "6720f63521493609fd64926be4ec9872f8875c7c5cd3070a7f881303ee3bc74e",
+      "bytes": 150
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-gates.log",
+      "sha256": "bd53ddbb9c61b71e5d634c0b21316716770270be260483b4fa588929a935d7a6",
+      "bytes": 308
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-installed.json",
+      "sha256": "eb06c6c2e00027db368ba7b306bb4b049b114e874683b6bd7614ce65ccc5d597",
+      "bytes": 1316
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/canonical-materialization-frozen.log",
+      "sha256": "4e29f284a98db389d66e60151ec462806e2debf1390d8d864108f45a3d9df8ca",
+      "bytes": 161
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/checks-canonical.json",
+      "sha256": "fe4087c611c53e81436a2824c81bccdd36c981956a3797da49a64adcf7f8d00d",
+      "bytes": 1322
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/checks-final.json",
+      "sha256": "f94747fcdf1af2c6901fc37b559474483a0646604dd793a97b6b5e4d8be6cce1",
+      "bytes": 1392
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/contracts-registry.json",
+      "sha256": "fb1ded2797bdbd0ca31460f3cba087f078a86dc201365c923da9fcc23b07ed7b",
+      "bytes": 380
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/core-registry.json",
+      "sha256": "99b7f8a1cc87cf46ff54b3113a1911a938f39b4f086537e0a4138ee38dd035b7",
+      "bytes": 375
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/intent.json",
+      "sha256": "35505303c7fa61c96c045ff8a10ccf9b7c5b0a2e82f6baa850e4006936a660e5",
+      "bytes": 148
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/local-canonical-checks.json",
+      "sha256": "771de0f12f2daa599f73f3013415e355124a4fb952cc272a49c72d9060353b25",
+      "bytes": 1254
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/local-final-checks.json",
+      "sha256": "c88f6e3f219a3b992704cc846c9a3204295c2007398b5f440b4d420166bfb70a",
+      "bytes": 346
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/mcp-registry.json",
+      "sha256": "cc279f4f5b1ca68041f6f0d3583e4d9dc218bd7c0b77846207aa3b981086d7ac",
+      "bytes": 373
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/preflight.json",
+      "sha256": "631dcd8490db34c8267fd395b09b7d7058046a6fbac72ed83502f7bb2e62f495",
+      "bytes": 249
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/protocol-registry.json",
+      "sha256": "cc0b427dca92d55ea5e1debe7e76580618a26f997b2c888b8484537b64b70bbd",
+      "bytes": 379
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/registry.json",
+      "sha256": "a39da224fafeec388f0ac27e08ea13cf666427a0177b67f7b077c65cadb59df0",
+      "bytes": 415373
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/retained-overlay-links.json",
+      "sha256": "1216f81efd6ca2767895e7f84edf457b9d26d20802cc67ac5f6207529f906352",
+      "bytes": 1348
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/services-registry.json",
+      "sha256": "444599f0eb56d104d64c288ed3a6544163e54430c0f275c2feec219d5f624611",
+      "bytes": 381
+    },
+    {
+      "path": "docs/audits/2026-10-04-final-registry-adoption/records/shared-build.log",
+      "sha256": "378134c4a90c4b72dcb4c460d0f8dd6a23d0fad651fd4d14930c8e9f47b2bae0",
+      "bytes": 67
+    }
+  ],
+  "validation": {
+    "backendPassed": 82,
+    "frontendPassed": 11,
+    "sdkImporterMembers": 3976,
+    "bloomImporterMembers": 20940,
+    "typesBuildExportGates": "passed"
+  },
+  "limits": [
+    "Published registry archives and all installed SDK importer members were compared byte for byte. Stale same-version candidate materializations were retained and repaired with a frozen install; their setup failures remain in the records.",
+    "Local web export proves compilation, not browser/native acceptance or deployed public-client configuration. Required PR/main CI and root image/promotion remain separate.",
+    "No production database, provider writes, grants, credentials or auth fixtures were changed. Owned PostgreSQL was stopped and its PID absence verified.",
+    "Initial run used Bun 1.3.14 and returned 82 passes plus a socket teardown hook timeout. Canonical CI Bun 1.4.2 completed 82/0 after retained overlay links were replaced with normal registry materialization. This is not a runtime product change.",
+    "The former overlay targets were not modified; only owned node_modules links were moved aside. All final resolvers remain within this worktree and match the public archives."
+  ]
+}
