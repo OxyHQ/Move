@@ -1,0 +1,87 @@
+{
+  "repository": "OxyHQ/Move",
+  "lockSha256": "47a6e0c11612e456a03b9f9c60be9004772265763ec604e7face56e32042fdab",
+  "installed": true,
+  "installedMembers": [
+    {
+      "importer": "packages/backend/package.json",
+      "name": "@oxy.so/contracts",
+      "version": "4.9.0",
+      "root": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/candidate/node_modules/@oxy.so/contracts",
+      "files": 198,
+      "allFilesEqual": true
+    },
+    {
+      "importer": "packages/backend/package.json",
+      "name": "@oxy.so/core",
+      "version": "4.2.0",
+      "root": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/candidate/node_modules/@oxy.so/core",
+      "files": 581,
+      "allFilesEqual": true
+    },
+    {
+      "importer": "packages/frontend/package.json",
+      "name": "@oxy.so/contracts",
+      "version": "4.9.0",
+      "root": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/candidate/node_modules/@oxy.so/contracts",
+      "files": 198,
+      "allFilesEqual": true
+    },
+    {
+      "importer": "packages/frontend/package.json",
+      "name": "@oxy.so/core",
+      "version": "4.2.0",
+      "root": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/candidate/node_modules/@oxy.so/core",
+      "files": 581,
+      "allFilesEqual": true
+    },
+    {
+      "importer": "packages/frontend/package.json",
+      "name": "@oxy.so/services",
+      "version": "11.1.0",
+      "root": "/home/nate/Oxy/.agent-evidence/integration-move-strict-20261004/frontend-compat/services/package",
+      "files": 2418,
+      "allFilesEqual": true
+    }
+  ],
+  "acceptanceChecksPending": [
+    {
+      "package": "@move/shared-types",
+      "cwd": "/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/shared-types",
+      "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "clean": "rm -rf dist"
+      }
+    },
+    {
+      "package": "@move/backend",
+      "cwd": "/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/backend",
+      "scripts": {
+        "dev": "bun --watch server.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "bun dist/server.js",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "bun run src/db/migrate.ts",
+        "typecheck": "tsc -p tsconfig.typecheck.json",
+        "test": "NODE_ENV=test bun test"
+      }
+    },
+    {
+      "package": "@move/frontend",
+      "cwd": "/home/nate/Oxy/Move/.worktrees/1519-strict-receiver-20261004/packages/frontend",
+      "scripts": {
+        "start": "expo start",
+        "android": "expo start --android",
+        "ios": "expo start --ios",
+        "web": "expo start --web",
+        "export:web": "expo export --platform web --clear",
+        "prebuild": "expo prebuild",
+        "lint": "expo lint",
+        "typecheck": "bun ../../scripts/generate-router-types.mjs && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+        "test": "bun test __tests__"
+      }
+    }
+  ],
+  "merged": false,
+  "deployed": false
+}

@@ -1,0 +1,2 @@
+$ bun ../../scripts/generate-router-types.mjs && tsc --noEmit && tsc --noEmit -p tsconfig.test.json
+typed routes: 7 routes -> .expo/types/router.d.ts

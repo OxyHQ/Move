@@ -1,0 +1,23 @@
+[
+  {
+    "name": "shared-build",
+    "cwd": ".",
+    "argv": [
+      "bun",
+      "run",
+      "build:shared-types"
+    ],
+    "exitCode": 0,
+    "seconds": 0.465
+  },
+  {
+    "name": "backend-realdb",
+    "cwd": ".",
+    "argv": [
+      "python3",
+      "scripts/test-strict-receiver-pg.py"
+    ],
+    "exitCode": 1,
+    "seconds": 8.435
+  }
+]

@@ -1,0 +1,7 @@
+bun install v1.4.2 (744846f84)
+
+$ bun run build:shared-types
+$ bun run --cwd packages/shared-types build
+$ tsc -p tsconfig.json
+
+6 packages installed [812.00ms]

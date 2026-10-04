@@ -1,0 +1,5 @@
+$ bun ./scripts/check-migration-phase-markers.mjs && bun ./scripts/check-workflow-secrets.mjs && bun ./scripts/test-gates.mjs
+deploy-phase markers: 1 migration(s) OK
+workflow secrets: 5 workflow(s) OK
+gate self-tests: all controls behaved
+Move manual frontend workflow: positive + six mutation controls PASS
