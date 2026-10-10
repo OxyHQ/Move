@@ -11,7 +11,14 @@ import * as WebBrowser from 'expo-web-browser';
 import type { OxyServices } from '@oxy.so/core';
 import type { MigrationPlatform } from '@move/shared-types';
 import { LINKED_RETURN_TO, MENTION_FEDERATION_DOMAIN, OXY_CLIENT_ID } from './config';
-import { PLATFORM_NETWORK, completeLink, formatMentionHandle, outcomeFromParams, type LinkOutcome, type LinkResult } from './handles';
+import {
+  PLATFORM_NETWORK,
+  completeLink,
+  formatMentionHandle,
+  outcomeFromParams,
+  type LinkOutcome,
+  type LinkResult,
+} from './handles';
 
 let pendingAuthSession = false;
 

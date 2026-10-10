@@ -45,7 +45,10 @@ const MEDIA_HEADERS_TIMEOUT_MS = 15_000;
 const UPLOADABLE = /^(image|video)\//;
 
 /** Per-process window: the fallback, and the test double. */
-export function createMemoryUploadLimiter(limit: number, now: () => number = Date.now): UploadLimiter {
+export function createMemoryUploadLimiter(
+  limit: number,
+  now: () => number = Date.now,
+): UploadLimiter {
   let windowStart = 0;
   let used = 0;
   let blockedUntil = 0;
@@ -87,7 +90,14 @@ export function createUploadLimiter(limit: number): UploadLimiter {
       if (!redis) return local.acquire();
       try {
         const windowKey = `move:media-uploads:${Math.floor(Date.now() / WINDOW_MS)}`;
-        const [ok, wait] = (await redis.eval(ACQUIRE_SCRIPT, 2, windowKey, BLOCK_KEY, limit, WINDOW_MS + 5_000)) as [number, number];
+        const [ok, wait] = (await redis.eval(
+          ACQUIRE_SCRIPT,
+          2,
+          windowKey,
+          BLOCK_KEY,
+          limit,
+          WINDOW_MS + 5_000,
+        )) as [number, number];
         return ok === 1 ? { ok: true } : { ok: false, retryAfterMs: Math.max(1_000, wait) };
       } catch (error) {
         logger.debug('[media] Redis limiter unavailable, using the local window', error);
@@ -96,7 +106,9 @@ export function createUploadLimiter(limit: number): UploadLimiter {
     },
     async block(retryAfterMs) {
       await local.block(retryAfterMs);
-      await getReadyRedis()?.set(BLOCK_KEY, '1', 'PX', Math.max(1_000, Math.round(retryAfterMs))).catch(() => undefined);
+      await getReadyRedis()
+        ?.set(BLOCK_KEY, '1', 'PX', Math.max(1_000, Math.round(retryAfterMs)))
+        .catch(() => undefined);
     },
   };
 }
@@ -120,7 +132,10 @@ async function downloadMedia(url: string, maxBytes: number): Promise<DownloadedM
     });
     if (status === 404 || status === 410) return null;
     if (!body) throw new Error(`media download answered ${status}`);
-    const contentType = typeof headers['content-type'] === 'string' ? headers['content-type'].split(';')[0].trim().toLowerCase() : '';
+    const contentType =
+      typeof headers['content-type'] === 'string'
+        ? headers['content-type'].split(';')[0].trim().toLowerCase()
+        : '';
     return { buffer: body, contentType };
   } catch (error) {
     if (error instanceof ResponseTooLargeError) return null;
@@ -139,7 +154,10 @@ function fileNameOf(url: string): string {
 
 export interface MediaCopier {
   /** Copy each entry; entries that can never be copied are dropped. */
-  copy(ownerUserId: string, media: SourceMedia[]): Promise<Array<SourceMedia & { assetId: string }>>;
+  copy(
+    ownerUserId: string,
+    media: SourceMedia[],
+  ): Promise<Array<SourceMedia & { assetId: string }>>;
 }
 
 export function createMediaCopier(deps: {
@@ -174,7 +192,12 @@ export function createMediaCopier(deps: {
         if (!file) continue;
         const contentType = UPLOADABLE.test(file.contentType) ? file.contentType : entry.mimeType;
         try {
-          const result = await upload({ ownerUserId, buffer: file.buffer, contentType, fileName: fileNameOf(entry.url) });
+          const result = await upload({
+            ownerUserId,
+            buffer: file.buffer,
+            contentType,
+            fileName: fileNameOf(entry.url),
+          });
           copied.push({ ...entry, mimeType: contentType, assetId: result.fileId });
         } catch (error) {
           if (error instanceof OxyUploadError && error.status === 429) {

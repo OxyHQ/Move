@@ -95,9 +95,9 @@ const require = createRequire(import.meta.url);
  * root here, which is the one part of this that is genuinely Expo's to know
  * (the POS resolves its config through `app.config.js`, not `app.json`).
  */
-const { startTypescriptTypeGenerationAsync } = require(
-  '@expo/cli/build/src/start/server/type-generation/startTypescriptTypeGeneration.js',
-);
+const {
+  startTypescriptTypeGenerationAsync,
+} = require('@expo/cli/build/src/start/server/type-generation/startTypescriptTypeGeneration.js');
 
 const declarationPath = path.join(projectRoot, '.expo', 'types', 'router.d.ts');
 const relativeDeclaration = path.relative(projectRoot, declarationPath);

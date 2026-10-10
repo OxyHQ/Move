@@ -33,7 +33,9 @@ export function usePlanApplier(job: MigrationJobView | undefined) {
   const jobId = job?.id;
   const applicable = !!job && job.status !== 'cancelled' && job.status !== 'undone';
   // Re-run when a plan-building phase settles.
-  const trigger = job ? `${job.phases.profile.status}/${job.phases.graph.status}/${job.status}` : '';
+  const trigger = job
+    ? `${job.phases.profile.status}/${job.phases.graph.status}/${job.status}`
+    : '';
 
   const run = useCallback(async () => {
     if (!jobId) return;

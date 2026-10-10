@@ -43,7 +43,9 @@ export function isRedisReady(): boolean {
 }
 
 export async function closeRedis(): Promise<void> {
-  const clients = [queueConnection, commandClient].filter((client): client is IORedis => client !== null);
+  const clients = [queueConnection, commandClient].filter(
+    (client): client is IORedis => client !== null,
+  );
   queueConnection = null;
   commandClient = null;
   await Promise.allSettled(clients.map((client) => client.quit()));

@@ -75,7 +75,11 @@ function buildRequestOptions(
     lookup: ((
       _hostname: string,
       options: number | LookupOneOptions | LookupAllOptions,
-      callback: (err: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void,
+      callback: (
+        err: NodeJS.ErrnoException | null,
+        address: string | LookupAddress[],
+        family?: number,
+      ) => void,
     ): void => {
       if (typeof options === 'object' && options !== null && options.all === true) {
         callback(null, [{ address: pinnedIp, family: pinnedFamily }]);
@@ -86,7 +90,11 @@ function buildRequestOptions(
   };
 }
 
-function fetchOnce(options: https.RequestOptions, isHttps: boolean, headersTimeoutMs: number): Promise<IncomingMessage> {
+function fetchOnce(
+  options: https.RequestOptions,
+  isHttps: boolean,
+  headersTimeoutMs: number,
+): Promise<IncomingMessage> {
   return new Promise<IncomingMessage>((resolve, reject) => {
     const req = (isHttps ? https : http).request(options, resolve);
     req.setTimeout(headersTimeoutMs, () => req.destroy(new Error('upstream headers timeout')));
@@ -127,7 +135,9 @@ export async function publicGet(url: string, options: PublicGetOptions): Promise
     const guard = await assertSafePublicUrl(current);
     if (!guard.ok) throw new SsrfRejection(guard.reason);
     const target = new URL(current);
-    const hopHeaders = options.signHeaders ? { ...headers, ...(await options.signHeaders(current)) } : headers;
+    const hopHeaders = options.signHeaders
+      ? { ...headers, ...(await options.signHeaders(current)) }
+      : headers;
     const response = await fetchOnce(
       buildRequestOptions(target, guard.ip, guard.family, hopHeaders, signal),
       target.protocol === 'https:',
@@ -149,7 +159,11 @@ export async function publicGet(url: string, options: PublicGetOptions): Promise
       response.destroy();
       throw new ResponseTooLargeError();
     }
-    return { status, headers: response.headers, body: await readBounded(response, options.maxBytes) };
+    return {
+      status,
+      headers: response.headers,
+      body: await readBounded(response, options.maxBytes),
+    };
   }
   throw new UpstreamError('too many redirects');
 }

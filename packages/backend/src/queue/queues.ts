@@ -52,12 +52,16 @@ export async function enqueueMigrationRun(jobId: string, delayMs = 0): Promise<b
   const runAt = Math.ceil((Date.now() + delay) / 1000);
   // A hex digest: BullMQ rejects a custom id containing `:`.
   const messageId = `migration-${createHash('sha256').update(`${jobId}|${runAt}`).digest('hex').slice(0, 40)}`;
-  await queue.add(RUN_MESSAGE, { jobId }, {
-    jobId: messageId,
-    delay,
-    attempts: MIGRATION_JOB_ATTEMPTS,
-    backoff: { type: 'exponential', delay: MIGRATION_BACKOFF_BASE_MS },
-  });
+  await queue.add(
+    RUN_MESSAGE,
+    { jobId },
+    {
+      jobId: messageId,
+      delay,
+      attempts: MIGRATION_JOB_ATTEMPTS,
+      backoff: { type: 'exponential', delay: MIGRATION_BACKOFF_BASE_MS },
+    },
+  );
   return true;
 }
 
@@ -66,7 +70,11 @@ export async function enqueueMigrationRun(jobId: string, delayMs = 0): Promise<b
  * per interval however many tasks call this, so the sweep needs no leader.
  */
 export async function scheduleStalledSweep(): Promise<void> {
-  await getMigrationQueue()?.upsertJobScheduler(SWEEP_MESSAGE, { every: SWEEP_EVERY_MS }, { name: SWEEP_MESSAGE, data: {} });
+  await getMigrationQueue()?.upsertJobScheduler(
+    SWEEP_MESSAGE,
+    { every: SWEEP_EVERY_MS },
+    { name: SWEEP_MESSAGE, data: {} },
+  );
 }
 
 export async function closeQueues(): Promise<void> {

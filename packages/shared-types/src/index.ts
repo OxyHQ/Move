@@ -22,11 +22,23 @@ export function isMigrationPlatform(value: unknown): value is MigrationPlatform 
 export const UPCOMING_PLATFORMS = ['threads', 'instagram', 'x', 'medium', 'substack'] as const;
 export type UpcomingPlatform = (typeof UPCOMING_PLATFORMS)[number];
 
-export const JOB_STATUSES = ['queued', 'running', 'paused', 'done', 'failed', 'cancelled', 'undone'] as const;
+export const JOB_STATUSES = [
+  'queued',
+  'running',
+  'paused',
+  'done',
+  'failed',
+  'cancelled',
+  'undone',
+] as const;
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
 /** The statuses that hold the one-active-job-per-user-and-platform slot. */
-export const ACTIVE_JOB_STATUSES = ['queued', 'running', 'paused'] as const satisfies readonly JobStatus[];
+export const ACTIVE_JOB_STATUSES = [
+  'queued',
+  'running',
+  'paused',
+] as const satisfies readonly JobStatus[];
 
 export const PHASE_NAMES = ['profile', 'graph', 'content'] as const;
 export type PhaseName = (typeof PHASE_NAMES)[number];

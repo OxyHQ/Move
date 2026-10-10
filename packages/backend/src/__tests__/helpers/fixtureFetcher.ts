@@ -5,7 +5,12 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SourceAuthRequiredError, type JsonFetcher, type JsonRequest, type JsonResponse } from '../../sources/http';
+import {
+  SourceAuthRequiredError,
+  type JsonFetcher,
+  type JsonRequest,
+  type JsonResponse,
+} from '../../sources/http';
 
 const FIXTURES = join(__dirname, '..', 'fixtures');
 
@@ -13,7 +18,9 @@ export function fixture(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(FIXTURES, path), 'utf8')) as Record<string, unknown>;
 }
 
-export type Route = { status: number; body?: unknown; headers?: Record<string, string> } | Record<string, unknown>;
+export type Route =
+  | { status: number; body?: unknown; headers?: Record<string, string> }
+  | Record<string, unknown>;
 
 export interface FixtureFetcher extends JsonFetcher {
   /** Every URL requested, unsigned or signed. */
@@ -31,7 +38,10 @@ export interface FixtureFetcher extends JsonFetcher {
  * actor (falling back to `routes`). Without it the fetcher has no signer and
  * refuses a signed request exactly as `createPublicJsonFetcher()` does.
  */
-export function createFixtureFetcher(routes: Record<string, Route>, signedRoutes?: Record<string, Route>): FixtureFetcher {
+export function createFixtureFetcher(
+  routes: Record<string, Route>,
+  signedRoutes?: Record<string, Route>,
+): FixtureFetcher {
   const calls: string[] = [];
   const signedCalls: string[] = [];
   const fetcher = (async (url: string, request?: JsonRequest): Promise<JsonResponse> => {
@@ -41,9 +51,12 @@ export function createFixtureFetcher(routes: Record<string, Route>, signedRoutes
       signedCalls.push(url);
       if (signedRoutes[url] !== undefined) return answer(signedRoutes[url]);
     }
-    const key = routes[url] !== undefined
-      ? url
-      : Object.keys(routes).find((candidate) => candidate.endsWith('*') && url.startsWith(candidate.slice(0, -1)));
+    const key =
+      routes[url] !== undefined
+        ? url
+        : Object.keys(routes).find(
+            (candidate) => candidate.endsWith('*') && url.startsWith(candidate.slice(0, -1)),
+          );
     if (!key) throw new Error(`unexpected fetch in test: ${url}`);
     return answer(routes[key]);
   }) as unknown as FixtureFetcher;
@@ -53,8 +66,17 @@ export function createFixtureFetcher(routes: Record<string, Route>, signedRoutes
 }
 
 function answer(route: Route): JsonResponse {
-  if (typeof route === 'object' && route !== null && 'status' in route && typeof route.status === 'number') {
-    return { status: route.status, headers: (route.headers as Record<string, string>) ?? {}, body: route.body };
+  if (
+    typeof route === 'object' &&
+    route !== null &&
+    'status' in route &&
+    typeof route.status === 'number'
+  ) {
+    return {
+      status: route.status,
+      headers: (route.headers as Record<string, string>) ?? {},
+      body: route.body,
+    };
   }
   return { status: 200, headers: {}, body: JSON.parse(JSON.stringify(route)) };
 }
@@ -69,26 +91,39 @@ export function mastodonRoutes(): Record<string, Route> {
   return {
     // MEASURED: mastodon.social refuses the unsigned actor GET.
     [GARGRON]: { status: 401, body: { error: 'Request not signed' } },
-    'https://mastodon.social/api/v1/accounts/lookup?acct=Gargron': fixture('mastodon/account-lookup.json'),
+    'https://mastodon.social/api/v1/accounts/lookup?acct=Gargron': fixture(
+      'mastodon/account-lookup.json',
+    ),
     [`${GARGRON}/outbox`]: fixture('mastodon/outbox.json'),
     [`${GARGRON}/outbox?page=true`]: fixture('mastodon/outbox-page1.json'),
-    [`${GARGRON}/outbox?max_id=117293597728332883&page=true`]: fixture('mastodon/outbox-page2.json'),
+    [`${GARGRON}/outbox?max_id=117293597728332883&page=true`]: fixture(
+      'mastodon/outbox-page2.json',
+    ),
     [`${GARGRON}/following`]: fixture('mastodon/following.json'),
     [`${GARGRON}/following?page=1`]: fixture('mastodon/following-page1.json'),
-    [`${GARGRON}/followers`]: { status: 200, body: { type: 'OrderedCollection', totalItems: 382784, first: `${GARGRON}/followers?page=1` } },
+    [`${GARGRON}/followers`]: {
+      status: 200,
+      body: { type: 'OrderedCollection', totalItems: 382784, first: `${GARGRON}/followers?page=1` },
+    },
   };
 }
 
 export function blueskyRoutes(): Record<string, Route> {
   const appView = 'https://public.api.bsky.app/xrpc';
   return {
-    [`${appView}/app.bsky.actor.getProfile?actor=${encodeURIComponent(JAY_DID)}`]: fixture('bluesky/profile.json'),
-    [`${appView}/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(JAY_DID)}&limit=100&filter=posts_and_author_threads`]: fixture('bluesky/author-feed-page1.json'),
-    [`${appView}/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(JAY_DID)}&limit=100&cursor=2026-06-20T00%3A00%3A00.000Z&filter=posts_and_author_threads`]: fixture('bluesky/author-feed-page2.json'),
-    [`${appView}/app.bsky.graph.getFollows?actor=${encodeURIComponent(JAY_DID)}&limit=100`]: fixture('bluesky/follows.json'),
+    [`${appView}/app.bsky.actor.getProfile?actor=${encodeURIComponent(JAY_DID)}`]:
+      fixture('bluesky/profile.json'),
+    [`${appView}/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(JAY_DID)}&limit=100&filter=posts_and_author_threads`]:
+      fixture('bluesky/author-feed-page1.json'),
+    [`${appView}/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(JAY_DID)}&limit=100&cursor=2026-06-20T00%3A00%3A00.000Z&filter=posts_and_author_threads`]:
+      fixture('bluesky/author-feed-page2.json'),
+    [`${appView}/app.bsky.graph.getFollows?actor=${encodeURIComponent(JAY_DID)}&limit=100`]:
+      fixture('bluesky/follows.json'),
     // Block records from the author's PDS (recorded 2026-09-25 from Jay's real
     // repo, trimmed to 3 + 2 records; page 2's cursor removed to end the list).
-    [`${BSKY_PDS}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(JAY_DID)}&collection=app.bsky.graph.block&limit=100`]: fixture('bluesky/blocks-page1.json'),
-    [`${BSKY_PDS}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(JAY_DID)}&collection=app.bsky.graph.block&limit=100&cursor=3miadgho7gx26`]: fixture('bluesky/blocks-page2.json'),
+    [`${BSKY_PDS}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(JAY_DID)}&collection=app.bsky.graph.block&limit=100`]:
+      fixture('bluesky/blocks-page1.json'),
+    [`${BSKY_PDS}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(JAY_DID)}&collection=app.bsky.graph.block&limit=100&cursor=3miadgho7gx26`]:
+      fixture('bluesky/blocks-page2.json'),
   };
 }

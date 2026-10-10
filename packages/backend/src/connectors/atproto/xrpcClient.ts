@@ -15,7 +15,11 @@ const DID_DOCUMENT_MAX_BYTES = 256 * 1024;
 const DID_DOCUMENT_TIMEOUT_MS = 8_000;
 
 /** `https://{host}/xrpc/{nsid}?{params}`, skipping undefined params. */
-export function buildXrpcUrl(host: string, nsid: string, params: Record<string, string | number | undefined> = {}): string {
+export function buildXrpcUrl(
+  host: string,
+  nsid: string,
+  params: Record<string, string | number | undefined> = {},
+): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) search.set(key, String(value));
@@ -28,9 +32,14 @@ export function buildXrpcUrl(host: string, nsid: string, params: Record<string, 
 function didDocumentUrl(did: string): string | undefined {
   if (DID_PLC_RE.test(did)) return `https://${PLC_DIRECTORY}/${did}`;
   if (!did.startsWith('did:web:')) return undefined;
-  const [host, ...path] = did.slice('did:web:'.length).split(':').map((segment) => decodeURIComponent(segment));
+  const [host, ...path] = did
+    .slice('did:web:'.length)
+    .split(':')
+    .map((segment) => decodeURIComponent(segment));
   if (!host) return undefined;
-  return path.length > 0 ? `https://${host}/${path.join('/')}/did.json` : `https://${host}/.well-known/did.json`;
+  return path.length > 0
+    ? `https://${host}/${path.join('/')}/did.json`
+    : `https://${host}/.well-known/did.json`;
 }
 
 /**
@@ -49,6 +58,8 @@ export async function resolvePdsEndpoint(did: string): Promise<string | undefine
   const document = JSON.parse(body.toString('utf8')) as {
     service?: Array<{ id?: string; type?: string; serviceEndpoint?: unknown }>;
   };
-  const service = document.service?.find((entry) => entry.id === '#atproto_pds' || entry.type === 'AtprotoPersonalDataServer');
+  const service = document.service?.find(
+    (entry) => entry.id === '#atproto_pds' || entry.type === 'AtprotoPersonalDataServer',
+  );
   return typeof service?.serviceEndpoint === 'string' ? service.serviceEndpoint : undefined;
 }

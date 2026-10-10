@@ -64,7 +64,12 @@ export function PlatformCard({ platform, onConnect }: PlatformCardProps) {
             </Button>
           ) : null
         ) : (
-          <Badge content={t('platforms.soon')} color="default" variant="subtle" size="label-small" />
+          <Badge
+            content={t('platforms.soon')}
+            color="default"
+            variant="subtle"
+            size="label-small"
+          />
         )}
       </View>
     </Card>

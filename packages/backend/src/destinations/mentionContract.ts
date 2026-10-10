@@ -56,22 +56,29 @@ const httpUrl = z
 /** Mention stores only these two; Move maps `unlisted` to `public` (Mention's own AP rule). */
 const MENTION_VISIBILITIES = ['public', 'followers_only'] as const;
 
-export const mentionImportItemSchema = z.object({
-  sourceId: opaqueId,
-  sourceUrl: httpUrl,
-  createdAt: z.iso.datetime({ offset: true }),
-  text: z.string().max(MENTION_MAX_TEXT),
-  contentWarning: z.string().trim().max(MENTION_MAX_CONTENT_WARNING).optional(),
-  language: z.string().trim().min(2).max(35).optional(),
-  visibility: z.enum(MENTION_VISIBILITIES),
-  replyToSourceId: opaqueId.optional(),
-  quoteSourceId: opaqueId.optional(),
-  media: z
-    .array(z.object({ assetId: opaqueId, alt: z.string().max(MENTION_MAX_ALT).optional() }).strict())
-    .max(MENTION_MAX_MEDIA),
-  article: z.object({ title: z.string().optional(), body: z.string().optional() }).strict().optional(),
-  links: z.array(httpUrl).max(MENTION_MAX_LINKS).optional(),
-}).strict();
+export const mentionImportItemSchema = z
+  .object({
+    sourceId: opaqueId,
+    sourceUrl: httpUrl,
+    createdAt: z.iso.datetime({ offset: true }),
+    text: z.string().max(MENTION_MAX_TEXT),
+    contentWarning: z.string().trim().max(MENTION_MAX_CONTENT_WARNING).optional(),
+    language: z.string().trim().min(2).max(35).optional(),
+    visibility: z.enum(MENTION_VISIBILITIES),
+    replyToSourceId: opaqueId.optional(),
+    quoteSourceId: opaqueId.optional(),
+    media: z
+      .array(
+        z.object({ assetId: opaqueId, alt: z.string().max(MENTION_MAX_ALT).optional() }).strict(),
+      )
+      .max(MENTION_MAX_MEDIA),
+    article: z
+      .object({ title: z.string().optional(), body: z.string().optional() })
+      .strict()
+      .optional(),
+    links: z.array(httpUrl).max(MENTION_MAX_LINKS).optional(),
+  })
+  .strict();
 
 export const mentionBatchRequestSchema = z.object({
   platform: z.enum(MIGRATION_PLATFORMS),
@@ -104,7 +111,11 @@ export type MentionImportItem = z.infer<typeof mentionImportItemSchema>;
  * {@link MENTION_BATCH_TARGET_BYTES} serialized bytes, preserving order (a
  * parent sent earlier in the list stays in an earlier or the same request).
  */
-export function splitBySize<T>(items: T[], maxItems = MENTION_BATCH_MAX_ITEMS, maxBytes = MENTION_BATCH_TARGET_BYTES): T[][] {
+export function splitBySize<T>(
+  items: T[],
+  maxItems = MENTION_BATCH_MAX_ITEMS,
+  maxBytes = MENTION_BATCH_TARGET_BYTES,
+): T[][] {
   const chunks: T[][] = [];
   let current: T[] = [];
   let bytes = 0;

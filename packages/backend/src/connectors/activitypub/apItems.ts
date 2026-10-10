@@ -11,14 +11,15 @@ import { isAbsoluteHttpUrl } from '../../utils/url';
 import { extractApLanguage, getApContentMap } from './apLanguage';
 
 /** The `Accept` every ActivityPub GET sends. */
-export const AP_ACCEPT = 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"';
+export const AP_ACCEPT =
+  'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"';
 
 /** The Public collection IRI. */
 const AS_PUBLIC = 'https://www.w3.org/ns/activitystreams#Public';
 
 export function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : null;
 }
 
@@ -120,7 +121,12 @@ export function extractApQuoteUri(object: Record<string, unknown>): string | und
   if (Array.isArray(tags)) {
     for (const entry of tags) {
       if (!entry || typeof entry !== 'object') continue;
-      const record = entry as { type?: unknown; rel?: unknown; mediaType?: unknown; href?: unknown };
+      const record = entry as {
+        type?: unknown;
+        rel?: unknown;
+        mediaType?: unknown;
+        href?: unknown;
+      };
       const isLink =
         record.type === 'Link' || (Array.isArray(record.type) && record.type.includes('Link'));
       if (!isLink) continue;
@@ -132,7 +138,8 @@ export function extractApQuoteUri(object: Record<string, unknown>): string | und
           : '';
       const isQuoteRel = rel.includes('_misskey_quote');
       const isApLink =
-        typeof record.mediaType === 'string' && record.mediaType.toLowerCase().includes('activity+json');
+        typeof record.mediaType === 'string' &&
+        record.mediaType.toLowerCase().includes('activity+json');
       if (!isQuoteRel && !isApLink) continue;
 
       const href = typeof record.href === 'string' ? record.href.trim() : '';
@@ -144,7 +151,8 @@ export function extractApQuoteUri(object: Record<string, unknown>): string | und
 }
 
 function addressees(to?: unknown, cc?: unknown): { to: unknown[]; cc: unknown[] } {
-  const asList = (value: unknown): unknown[] => (Array.isArray(value) ? value : value === undefined ? [] : [value]);
+  const asList = (value: unknown): unknown[] =>
+    Array.isArray(value) ? value : value === undefined ? [] : [value];
   return { to: asList(to), cc: asList(cc) };
 }
 
@@ -241,6 +249,8 @@ export function extractApContentHtml(object: Record<string, unknown> | null | un
 }
 
 /** The content warning: an AP `summary`, normalized to one plain-text line. */
-export function extractApSummary(object: Record<string, unknown> | null | undefined): string | undefined {
+export function extractApSummary(
+  object: Record<string, unknown> | null | undefined,
+): string | undefined {
   return htmlToInlineLabel(object?.summary);
 }

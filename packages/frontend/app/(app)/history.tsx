@@ -42,7 +42,9 @@ export default function HistoryScreen() {
           action={{ label: t('history.start'), onPress: () => router.replace('/') }}
         />
       ) : null}
-      {jobs.data?.map((job) => <HistoryEntry key={job.id} job={job} />)}
+      {jobs.data?.map((job) => (
+        <HistoryEntry key={job.id} job={job} />
+      ))}
     </PageScreen>
   );
 }
@@ -76,7 +78,13 @@ function HistoryEntry({ job }: { job: MigrationJobView }) {
       if (result.failed > 0) {
         toast.warning(t('history.undoPartial', { count: result.failed }));
       } else {
-        toast.success(t('history.undone', { posts: result.deleted, follows: client.unfollowed, blocks: client.unblocked }));
+        toast.success(
+          t('history.undone', {
+            posts: result.deleted,
+            follows: client.unfollowed,
+            blocks: client.unblocked,
+          }),
+        );
       }
       if (client.profileKept) {
         toast.info(t('history.undoKept'));
@@ -97,7 +105,9 @@ function HistoryEntry({ job }: { job: MigrationJobView }) {
             <Text variant="headline-semibold" numberOfLines={1}>
               {job.sourceHandle ?? platformName}
             </Text>
-            <Muted>{t('history.startedOn', { date: formatDate(job.createdAt, i18n.language) ?? '' })}</Muted>
+            <Muted>
+              {t('history.startedOn', { date: formatDate(job.createdAt, i18n.language) ?? '' })}
+            </Muted>
           </View>
           <JobStatusBadge status={job.status} />
         </View>

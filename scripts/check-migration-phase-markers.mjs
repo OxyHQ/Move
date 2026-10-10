@@ -22,26 +22,34 @@ export function checkMigrationText(name, text) {
   const errors = [];
   const lines = text.split(/\r?\n/);
   const markers = lines.filter((line) => MARKER.test(line));
-  if (markers.length === 0) errors.push(`${name}: missing "-- oxy:deploy-phase=pre|post" on its own line`);
-  if (markers.length > 1) errors.push(`${name}: ${markers.length} deploy-phase markers (exactly one allowed)`);
+  if (markers.length === 0)
+    errors.push(`${name}: missing "-- oxy:deploy-phase=pre|post" on its own line`);
+  if (markers.length > 1)
+    errors.push(`${name}: ${markers.length} deploy-phase markers (exactly one allowed)`);
   const stray = lines.filter((line) => line.includes('oxy:deploy-phase') && !MARKER.test(line));
   if (stray.length > 0) errors.push(`${name}: malformed deploy-phase marker: ${stray[0].trim()}`);
-  if (/\$\d/.test(text.replace(/--.*$/gm, ''))) errors.push(`${name}: contains a bound parameter ($N) — use sql.raw for CHECK constants`);
+  if (/\$\d/.test(text.replace(/--.*$/gm, '')))
+    errors.push(`${name}: contains a bound parameter ($N) — use sql.raw for CHECK constants`);
   return errors;
 }
 
 export function checkMigrationsFolder(folder) {
   const errors = [];
-  const files = readdirSync(folder).filter((file) => file.endsWith('.sql')).sort();
+  const files = readdirSync(folder)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
   if (files.length === 0) errors.push(`${folder}: no migrations found (vacuity floor)`);
   const journalPath = join(folder, 'meta', '_journal.json');
-  const journal = existsSync(journalPath) ? JSON.parse(readFileSync(journalPath, 'utf8')) : { entries: [] };
+  const journal = existsSync(journalPath)
+    ? JSON.parse(readFileSync(journalPath, 'utf8'))
+    : { entries: [] };
   const tags = new Set(journal.entries.map((entry) => `${entry.tag}.sql`));
   for (const file of files) {
     errors.push(...checkMigrationText(file, readFileSync(join(folder, file), 'utf8')));
     if (!tags.has(file)) errors.push(`${file}: not in meta/_journal.json`);
   }
-  for (const tag of tags) if (!files.includes(tag)) errors.push(`${tag}: in the journal but missing on disk`);
+  for (const tag of tags)
+    if (!files.includes(tag)) errors.push(`${tag}: in the journal but missing on disk`);
   return { errors, count: files.length };
 }
 

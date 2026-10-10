@@ -19,7 +19,12 @@ import { Lead, Text } from '@oxy.so/bloom/typography';
 import { isMigrationPlatform, type MigrationPlatform } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
 import { linkAccount, type LinkAttempt } from '@/lib/connect';
-import { PLATFORM_NETWORK, linkErrorKey, normalizeSourceInput, startFailureKey } from '@/lib/handles';
+import {
+  PLATFORM_NETWORK,
+  linkErrorKey,
+  normalizeSourceInput,
+  startFailureKey,
+} from '@/lib/handles';
 import { queryKeys } from '@/lib/moveApiContext';
 
 export default function ConnectScreen() {
@@ -29,7 +34,11 @@ export default function ConnectScreen() {
   if (!isMigrationPlatform(params.platform)) {
     return (
       <PageScreen title={t('connect.unknownTitle')} back>
-        <EmptyState icon={RiErrorWarningLine} title={t('connect.unknownTitle')} description={t('connect.unknownBody')} />
+        <EmptyState
+          icon={RiErrorWarningLine}
+          title={t('connect.unknownTitle')}
+          description={t('connect.unknownBody')}
+        />
       </PageScreen>
     );
   }
@@ -51,7 +60,9 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
     queryKey: queryKeys.linkedAccounts,
     queryFn: () => oxyServices.linkedAccounts.list(),
   });
-  const accounts = (linked.data ?? []).filter((account) => account.network === PLATFORM_NETWORK[platform]);
+  const accounts = (linked.data ?? []).filter(
+    (account) => account.network === PLATFORM_NETWORK[platform],
+  );
   const normalized = normalizeSourceInput(platform, input);
   const invalid = input.trim().length > 0 && normalized === null;
 

@@ -3,15 +3,25 @@ import { DEFAULT_JOB_OPTIONS, type JobOptions } from '@move/shared-types';
 import { BlueskySource, type PageCursor } from '../sources/bluesky';
 import { DEFAULT_BACKOFF, SourceRateLimitedError, withBackoff } from '../sources/http';
 import { isSkipped, type GraphAccount, type SkippedItem, type SourceItem } from '../sources/types';
-import { BSKY_PDS as PDS, JAY_DID, blueskyRoutes, createFixtureFetcher, fixture } from './helpers/fixtureFetcher';
+import {
+  BSKY_PDS as PDS,
+  JAY_DID,
+  blueskyRoutes,
+  createFixtureFetcher,
+  fixture,
+} from './helpers/fixtureFetcher';
 
 /** The recorded routes minus the block pages, so a test can answer those itself. */
 function followsOnlyRoutes() {
-  return Object.fromEntries(Object.entries(blueskyRoutes()).filter(([url]) => !url.includes('listRecords')));
+  return Object.fromEntries(
+    Object.entries(blueskyRoutes()).filter(([url]) => !url.includes('listRecords')),
+  );
 }
 
 function fixtureSubjects(file: string): string[] {
-  return (fixture(`bluesky/${file}`).records as Array<{ value: { subject: string } }>).map((record) => record.value.subject);
+  return (fixture(`bluesky/${file}`).records as Array<{ value: { subject: string } }>).map(
+    (record) => record.value.subject,
+  );
 }
 
 const POST = (rkey: string) => `at://${JAY_DID}/app.bsky.feed.post/${rkey}`;
@@ -20,17 +30,28 @@ function source(pdsEndpoint: string | null = PDS) {
   const fetcher = createFixtureFetcher(blueskyRoutes());
   return {
     fetcher,
-    source: new BlueskySource({ platform: 'bluesky', actor: JAY_DID, handle: 'jay.bsky.team' }, fetcher, { pdsEndpoint: pdsEndpoint ?? undefined }),
+    source: new BlueskySource(
+      { platform: 'bluesky', actor: JAY_DID, handle: 'jay.bsky.team' },
+      fetcher,
+      { pdsEndpoint: pdsEndpoint ?? undefined },
+    ),
   };
 }
 
-async function readAll(src: BlueskySource, options: JobOptions = DEFAULT_JOB_OPTIONS, cursor: PageCursor | null = null) {
+async function readAll(
+  src: BlueskySource,
+  options: JobOptions = DEFAULT_JOB_OPTIONS,
+  cursor: PageCursor | null = null,
+) {
   const out: Array<{ value: SourceItem | SkippedItem; cursor: PageCursor }> = [];
   for await (const entry of src.items({ cursor, options })) out.push(entry);
   return out;
 }
 
-function get(entries: Array<{ value: SourceItem | SkippedItem }>, id: string): SourceItem | SkippedItem {
+function get(
+  entries: Array<{ value: SourceItem | SkippedItem }>,
+  id: string,
+): SourceItem | SkippedItem {
   const found = entries.find((entry) => entry.value.sourceId === id);
   if (!found) throw new Error(`no item ${id}`);
   return found.value;
@@ -68,9 +89,11 @@ describe('Bluesky source (recorded public AppView responses)', () => {
     expect(video.media).toEqual([]);
   });
 
-  test('reposts off, replies to others skipped — including a self-reply under someone else\'s root', async () => {
+  test("reposts off, replies to others skipped — including a self-reply under someone else's root", async () => {
     const entries = await readAll(source().source);
-    const reasons = entries.filter((entry) => isSkipped(entry.value)).map((entry) => [entry.value.sourceId, (entry.value as SkippedItem).reason]);
+    const reasons = entries
+      .filter((entry) => isSkipped(entry.value))
+      .map((entry) => [entry.value.sourceId, (entry.value as SkippedItem).reason]);
     expect(reasons.some(([, reason]) => reason === 'boost-disabled')).toBe(true);
     expect(isSkipped(get(entries, POST('3mvqo2jcqlk25')))).toBe(true);
     // Parent is Jay's own post, but the thread ROOT is someone else's: a conversation, not a self-thread.
@@ -105,7 +128,9 @@ describe('Bluesky source (recorded public AppView responses)', () => {
 
   test('reposts become a link to the original when asked', async () => {
     const entries = await readAll(source().source, { ...DEFAULT_JOB_OPTIONS, includeBoosts: true });
-    const boost = entries.map((entry) => entry.value).find((value) => value.kind === 'boost') as SourceItem;
+    const boost = entries
+      .map((entry) => entry.value)
+      .find((value) => value.kind === 'boost') as SourceItem;
     expect(boost.links?.[0]).toStartWith('https://bsky.app/profile/');
   });
 
@@ -113,13 +138,19 @@ describe('Bluesky source (recorded public AppView responses)', () => {
     const all = await readAll(source().source);
     for (const cut of [1, 4, all.length - 1]) {
       const resumed = await readAll(source().source, DEFAULT_JOB_OPTIONS, all[cut - 1].cursor);
-      expect(resumed.map((entry) => entry.value.sourceId)).toEqual(all.slice(cut).map((entry) => entry.value.sourceId));
+      expect(resumed.map((entry) => entry.value.sourceId)).toEqual(
+        all.slice(cut).map((entry) => entry.value.sourceId),
+      );
     }
   });
 
   test('graph reads getFollows, then the public block records from the PDS', async () => {
     const graph: GraphAccount[] = [];
-    for await (const { value } of source().source.graph({ cursor: null, options: DEFAULT_JOB_OPTIONS })) graph.push(value);
+    for await (const { value } of source().source.graph({
+      cursor: null,
+      options: DEFAULT_JOB_OPTIONS,
+    }))
+      graph.push(value);
     const follows = graph.filter((account) => account.relation !== 'block');
     const blocks = graph.filter((account) => account.relation === 'block');
     expect(follows.length).toBe(3);
@@ -136,11 +167,16 @@ describe('Bluesky source (recorded public AppView responses)', () => {
 
   test('graph resumes inside the blocks without re-reading the follows', async () => {
     const all: Array<{ value: GraphAccount; cursor: PageCursor }> = [];
-    for await (const entry of source().source.graph({ cursor: null, options: DEFAULT_JOB_OPTIONS })) all.push(entry);
+    for await (const entry of source().source.graph({ cursor: null, options: DEFAULT_JOB_OPTIONS }))
+      all.push(entry);
     for (const cut of [2, 3, 4, all.length - 1]) {
       const { source: src, fetcher } = source();
       const resumed: string[] = [];
-      for await (const { value } of src.graph({ cursor: all[cut - 1].cursor, options: DEFAULT_JOB_OPTIONS })) resumed.push(value.actor);
+      for await (const { value } of src.graph({
+        cursor: all[cut - 1].cursor,
+        options: DEFAULT_JOB_OPTIONS,
+      }))
+        resumed.push(value.actor);
       expect(resumed).toEqual(all.slice(cut).map((entry) => entry.value.actor));
       // A cursor INSIDE the blocks (after the 3 follows) never goes back to them.
       if (cut > 3) expect(fetcher.calls.some((url) => url.includes('getFollows'))).toBe(false);
@@ -149,7 +185,11 @@ describe('Bluesky source (recorded public AppView responses)', () => {
 
   test('without a PDS there is nowhere public to read blocks: follows only', async () => {
     const graph: GraphAccount[] = [];
-    for await (const { value } of source(null).source.graph({ cursor: null, options: DEFAULT_JOB_OPTIONS })) graph.push(value);
+    for await (const { value } of source(null).source.graph({
+      cursor: null,
+      options: DEFAULT_JOB_OPTIONS,
+    }))
+      graph.push(value);
     expect(graph).toHaveLength(3);
     expect(graph.some((account) => account.relation === 'block')).toBe(false);
   });
@@ -161,16 +201,36 @@ describe('Bluesky source (recorded public AppView responses)', () => {
     const blocksAnswer = (answer: { status: number; body: unknown }) =>
       new BlueskySource(
         { platform: 'bluesky', actor: JAY_DID, handle: 'jay.bsky.team' },
-        withBackoff(createFixtureFetcher({ ...followsOnlyRoutes(), [`${PDS}/xrpc/com.atproto.repo.listRecords*`]: answer }), policy, async () => undefined),
+        withBackoff(
+          createFixtureFetcher({
+            ...followsOnlyRoutes(),
+            [`${PDS}/xrpc/com.atproto.repo.listRecords*`]: answer,
+          }),
+          policy,
+          async () => undefined,
+        ),
         { pdsEndpoint: PDS },
       );
-    for (const answer of [{ status: 400, body: { error: 'RepoNotFound' } }, { status: 404, body: {} }]) {
+    for (const answer of [
+      { status: 400, body: { error: 'RepoNotFound' } },
+      { status: 404, body: {} },
+    ]) {
       const graph: GraphAccount[] = [];
-      for await (const { value } of blocksAnswer(answer).graph({ cursor: null, options: DEFAULT_JOB_OPTIONS })) graph.push(value);
+      for await (const { value } of blocksAnswer(answer).graph({
+        cursor: null,
+        options: DEFAULT_JOB_OPTIONS,
+      }))
+        graph.push(value);
       expect(graph).toHaveLength(3);
     }
-    await expect((async () => {
-      for await (const _ of blocksAnswer({ status: 429, body: {} }).graph({ cursor: null, options: DEFAULT_JOB_OPTIONS })) void _;
-    })()).rejects.toBeInstanceOf(SourceRateLimitedError);
+    await expect(
+      (async () => {
+        for await (const _ of blocksAnswer({ status: 429, body: {} }).graph({
+          cursor: null,
+          options: DEFAULT_JOB_OPTIONS,
+        }))
+          void _;
+      })(),
+    ).rejects.toBeInstanceOf(SourceRateLimitedError);
   });
 });

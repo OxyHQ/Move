@@ -93,7 +93,12 @@ export class MentionDestination implements ContentDestination {
     this.fetchImpl = deps.fetch ?? fetch;
   }
 
-  private async request(method: string, path: string, oxyUserId: string, body?: unknown): Promise<unknown> {
+  private async request(
+    method: string,
+    path: string,
+    oxyUserId: string,
+    body?: unknown,
+  ): Promise<unknown> {
     const token = await this.deps.oxy.serviceToken();
     const response = await this.fetchImpl(`${this.deps.baseUrl}${path}`, {
       method,
@@ -117,20 +122,35 @@ export class MentionDestination implements ContentDestination {
       throw new Error(`Mention ${method} ${path} answered ${response.status}`);
     }
     if (!response.ok) {
-      throw new DestinationRejectedError(`Mention ${method} ${path} answered ${response.status}: ${text.slice(0, 300)}`, response.status);
+      throw new DestinationRejectedError(
+        `Mention ${method} ${path} answered ${response.status}: ${text.slice(0, 300)}`,
+        response.status,
+      );
     }
     return text.length > 0 ? JSON.parse(text) : {};
   }
 
   /** Deliver in order, split into requests of ≤ 50 items and ≤ ~0.9 MB each. */
-  async deliver(params: { oxyUserId: string; platform: 'mastodon' | 'bluesky'; batchId: string; items: PreparedItem[] }): Promise<DeliveryResult[]> {
+  async deliver(params: {
+    oxyUserId: string;
+    platform: 'mastodon' | 'bluesky';
+    batchId: string;
+    items: PreparedItem[];
+  }): Promise<DeliveryResult[]> {
     const out: DeliveryResult[] = [];
     for (const chunk of splitBySize(params.items.map(toMentionItem))) {
-      const payload = mentionBatchRequestSchema.parse({ platform: params.platform, batchId: params.batchId, items: chunk });
+      const payload = mentionBatchRequestSchema.parse({
+        platform: params.platform,
+        batchId: params.batchId,
+        items: chunk,
+      });
       const raw = await this.request('POST', '/imports/v1/posts:batch', params.oxyUserId, payload);
       const parsed = mentionBatchResponseSchema.safeParse(raw);
       if (!parsed.success) {
-        throw new DestinationRejectedError(`Mention batch response did not match the contract: ${parsed.error.message}`, 200);
+        throw new DestinationRejectedError(
+          `Mention batch response did not match the contract: ${parsed.error.message}`,
+          200,
+        );
       }
       const bySource = new Map(parsed.data.results.map((result) => [result.sourceId, result]));
       // Every item sent gets an answer; one Mention forgot is a failure, not a success.
@@ -138,7 +158,10 @@ export class MentionDestination implements ContentDestination {
         const result = bySource.get(item.sourceId);
         if (!result) {
           out.push({ sourceId: item.sourceId, status: 'failed', error: 'missing-from-response' });
-        } else if ((result.status === 'created' || result.status === 'existing') && !result.postId) {
+        } else if (
+          (result.status === 'created' || result.status === 'existing') &&
+          !result.postId
+        ) {
           out.push({ sourceId: item.sourceId, status: 'failed', error: 'no-post-id' });
         } else {
           out.push({
@@ -154,20 +177,34 @@ export class MentionDestination implements ContentDestination {
   }
 
   async undo(params: { oxyUserId: string; batchId: string }): Promise<UndoResult> {
-    const raw = await this.request('DELETE', `/imports/v1/batches/${encodeURIComponent(params.batchId)}`, params.oxyUserId);
+    const raw = await this.request(
+      'DELETE',
+      `/imports/v1/batches/${encodeURIComponent(params.batchId)}`,
+      params.oxyUserId,
+    );
     return mentionUndoResponseSchema.parse(raw);
   }
 
   /** The source ids of this user + platform Mention already imported (any batch). */
-  async lookupImported(params: { oxyUserId: string; platform: 'mastodon' | 'bluesky'; sourceIds: string[] }): Promise<Set<string>> {
+  async lookupImported(params: {
+    oxyUserId: string;
+    platform: 'mastodon' | 'bluesky';
+    sourceIds: string[];
+  }): Promise<Set<string>> {
     const found = new Set<string>();
     const unique = [...new Set(params.sourceIds)];
     for (let start = 0; start < unique.length; start += MENTION_LOOKUP_MAX_IDS) {
       const query = new URLSearchParams({ platform: params.platform });
       // Repeated parameters (Mention accepts repeated or comma-joined; its `queryList` splits on commas either way).
-      for (const sourceId of unique.slice(start, start + MENTION_LOOKUP_MAX_IDS)) query.append('sourceIds', sourceId);
-      const raw = await this.request('GET', `/imports/v1/lookup?${query.toString()}`, params.oxyUserId);
-      for (const sourceId of Object.keys(mentionLookupResponseSchema.parse(raw).imported)) found.add(sourceId);
+      for (const sourceId of unique.slice(start, start + MENTION_LOOKUP_MAX_IDS))
+        query.append('sourceIds', sourceId);
+      const raw = await this.request(
+        'GET',
+        `/imports/v1/lookup?${query.toString()}`,
+        params.oxyUserId,
+      );
+      for (const sourceId of Object.keys(mentionLookupResponseSchema.parse(raw).imported))
+        found.add(sourceId);
     }
     return found;
   }

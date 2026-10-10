@@ -28,7 +28,9 @@ export default function SignedOutHomeScreen() {
       </View>
       {platforms.isPending ? <Loading accessibilityLabel={t('home.loadingPlatforms')} /> : null}
       {platforms.isError ? <QueryError onRetry={() => void platforms.refetch()} /> : null}
-      {platforms.data?.map((platform) => <PlatformCard key={platform.id} platform={platform} />)}
+      {platforms.data?.map((platform) => (
+        <PlatformCard key={platform.id} platform={platform} />
+      ))}
     </PageScreen>
   );
 }

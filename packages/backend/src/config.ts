@@ -24,7 +24,10 @@ const positiveInt = (fallback: number) =>
       if (value === undefined || value.trim() === '') return fallback;
       const parsed = Number(value);
       if (!Number.isInteger(parsed) || parsed <= 0) {
-        context.addIssue({ code: 'custom', message: `must be a positive integer, got ${JSON.stringify(value)}` });
+        context.addIssue({
+          code: 'custom',
+          message: `must be a positive integer, got ${JSON.stringify(value)}`,
+        });
         return z.NEVER;
       }
       return parsed;
@@ -61,7 +64,9 @@ const environmentSchema = z.object({
 
 const parsed = environmentSchema.safeParse(process.env);
 if (!parsed.success) {
-  const issues = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
+  const issues = parsed.error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join('; ');
   throw new Error(`Invalid Oxy Move environment: ${issues}`);
 }
 const environment = parsed.data;

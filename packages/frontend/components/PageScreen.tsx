@@ -20,10 +20,16 @@ interface PageScreenProps {
 export function PageScreen({ title, back = false, actions, children }: PageScreenProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const onBack = back ? () => (router.canGoBack() ? router.back() : router.replace('/')) : undefined;
+  const onBack = back
+    ? () => (router.canGoBack() ? router.back() : router.replace('/'))
+    : undefined;
 
   return (
-    <Screen header={<PageHeader title={title} onBack={onBack} backLabel={t('common.back')} actions={actions} />}>
+    <Screen
+      header={
+        <PageHeader title={title} onBack={onBack} backLabel={t('common.back')} actions={actions} />
+      }
+    >
       <ScreenScrollView keyboardShouldPersistTaps="handled">
         <View className="w-full max-w-xl self-center gap-4 px-4 pb-12 pt-2">{children}</View>
       </ScreenScrollView>

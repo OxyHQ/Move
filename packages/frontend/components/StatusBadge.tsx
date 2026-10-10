@@ -23,10 +23,24 @@ const PHASE_TONE: Record<PhaseStatus, Tone> = {
 
 export function JobStatusBadge({ status }: { status: JobStatus }) {
   const { t } = useTranslation();
-  return <Badge content={t(`status.${status}`)} color={JOB_TONE[status]} variant="subtle" size="label-small" />;
+  return (
+    <Badge
+      content={t(`status.${status}`)}
+      color={JOB_TONE[status]}
+      variant="subtle"
+      size="label-small"
+    />
+  );
 }
 
 export function PhaseStatusBadge({ status }: { status: PhaseStatus }) {
   const { t } = useTranslation();
-  return <Badge content={t(`phaseStatus.${status}`)} color={PHASE_TONE[status]} variant="subtle" size="label-small" />;
+  return (
+    <Badge
+      content={t(`phaseStatus.${status}`)}
+      color={PHASE_TONE[status]}
+      variant="subtle"
+      size="label-small"
+    />
+  );
 }

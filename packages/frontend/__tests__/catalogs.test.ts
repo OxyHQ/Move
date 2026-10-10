@@ -4,10 +4,18 @@
  */
 
 import { expect, test } from 'bun:test';
-import { JOB_STATUSES, PHASE_STATUSES, UPCOMING_PLATFORMS, MIGRATION_PLATFORMS } from '@move/shared-types';
+import {
+  JOB_STATUSES,
+  PHASE_STATUSES,
+  UPCOMING_PLATFORMS,
+  MIGRATION_PLATFORMS,
+} from '@move/shared-types';
 import en from '../locales/en.json';
 import es from '../locales/es.json';
-import { LINKED_ACCOUNT_CALLBACK_ERRORS, LINKED_ACCOUNT_START_ERROR_REASONS } from '@oxy.so/contracts';
+import {
+  LINKED_ACCOUNT_CALLBACK_ERRORS,
+  LINKED_ACCOUNT_START_ERROR_REASONS,
+} from '@oxy.so/contracts';
 import { startFailureKey } from '../lib/handles';
 
 type Catalog = { [key: string]: string | Catalog };
@@ -35,7 +43,9 @@ test('every code and status the app renders has a message', () => {
     ...PHASE_STATUSES.map((status) => `phaseStatus.${status}`),
     ...[...MIGRATION_PLATFORMS, ...UPCOMING_PLATFORMS].map((id) => `platformNames.${id}`),
     ...MIGRATION_PLATFORMS.flatMap((platform) => [
-      ...LINKED_ACCOUNT_START_ERROR_REASONS.map((reason) => startFailureKey(platform, { details: { reason } })),
+      ...LINKED_ACCOUNT_START_ERROR_REASONS.map((reason) =>
+        startFailureKey(platform, { details: { reason } }),
+      ),
       startFailureKey(platform, new Error('network')),
     ]),
   ];

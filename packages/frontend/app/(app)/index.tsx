@@ -64,7 +64,9 @@ export default function HomeScreen() {
                 subtitle={job.sourceHandle ?? job.sourceActor}
                 trailing={<Loading variant="inline" size="sm" />}
                 onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })}
-                accessibilityLabel={t('home.openProgress', { platform: t(`platformNames.${job.platform}`) })}
+                accessibilityLabel={t('home.openProgress', {
+                  platform: t(`platformNames.${job.platform}`),
+                })}
               />
             ))}
           </View>
@@ -79,7 +81,11 @@ export default function HomeScreen() {
           platform={platform}
           onConnect={
             isMigrationPlatform(platform.id)
-              ? () => router.push({ pathname: '/connect/[platform]', params: { platform: platform.id } })
+              ? () =>
+                  router.push({
+                    pathname: '/connect/[platform]',
+                    params: { platform: platform.id },
+                  })
               : undefined
           }
         />

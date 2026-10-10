@@ -36,4 +36,5 @@ export const MENTION_WEB_URL = process.env.EXPO_PUBLIC_MENTION_WEB_URL ?? 'https
  * Mention's ActivityPub domain: a local user is `@<username>@mention.earth`
  * (Mention `connectors/activitypub/constants.ts` `FEDERATION_DOMAIN`).
  */
-export const MENTION_FEDERATION_DOMAIN = process.env.EXPO_PUBLIC_MENTION_FEDERATION_DOMAIN ?? 'mention.earth';
+export const MENTION_FEDERATION_DOMAIN =
+  process.env.EXPO_PUBLIC_MENTION_FEDERATION_DOMAIN ?? 'mention.earth';

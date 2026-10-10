@@ -60,7 +60,10 @@ const EXTENSION_MIME: Record<string, string> = {
   webm: 'video/webm',
 };
 
-function toResolvedUrl(member: string | ApUrlEntry | undefined, attachmentMimeType: string): ResolvedUrl | null {
+function toResolvedUrl(
+  member: string | ApUrlEntry | undefined,
+  attachmentMimeType: string,
+): ResolvedUrl | null {
   if (typeof member === 'string') {
     const href = member.trim();
     if (!href) return null;
@@ -80,7 +83,9 @@ function normalizeMime(mimeType: string): string {
 }
 
 function isStreaming(resolved: ResolvedUrl): boolean {
-  return STREAMING_VIDEO_MIMES.has(normalizeMime(resolved.mimeType)) || STREAMING_RE.test(resolved.href);
+  return (
+    STREAMING_VIDEO_MIMES.has(normalizeMime(resolved.mimeType)) || STREAMING_RE.test(resolved.href)
+  );
 }
 
 function classify(resolved: ResolvedUrl): ApMediaType | null {
@@ -140,7 +145,9 @@ function resolveApAttachment(
   if (attachment.url === undefined || attachment.url === null) return null;
 
   const attachmentMime = normalizeMime(attachment.mediaType || '');
-  const members: Array<string | ApUrlEntry> = Array.isArray(attachment.url) ? attachment.url : [attachment.url];
+  const members: Array<string | ApUrlEntry> = Array.isArray(attachment.url)
+    ? attachment.url
+    : [attachment.url];
 
   const resolved: ResolvedUrl[] = [];
   for (const member of members) {
@@ -158,22 +165,32 @@ function resolveApAttachment(
   }
 
   if (videos.length > 0) {
-    const best = videos.reduce((a, b) => (videoPreferenceScore(b) < videoPreferenceScore(a) ? b : a));
+    const best = videos.reduce((a, b) =>
+      videoPreferenceScore(b) < videoPreferenceScore(a) ? b : a,
+    );
     return { href: best.href, type: 'video', mimeType: inferMime(best, 'video') };
   }
-  if (images.length > 0) return { href: images[0].href, type: 'image', mimeType: inferMime(images[0], 'image') };
+  if (images.length > 0)
+    return { href: images[0].href, type: 'image', mimeType: inferMime(images[0], 'image') };
 
-  const undeclared = resolved.find((r) => normalizeMime(r.mimeType).length === 0 && !isStreaming(r));
+  const undeclared = resolved.find(
+    (r) => normalizeMime(r.mimeType).length === 0 && !isStreaming(r),
+  );
   if (undeclared) {
     const apType = classifyFromApType(attachment);
-    if (apType) return { href: undeclared.href, type: apType, mimeType: inferMime(undeclared, apType) };
+    if (apType)
+      return { href: undeclared.href, type: apType, mimeType: inferMime(undeclared, apType) };
   }
   return null;
 }
 
 /** Every uploadable attachment of a Note, with its alt text. */
 export function extractApMedia(note: { attachment?: unknown }): SourceMedia[] {
-  const list = Array.isArray(note.attachment) ? note.attachment : note.attachment ? [note.attachment] : [];
+  const list = Array.isArray(note.attachment)
+    ? note.attachment
+    : note.attachment
+      ? [note.attachment]
+      : [];
   const media: SourceMedia[] = [];
   for (const raw of list) {
     const attachment = raw as ApAttachment;

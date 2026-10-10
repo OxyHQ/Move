@@ -28,7 +28,11 @@ import { ErrorFallback } from '@/components/error-fallback';
 // and in a window that is not such a popup.
 WebBrowser.maybeCompleteAuthSession();
 
-const LANGUAGE = { supportedLocales: SUPPORTED_LOCALES, fallbackLocale: FALLBACK_LOCALE, onChange: setLanguage };
+const LANGUAGE = {
+  supportedLocales: SUPPORTED_LOCALES,
+  fallbackLocale: FALLBACK_LOCALE,
+  onChange: setLanguage,
+};
 
 /**
  * Top-level error boundary. expo-router renders this whenever a render error
@@ -78,7 +82,9 @@ export default function RootLayout() {
 function AppImageResolver({ children }: { children: ReactNode }) {
   const { oxyServices } = useOxy();
   return (
-    <ImageResolverProvider value={(id, variant) => oxyServices.assets.publicUrl(id, variant ?? 'thumb')}>
+    <ImageResolverProvider
+      value={(id, variant) => oxyServices.assets.publicUrl(id, variant ?? 'thumb')}
+    >
       {children}
     </ImageResolverProvider>
   );

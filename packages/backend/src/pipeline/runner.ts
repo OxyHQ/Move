@@ -63,7 +63,20 @@ export type RunOutcome =
   | { status: 'paused'; resumeAt: Date }
   | { status: 'retry'; error: unknown };
 
-type JobPatch = Partial<Pick<MigrationJob, 'status' | 'phases' | 'cursor' | 'plan' | 'error' | 'pausedUntil' | 'startedAt' | 'finishedAt' | 'sourceHandle'>>;
+type JobPatch = Partial<
+  Pick<
+    MigrationJob,
+    | 'status'
+    | 'phases'
+    | 'cursor'
+    | 'plan'
+    | 'error'
+    | 'pausedUntil'
+    | 'startedAt'
+    | 'finishedAt'
+    | 'sourceHandle'
+  >
+>;
 
 class JobRun {
   private job: MigrationJob;
@@ -71,7 +84,10 @@ class JobRun {
   /** Source ids delivered (sent/existing) this run, to avoid a query per child. */
   private readonly delivered = new Set<string>();
 
-  constructor(job: MigrationJob, private readonly deps: PipelineDeps) {
+  constructor(
+    job: MigrationJob,
+    private readonly deps: PipelineDeps,
+  ) {
     this.job = job;
     this.now = deps.now ?? (() => new Date());
   }
@@ -88,29 +104,53 @@ class JobRun {
     const rows = await this.deps.db
       .update(migrationJobs)
       .set({ counters: this.counters, ...patch, updatedAt: this.now() })
-      .where(and(eq(migrationJobs.id, this.job.id), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])))
+      .where(
+        and(
+          eq(migrationJobs.id, this.job.id),
+          inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES]),
+        ),
+      )
       .returning();
     if (rows.length === 0) throw new JobCancelledError();
     this.job = rows[0];
     this.deps.progress.emit(this.job.oxyUserId, this.job);
   }
 
-  private async setPhase(name: PhaseName, status: JobPhases[PhaseName]['status'], reason?: string): Promise<void> {
-    const phases: JobPhases = { ...this.job.phases, [name]: { status, ...(reason ? { reason } : {}) } };
+  private async setPhase(
+    name: PhaseName,
+    status: JobPhases[PhaseName]['status'],
+    reason?: string,
+  ): Promise<void> {
+    const phases: JobPhases = {
+      ...this.job.phases,
+      [name]: { status, ...(reason ? { reason } : {}) },
+    };
     await this.save({ phases });
   }
 
   async run(): Promise<void> {
-    await this.save({ status: 'running', startedAt: this.job.startedAt ?? this.now(), pausedUntil: null, error: null });
+    await this.save({
+      status: 'running',
+      startedAt: this.job.startedAt ?? this.now(),
+      pausedUntil: null,
+      error: null,
+    });
 
-    const account = await this.deps.oxy.verifyLinkedAccount(this.job.oxyUserId, this.job.linkedAccountId, this.job.platform);
+    const account = await this.deps.oxy.verifyLinkedAccount(
+      this.job.oxyUserId,
+      this.job.linkedAccountId,
+      this.job.platform,
+    );
     if (account.actor !== this.job.sourceActor) {
-      throw Object.assign(new Error('linked account changed since the job was created'), { moveCode: 'linked-account-changed' });
+      throw Object.assign(new Error('linked account changed since the job was created'), {
+        moveCode: 'linked-account-changed',
+      });
     }
     const source = await this.deps.sourceFactory(account);
 
     // A finished phase is never re-run; each resumes from its own cursor.
-    const pending = (name: PhaseName) => this.job.phases[name].status !== 'done' && this.job.phases[name].status !== 'skipped';
+    const pending = (name: PhaseName) =>
+      this.job.phases[name].status !== 'done' && this.job.phases[name].status !== 'skipped';
     if (pending('profile')) {
       if (this.job.options.profile) await this.profilePhase(source);
       else await this.setPhase('profile', 'skipped', 'option-off');
@@ -142,7 +182,11 @@ class JobRun {
     await this.setPhase('profile', 'running');
     const profile = await source.profile();
     // Oxy profiles have an avatar and no banner, so only the avatar is copied.
-    const [avatar] = profile.avatarUrl ? await this.deps.media.copy(this.job.oxyUserId, [{ url: profile.avatarUrl, mimeType: 'image/jpeg' }]) : [];
+    const [avatar] = profile.avatarUrl
+      ? await this.deps.media.copy(this.job.oxyUserId, [
+          { url: profile.avatarUrl, mimeType: 'image/jpeg' },
+        ])
+      : [];
     if (avatar) this.counters.mediaUploaded++;
     const plan: MigrationPlan = {
       ...this.job.plan,
@@ -198,13 +242,23 @@ class JobRun {
             unresolved: this.counters.followsRead - this.counters.followsResolved,
             hidden: false,
           },
-          blocks: blocksRead > 0 ? { blockBatches: blocks, read: blocksRead, unresolved: blocksRead - blocks.flat().length } : null,
+          blocks:
+            blocksRead > 0
+              ? {
+                  blockBatches: blocks,
+                  read: blocksRead,
+                  unresolved: blocksRead - blocks.flat().length,
+                }
+              : null,
         },
         cursor: { ...this.job.cursor, graph: chunkCursor },
       });
     };
 
-    for await (const { value, cursor } of source.graph({ cursor: (this.job.cursor.graph ?? null) as never, options: this.job.options })) {
+    for await (const { value, cursor } of source.graph({
+      cursor: (this.job.cursor.graph ?? null) as never,
+      options: this.job.options,
+    })) {
       chunk.push(value);
       chunkCursor = cursor;
       if (chunk.length >= GRAPH_CHUNK) await flush();
@@ -220,11 +274,13 @@ class JobRun {
     const rows = await this.deps.db
       .select({ sourceId: migrationItems.sourceId })
       .from(migrationItems)
-      .where(and(
-        eq(migrationItems.jobId, this.job.id),
-        inArray(migrationItems.sourceId, unknown),
-        inArray(migrationItems.status, ['sent', 'existing']),
-      ));
+      .where(
+        and(
+          eq(migrationItems.jobId, this.job.id),
+          inArray(migrationItems.sourceId, unknown),
+          inArray(migrationItems.status, ['sent', 'existing']),
+        ),
+      );
     for (const row of rows) this.delivered.add(row.sourceId);
   }
 
@@ -234,14 +290,20 @@ class JobRun {
    * parent sent earlier in the batch). Call {@link loadDelivered} first.
    */
   private isWaiting(item: SourceItem, present: ReadonlySet<string>): boolean {
-    return references(item).some((reference) => !present.has(reference) && !this.delivered.has(reference));
+    return references(item).some(
+      (reference) => !present.has(reference) && !this.delivered.has(reference),
+    );
   }
 
   /**
    * Store `item` as `deferred` with its payload, so it can be resent without
    * re-reading the source. An item already delivered is never demoted.
    */
-  private async defer(db: Pick<Database, 'insert'>, item: SourceItem, reason: string | null): Promise<void> {
+  private async defer(
+    db: Pick<Database, 'insert'>,
+    item: SourceItem,
+    reason: string | null,
+  ): Promise<void> {
     await db
       .insert(migrationItems)
       .values({
@@ -255,7 +317,13 @@ class JobRun {
       })
       .onConflictDoUpdate({
         target: [migrationItems.jobId, migrationItems.sourceId],
-        set: { status: 'deferred', lastError: reason, payload: item, attempts: sql`${migrationItems.attempts} + 1`, updatedAt: this.now() },
+        set: {
+          status: 'deferred',
+          lastError: reason,
+          payload: item,
+          attempts: sql`${migrationItems.attempts} + 1`,
+          updatedAt: this.now(),
+        },
         setWhere: notInArray(migrationItems.status, ['sent', 'existing']),
       });
   }
@@ -302,18 +370,32 @@ class JobRun {
   }
 
   /** Copy media, deliver, record results and the checkpoint in one transaction. */
-  private async deliver(items: SourceItem[], contentCursor: unknown, advanceCursor: boolean): Promise<DeliveryResult[]> {
+  private async deliver(
+    items: SourceItem[],
+    contentCursor: unknown,
+    advanceCursor: boolean,
+  ): Promise<DeliveryResult[]> {
     if (items.length === 0) {
-      if (advanceCursor) await this.save({ cursor: { ...this.job.cursor, content: contentCursor } });
+      if (advanceCursor)
+        await this.save({ cursor: { ...this.job.cursor, content: contentCursor } });
       return [];
     }
     const rows = await this.deps.db
       .select({ sourceId: migrationItems.sourceId, mediaAssets: migrationItems.mediaAssets })
       .from(migrationItems)
-      .where(and(eq(migrationItems.jobId, this.job.id), inArray(migrationItems.sourceId, items.map((item) => item.sourceId))));
+      .where(
+        and(
+          eq(migrationItems.jobId, this.job.id),
+          inArray(
+            migrationItems.sourceId,
+            items.map((item) => item.sourceId),
+          ),
+        ),
+      );
     const knownAssets = new Map(rows.map((row) => [row.sourceId, row.mediaAssets ?? {}]));
     const prepared: PreparedItem[] = [];
-    for (const item of items) prepared.push(await this.prepare(item, knownAssets.get(item.sourceId) ?? {}));
+    for (const item of items)
+      prepared.push(await this.prepare(item, knownAssets.get(item.sourceId) ?? {}));
     const results = await this.deps.destination.deliver({
       oxyUserId: this.job.oxyUserId,
       platform: this.job.platform,
@@ -324,7 +406,11 @@ class JobRun {
     return results;
   }
 
-  private async record(items: SourceItem[], results: DeliveryResult[], contentCursor: unknown): Promise<void> {
+  private async record(
+    items: SourceItem[],
+    results: DeliveryResult[],
+    contentCursor: unknown,
+  ): Promise<void> {
     const byId = new Map(items.map((item) => [item.sourceId, item]));
     const now = this.now();
     await this.deps.db.transaction(async (tx) => {
@@ -372,10 +458,17 @@ class JobRun {
         .update(migrationJobs)
         .set({
           counters: this.counters,
-          ...(contentCursor !== undefined ? { cursor: { ...this.job.cursor, content: contentCursor } } : {}),
+          ...(contentCursor !== undefined
+            ? { cursor: { ...this.job.cursor, content: contentCursor } }
+            : {}),
           updatedAt: now,
         })
-        .where(and(eq(migrationJobs.id, this.job.id), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])))
+        .where(
+          and(
+            eq(migrationJobs.id, this.job.id),
+            inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES]),
+          ),
+        )
         .returning();
       if (rows.length === 0) throw new JobCancelledError();
       this.job = rows[0];
@@ -390,7 +483,10 @@ class JobRun {
     let lastCursor: unknown = this.job.cursor.content ?? null;
     let sinceCheckpoint = 0;
 
-    for await (const { value, cursor } of source.items({ cursor: (this.job.cursor.content ?? null) as never, options: this.job.options })) {
+    for await (const { value, cursor } of source.items({
+      cursor: (this.job.cursor.content ?? null) as never,
+      options: this.job.options,
+    })) {
       this.counters.read++;
       lastCursor = cursor;
       sinceCheckpoint++;
@@ -485,19 +581,30 @@ class JobRun {
       platform: this.job.platform,
       sourceIds: referenced,
     });
-    const prepared = orphans.map((item) => standalone(item, (reference) => known.has(reference) || this.delivered.has(reference)));
+    const prepared = orphans.map((item) =>
+      standalone(item, (reference) => known.has(reference) || this.delivered.has(reference)),
+    );
     const results = await this.sendInBatches(prepared, max);
     // A lookup/insert race can still defer one: send those with no references at all.
-    const stillDeferred = new Set(results.filter((result) => result.status === 'deferred').map((result) => result.sourceId));
+    const stillDeferred = new Set(
+      results.filter((result) => result.status === 'deferred').map((result) => result.sourceId),
+    );
     if (stillDeferred.size > 0) {
-      await this.sendInBatches(prepared.filter((item) => stillDeferred.has(item.sourceId)).map((item) => standalone(item, () => false)), max);
+      await this.sendInBatches(
+        prepared
+          .filter((item) => stillDeferred.has(item.sourceId))
+          .map((item) => standalone(item, () => false)),
+        max,
+      );
     }
   }
 }
 
 /** The source ids an item points at (its reply parent and quoted post). */
 function references(item: SourceItem): string[] {
-  return [item.replyToSourceId, item.quoteSourceId].filter((value): value is string => Boolean(value));
+  return [item.replyToSourceId, item.quoteSourceId].filter((value): value is string =>
+    Boolean(value),
+  );
 }
 
 /** The web URL of a referenced source post, for the link a standalone import carries. */
@@ -547,9 +654,10 @@ export async function runMigrationJob(jobId: string, deps: PipelineDeps): Promis
     return { status: 'done' };
   } catch (error) {
     const coded = (error as { moveCode?: string } | null)?.moveCode;
-    const disposition: Disposition = coded === 'linked-account-changed'
-      ? { kind: 'fail', code: 'linked-account-changed' }
-      : classify(error);
+    const disposition: Disposition =
+      coded === 'linked-account-changed'
+        ? { kind: 'fail', code: 'linked-account-changed' }
+        : classify(error);
     switch (disposition.kind) {
       case 'cancelled': {
         // An undo that raced a delivery already in flight: Mention may have
@@ -557,9 +665,11 @@ export async function runMigrationJob(jobId: string, deps: PipelineDeps): Promis
         // idempotent and closes the window.
         const latest = await loadJob(deps.db, jobId);
         if (latest?.status === 'undone') {
-          await deps.destination.undo({ oxyUserId: latest.oxyUserId, batchId: latest.id }).catch((undoError) => {
-            logger.warn('[pipeline] post-undo batch delete failed', undoError);
-          });
+          await deps.destination
+            .undo({ oxyUserId: latest.oxyUserId, batchId: latest.id })
+            .catch((undoError) => {
+              logger.warn('[pipeline] post-undo batch delete failed', undoError);
+            });
           return { status: 'undone' };
         }
         return { status: 'cancelled' };
@@ -569,7 +679,12 @@ export async function runMigrationJob(jobId: string, deps: PipelineDeps): Promis
         await deps.db
           .update(migrationJobs)
           .set({ status: 'paused', pausedUntil: resumeAt, updatedAt: now() })
-          .where(and(eq(migrationJobs.id, jobId), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])));
+          .where(
+            and(
+              eq(migrationJobs.id, jobId),
+              inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES]),
+            ),
+          );
         emitLatest(deps, jobId);
         return { status: 'paused', resumeAt };
       }
@@ -577,25 +692,42 @@ export async function runMigrationJob(jobId: string, deps: PipelineDeps): Promis
         await failJob(deps, jobId, disposition.code, disposition.detail);
         return { status: 'failed' };
       default:
-        logger.warn('[pipeline] transient failure; the attempt will be retried from the last checkpoint', error);
+        logger.warn(
+          '[pipeline] transient failure; the attempt will be retried from the last checkpoint',
+          error,
+        );
         return { status: 'retry', error };
     }
   }
 }
 
 function emitLatest(deps: PipelineDeps, jobId: string): void {
-  void loadJob(deps.db, jobId).then((job) => {
-    if (job) deps.progress.emit(job.oxyUserId, job);
-  }).catch(() => undefined);
+  void loadJob(deps.db, jobId)
+    .then((job) => {
+      if (job) deps.progress.emit(job.oxyUserId, job);
+    })
+    .catch(() => undefined);
 }
 
 /** Mark a job failed (only while active) with a stable code. */
-export async function failJob(deps: Pick<PipelineDeps, 'db' | 'progress' | 'now'>, jobId: string, code: string, detail?: string): Promise<void> {
+export async function failJob(
+  deps: Pick<PipelineDeps, 'db' | 'progress' | 'now'>,
+  jobId: string,
+  code: string,
+  detail?: string,
+): Promise<void> {
   const now = deps.now ?? (() => new Date());
   const rows = await deps.db
     .update(migrationJobs)
-    .set({ status: 'failed', error: detail ? `${code}: ${detail}` : code, finishedAt: now(), updatedAt: now() })
-    .where(and(eq(migrationJobs.id, jobId), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])))
+    .set({
+      status: 'failed',
+      error: detail ? `${code}: ${detail}` : code,
+      finishedAt: now(),
+      updatedAt: now(),
+    })
+    .where(
+      and(eq(migrationJobs.id, jobId), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])),
+    )
     .returning();
   if (rows[0]) deps.progress.emit(rows[0].oxyUserId, rows[0]);
 }

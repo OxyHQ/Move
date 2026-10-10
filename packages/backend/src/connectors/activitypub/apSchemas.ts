@@ -14,16 +14,28 @@ import { z } from 'zod';
 const apId = z.string().min(1);
 
 /** ISO-8601 with or without offset; coerced to the original instant. */
-const apPublished = z.string().datetime({ offset: true, local: true }).pipe(z.coerce.date()).optional();
+const apPublished = z
+  .string()
+  .datetime({ offset: true, local: true })
+  .pipe(z.coerce.date())
+  .optional();
 
 /** `type` is a string or, on some servers, an array of strings. */
 const apType = z.union([z.string(), z.array(z.string())]);
 
 const apLinkEntrySchema = z
-  .object({ type: apType.optional(), href: z.string().optional(), mediaType: z.string().optional() })
+  .object({
+    type: apType.optional(),
+    href: z.string().optional(),
+    mediaType: z.string().optional(),
+  })
   .loose();
 
-const apUrl = z.union([z.string(), apLinkEntrySchema, z.array(z.union([z.string(), apLinkEntrySchema]))]);
+const apUrl = z.union([
+  z.string(),
+  apLinkEntrySchema,
+  z.array(z.union([z.string(), apLinkEntrySchema])),
+]);
 
 /** A Note attachment (media, `url` in any of its shapes) or an actor `PropertyValue`. */
 const apAttachmentSchema = z
@@ -44,7 +56,14 @@ const apTagSchema = z
 const apImageSchema: z.ZodType<unknown> = z.lazy(() =>
   z.union([
     z.string(),
-    z.object({ type: apType.optional(), mediaType: z.string().optional(), url: apUrl.optional(), href: z.string().optional() }).loose(),
+    z
+      .object({
+        type: apType.optional(),
+        mediaType: z.string().optional(),
+        url: apUrl.optional(),
+        href: z.string().optional(),
+      })
+      .loose(),
     z.array(apImageSchema),
   ]),
 );
@@ -113,7 +132,10 @@ const apOutboxActivitySchema = z.union([
       id: apId,
       type: z.literal('Announce'),
       actor: apActorRef,
-      object: z.union([z.string(), z.object({ id: apId.optional(), type: apType.optional() }).loose()]),
+      object: z.union([
+        z.string(),
+        z.object({ id: apId.optional(), type: apType.optional() }).loose(),
+      ]),
       published: apPublished,
       to: apAddressing,
       cc: apAddressing,
@@ -151,6 +173,9 @@ const apOrderedCollectionSchema = z
 
 export const isApActor = (raw: unknown): boolean => apActorSchema.safeParse(raw).success;
 export const isApNote = (raw: unknown): boolean => apNoteSchema.safeParse(raw).success;
-export const isApOutboxActivity = (raw: unknown): boolean => apOutboxActivitySchema.safeParse(raw).success;
-export const isApCollection = (raw: unknown): boolean => apOrderedCollectionSchema.safeParse(raw).success;
-export const isApCollectionPage = (raw: unknown): boolean => apOrderedCollectionPageSchema.safeParse(raw).success;
+export const isApOutboxActivity = (raw: unknown): boolean =>
+  apOutboxActivitySchema.safeParse(raw).success;
+export const isApCollection = (raw: unknown): boolean =>
+  apOrderedCollectionSchema.safeParse(raw).success;
+export const isApCollectionPage = (raw: unknown): boolean =>
+  apOrderedCollectionPageSchema.safeParse(raw).success;

@@ -89,14 +89,9 @@
   },
   "overrides": [
     {
-      "includes": [
-        "packages/backend/**",
-        "scripts/**"
-      ],
+      "includes": ["packages/backend/**", "scripts/**"],
       "javascript": {
-        "globals": [
-          "Bun"
-        ]
+        "globals": ["Bun"]
       }
     }
   ]

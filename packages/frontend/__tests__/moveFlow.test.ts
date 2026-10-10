@@ -7,14 +7,32 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import type { MigrationJobView, MigrationPlan, PlanAckRequest, PlanResponse } from '@move/shared-types';
+import type {
+  MigrationJobView,
+  MigrationPlan,
+  PlanAckRequest,
+  PlanResponse,
+} from '@move/shared-types';
 import { createMoveApi, errorCode, type MoveHttp } from '../lib/moveApi';
 import { applyPlan, planHasPendingWork, undoPlan, type PlanSdk } from '../lib/planApplier';
-import { completeLink, type LinkCompleter, mastodonMigrationUrl, normalizeSourceInput, outcomeFromParams, formatMentionHandle, startFailureKey } from '../lib/handles';
+import {
+  completeLink,
+  type LinkCompleter,
+  mastodonMigrationUrl,
+  normalizeSourceInput,
+  outcomeFromParams,
+  formatMentionHandle,
+  startFailureKey,
+} from '../lib/handles';
 import { LINKED_ACCOUNT_CALLBACK_ERRORS, type LinkedAccount } from '@oxy.so/contracts';
 
 const PLAN: MigrationPlan = {
-  profile: { displayName: 'Ada', bio: 'Poet of numbers', avatarFileId: 'file-avatar', links: ['https://ada.example'] },
+  profile: {
+    displayName: 'Ada',
+    bio: 'Poet of numbers',
+    avatarFileId: 'file-avatar',
+    links: ['https://ada.example'],
+  },
   graph: { followBatches: [['u1', 'u2'], ['u3'], ['u4', 'u5']], unresolved: 1, hidden: false },
   blocks: null,
 };
@@ -72,9 +90,30 @@ function fakeBackend() {
           sourceActor: 'https://mastodon.example/users/ada',
           sourceHandle: '@ada@mastodon.example',
           status: 'running',
-          phases: { profile: { status: 'done' }, graph: { status: 'done' }, content: { status: 'running' } },
-          counters: { read: 0, created: 0, existing: 0, failed: 0, skipped: 0, deferred: 0, mediaUploaded: 0, followsRead: 6, followsResolved: 5 },
-          options: { content: true, graph: true, profile: true, includeBoosts: false, includeRepliesToOthers: false, ...input.options },
+          phases: {
+            profile: { status: 'done' },
+            graph: { status: 'done' },
+            content: { status: 'running' },
+          },
+          counters: {
+            read: 0,
+            created: 0,
+            existing: 0,
+            failed: 0,
+            skipped: 0,
+            deferred: 0,
+            mediaUploaded: 0,
+            followsRead: 6,
+            followsResolved: 5,
+          },
+          options: {
+            content: true,
+            graph: true,
+            profile: true,
+            includeBoosts: false,
+            includeRepliesToOthers: false,
+            ...input.options,
+          },
           error: null,
           pausedUntil: null,
           planAck: null,
@@ -106,13 +145,21 @@ function fakeClient(plan: MigrationPlan) {
       log.push(`ack ${JSON.stringify(ack)}`);
       const facts = { ...(state.undoFacts ?? {}) };
       if (ack.profileBefore && !facts.profileBefore) facts.profileBefore = ack.profileBefore;
-      if (ack.alreadyFollowing) facts.alreadyFollowing = { ...ack.alreadyFollowing, ...facts.alreadyFollowing };
-      if (ack.alreadyBlocked) facts.alreadyBlocked = { ...ack.alreadyBlocked, ...facts.alreadyBlocked };
+      if (ack.alreadyFollowing)
+        facts.alreadyFollowing = { ...ack.alreadyFollowing, ...facts.alreadyFollowing };
+      if (ack.alreadyBlocked)
+        facts.alreadyBlocked = { ...ack.alreadyBlocked, ...facts.alreadyBlocked };
       state.undoFacts = facts;
       state.ack = {
         profileApplied: ack.profileApplied || state.ack?.profileApplied || false,
-        followBatchesApplied: [...(state.ack?.followBatchesApplied ?? []), ...(ack.followBatchesApplied ?? [])],
-        blockBatchesApplied: [...(state.ack?.blockBatchesApplied ?? []), ...(ack.blockBatchesApplied ?? [])],
+        followBatchesApplied: [
+          ...(state.ack?.followBatchesApplied ?? []),
+          ...(ack.followBatchesApplied ?? []),
+        ],
+        blockBatchesApplied: [
+          ...(state.ack?.blockBatchesApplied ?? []),
+          ...(ack.blockBatchesApplied ?? []),
+        ],
       };
       return {};
     },
@@ -155,7 +202,10 @@ describe('confirm → progress → undo', () => {
       body: { platform: 'mastodon', linkedAccountId: 'la-1', dryRun: true },
     });
 
-    const job = await api.create('mastodon', 'la-1', { includeBoosts: true, includeRepliesToOthers: false });
+    const job = await api.create('mastodon', 'la-1', {
+      includeBoosts: true,
+      includeRepliesToOthers: false,
+    });
     expect(job.id).toBe('job-1');
     expect(backend.requests[1].body).toEqual({
       platform: 'mastodon',
@@ -183,7 +233,12 @@ describe('confirm → progress → undo', () => {
       'block b2',
       'ack {"blockBatchesApplied":[0]}',
     ]);
-    expect(progress).toMatchObject({ profile: 'applied', batchesApplied: 1, blockBatchesApplied: 1, blocksTotal: 2 });
+    expect(progress).toMatchObject({
+      profile: 'applied',
+      batchesApplied: 1,
+      blockBatchesApplied: 1,
+      blocksTotal: 2,
+    });
     expect(planHasPendingWork(FULL_PLAN, state.ack)).toBe(false);
 
     // Undo from those facts: only what Move added goes. (The avatar had no
@@ -195,17 +250,33 @@ describe('confirm → progress → undo', () => {
       'unblock b2',
       'updateProfile {"name":{"displayName":"Old"},"bio":"old","links":[]}',
     ]);
-    expect(undone).toEqual({ unfollowed: 1, unblocked: 1, kept: 2, profileRestored: true, profileKept: false });
+    expect(undone).toEqual({
+      unfollowed: 1,
+      unblocked: 1,
+      kept: 2,
+      profileRestored: true,
+      profileKept: false,
+    });
   });
 
   test('a batch applied without a recorded fact is left alone rather than guessed', async () => {
     const { sdk, log } = fakeClient(FULL_PLAN);
     const undone = await undoPlan(
       { sdk },
-      { plan: FULL_PLAN, ack: { profileApplied: true, followBatchesApplied: [0], blockBatchesApplied: [0] }, undoFacts: null },
+      {
+        plan: FULL_PLAN,
+        ack: { profileApplied: true, followBatchesApplied: [0], blockBatchesApplied: [0] },
+        undoFacts: null,
+      },
     );
     expect(log).toEqual([]);
-    expect(undone).toEqual({ unfollowed: 0, unblocked: 0, kept: 4, profileRestored: false, profileKept: true });
+    expect(undone).toEqual({
+      unfollowed: 0,
+      unblocked: 0,
+      kept: 4,
+      profileRestored: false,
+      profileKept: true,
+    });
   });
 });
 
@@ -233,7 +304,10 @@ describe('connect helpers', () => {
     for (const code of LINKED_ACCOUNT_CALLBACK_ERRORS) {
       expect(outcomeFromParams({ link_error: code })).toEqual({ kind: 'error', code });
     }
-    expect(outcomeFromParams({ link_error: 'made_up' })).toEqual({ kind: 'error', code: 'unknown' });
+    expect(outcomeFromParams({ link_error: 'made_up' })).toEqual({
+      kind: 'error',
+      code: 'unknown',
+    });
     // `error` is the SDK's OAuth parameter (and stripped on web): not ours.
     expect(outcomeFromParams({ error: 'access_denied' } as never)).toBeNull();
     expect(outcomeFromParams({})).toBeNull();
@@ -256,29 +330,54 @@ describe('connect helpers', () => {
 
     expect(await completeLink(oxy(409), 'c-2')).toEqual({ kind: 'error', code: 'already_linked' });
     // 403: another user started the flow (the code is now burned); 404: expired or used.
-    expect(await completeLink(oxy(403), 'c-3')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
-    expect(await completeLink(oxy(404), 'c-4')).toEqual({ kind: 'error', code: 'expired_or_foreign' });
+    expect(await completeLink(oxy(403), 'c-3')).toEqual({
+      kind: 'error',
+      code: 'expired_or_foreign',
+    });
+    expect(await completeLink(oxy(404), 'c-4')).toEqual({
+      kind: 'error',
+      code: 'expired_or_foreign',
+    });
     expect(await completeLink(oxy(500), 'c-5')).toEqual({ kind: 'error', code: 'unknown' });
   });
 
-  test("a refused start blames the handle only when Oxy says the handle did not resolve", () => {
+  test('a refused start blames the handle only when Oxy says the handle did not resolve', () => {
     // What `oxyServices.linkedAccounts.start` throws for a 400: the SDK keeps the body's `details`.
-    const refusal = (reason: string) => Object.assign(new Error('Bad request'), { status: 400, details: { reason } });
-    expect(startFailureKey('bluesky', refusal('handle_unresolvable'))).toBe('connect.startFailed.handle_unresolvable');
+    const refusal = (reason: string) =>
+      Object.assign(new Error('Bad request'), { status: 400, details: { reason } });
+    expect(startFailureKey('bluesky', refusal('handle_unresolvable'))).toBe(
+      'connect.startFailed.handle_unresolvable',
+    );
     // Bluesky refusing Oxy's client metadata is not "we couldn't find that account".
-    expect(startFailureKey('bluesky', refusal('provider_rejected'))).toBe('connect.startFailed.provider_rejected.bluesky');
-    expect(startFailureKey('mastodon', refusal('provider_rejected'))).toBe('connect.startFailed.provider_rejected.mastodon');
-    expect(startFailureKey('bluesky', refusal('provider_unavailable'))).toBe('connect.startFailed.provider_unavailable');
-    expect(startFailureKey('mastodon', refusal('instance_unreachable'))).toBe('connect.startFailed.instance_unreachable');
-    expect(startFailureKey('mastodon', refusal('instance_invalid'))).toBe('connect.startFailed.instance_invalid');
+    expect(startFailureKey('bluesky', refusal('provider_rejected'))).toBe(
+      'connect.startFailed.provider_rejected.bluesky',
+    );
+    expect(startFailureKey('mastodon', refusal('provider_rejected'))).toBe(
+      'connect.startFailed.provider_rejected.mastodon',
+    );
+    expect(startFailureKey('bluesky', refusal('provider_unavailable'))).toBe(
+      'connect.startFailed.provider_unavailable',
+    );
+    expect(startFailureKey('mastodon', refusal('instance_unreachable'))).toBe(
+      'connect.startFailed.instance_unreachable',
+    );
+    expect(startFailureKey('mastodon', refusal('instance_invalid'))).toBe(
+      'connect.startFailed.instance_invalid',
+    );
     // No reason, or one this build does not know: never a guess at the input.
-    expect(startFailureKey('bluesky', new Error('Network error'))).toBe('connect.startFailed.unknown');
-    expect(startFailureKey('bluesky', refusal('something_new'))).toBe('connect.startFailed.unknown');
+    expect(startFailureKey('bluesky', new Error('Network error'))).toBe(
+      'connect.startFailed.unknown',
+    );
+    expect(startFailureKey('bluesky', refusal('something_new'))).toBe(
+      'connect.startFailed.unknown',
+    );
   });
 
   test('the Mastodon move step targets the Mention handle and the source instance', () => {
     expect(formatMentionHandle('ada', 'mention.earth')).toBe('@ada@mention.earth');
-    expect(mastodonMigrationUrl('https://mastodon.example/users/ada')).toBe('https://mastodon.example/settings/migration');
+    expect(mastodonMigrationUrl('https://mastodon.example/users/ada')).toBe(
+      'https://mastodon.example/settings/migration',
+    );
     expect(mastodonMigrationUrl('not a url')).toBeNull();
   });
 });

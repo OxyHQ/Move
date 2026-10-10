@@ -6,6 +6,6 @@
 // app/_layout.tsx.
 export default {
   plugins: {
-    "@tailwindcss/postcss": {},
+    '@tailwindcss/postcss': {},
   },
 };

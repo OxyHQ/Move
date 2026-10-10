@@ -3,22 +3,12 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": [
-      "bun",
-      "node"
-    ],
+    "types": ["bun", "node"],
     "rootDir": "..",
     "composite": false
   },
-  "include": [
-    "**/*.ts",
-    "../frontend/lib/planApplier.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "drizzle.config.ts"
-  ],
+  "include": ["**/*.ts", "../frontend/lib/planApplier.ts"],
+  "exclude": ["node_modules", "dist", "drizzle.config.ts"],
   "references": [
     {
       "path": "../shared-types"
