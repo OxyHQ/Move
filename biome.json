@@ -1,0 +1,103 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!.worktrees",
+      "!**/dist",
+      "!**/coverage",
+      "!**/.expo",
+      "!**/.next",
+      "!**/drizzle/meta",
+      "!**/*.generated.*",
+      "!docs/audits",
+      "!packages/backend/src/__tests__/fixtures"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always",
+      "bracketSpacing": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "correctness": {
+        "noUndeclaredVariables": "error",
+        "useIsNan": "error",
+        "useValidTypeof": "error",
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        "noDuplicateParameters": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateCase": "error",
+        "noVar": "error",
+        "useIterableCallbackReturn": "warn",
+        "noTemplateCurlyInString": "warn"
+      },
+      "complexity": {
+        "noUselessLoneBlockStatements": "warn",
+        "useOptionalChain": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "warn",
+        "useShorthandFunctionType": "warn",
+        "useTemplate": "warn"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/backend/**",
+        "scripts/**"
+      ],
+      "javascript": {
+        "globals": [
+          "Bun"
+        ]
+      }
+    }
+  ]
+}
