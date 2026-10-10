@@ -20,7 +20,19 @@ const SHUTDOWN_DEADLINE_MS = 10_000;
  * migration interrupted here resumes from its checkpoint on another task), and
  * only then do HTTP, sockets, Redis and Postgres close.
  */
-export function registerGracefulShutdown({ server, io }: { server: http.Server; io: SocketIOServer }): void {
+export interface GracefulShutdownDeps {
+  server: http.Server;
+  io: SocketIOServer;
+  /**
+   * Stops the platform-activity publisher: flushes the last traffic aggregate
+   * and sends the `removed` heartbeat so this instance leaves the dashboard
+   * registry now rather than at lease expiry. Runs LAST, after HTTP and sockets
+   * have drained, so their final requests are still counted.
+   */
+  stopActivity?: () => Promise<void>;
+}
+
+export function registerGracefulShutdown({ server, io, stopActivity }: GracefulShutdownDeps): void {
   let isShuttingDown = false;
 
   const gracefulShutdown = (signal: string): void => {
@@ -48,6 +60,7 @@ export function registerGracefulShutdown({ server, io }: { server: http.Server; 
       await shutdownQueues().catch((error) => logger.error('Error shutting down the migration queue', error));
       const socketsClosed = new Promise<void>((resolve) => io.close(() => resolve()));
       await Promise.allSettled([httpClosed, socketsClosed, closeRedis(), closePostgres()]);
+      await stopActivity?.().catch((error) => logger.warn('Platform activity publisher did not stop cleanly', error));
       clearTimeout(hardTimeout);
       logger.info('HTTP, sockets, queue, Redis and PostgreSQL closed');
       process.exit(0);

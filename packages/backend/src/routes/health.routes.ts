@@ -7,7 +7,7 @@ import { Router, type Response } from 'express';
 import type { HealthResponse } from '@move/shared-types';
 import { assertMigrationsCurrent, checkPostgresHealth } from '../db/postgres';
 import { isRedisConfigured, isRedisReady } from '../utils/redis';
-import { getRuntimePhase } from '../utils/runtimeHealth';
+import { getRuntimePhase, recordReadinessVerdict } from '../utils/runtimeHealth';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -37,6 +37,7 @@ router.get('/ready', async (_req, res: Response) => {
     }
   }
   const isReady = phase === 'ready' && postgresReady && migrationsCurrent;
+  recordReadinessVerdict(isReady);
   res.status(isReady ? 200 : 503).json({
     status: isReady ? 'ready' : 'not_ready',
     phase,
