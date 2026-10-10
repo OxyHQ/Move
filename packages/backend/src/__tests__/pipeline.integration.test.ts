@@ -39,7 +39,13 @@ import {
 // The CLIENT's plan applier, run against the real JobService: undo on another
 // device must work from what the backend recorded, and only a test that drives
 // both halves together can show it.
-import { applyPlan, undoPlan, type PlanApi, type PlanSdk, type ProfileUpdate } from '../../../frontend/lib/planApplier';
+import {
+  applyPlan,
+  undoPlan,
+  type PlanApi,
+  type PlanSdk,
+  type ProfileUpdate,
+} from '../../../frontend/lib/planApplier';
 import { createTestDatabase, type TestDatabase } from './helpers/testDatabase';
 
 const STATUS = (id: string) => `${GARGRON}/statuses/${id}`;
@@ -80,7 +86,12 @@ class FakeMention implements ContentDestination {
     return `${user}|${platform}|${sourceId}`;
   }
 
-  async deliver(params: { oxyUserId: string; platform: 'mastodon' | 'bluesky'; batchId: string; items: PreparedItem[] }): Promise<DeliveryResult[]> {
+  async deliver(params: {
+    oxyUserId: string;
+    platform: 'mastodon' | 'bluesky';
+    batchId: string;
+    items: PreparedItem[];
+  }): Promise<DeliveryResult[]> {
     this.deliveries++;
     const mode = this.failOnDelivery.get(this.deliveries) ?? 'none';
     if (mode === 'rate-limit') throw new DestinationRateLimitedError('slow down', 30_000);
@@ -88,12 +99,19 @@ class FakeMention implements ContentDestination {
     const results: DeliveryResult[] = params.items.map((item) => {
       const key = this.key(params.oxyUserId, params.platform, item.sourceId);
       const existing = this.posts.get(key);
-      if (existing) return { sourceId: item.sourceId, status: 'existing', destinationId: existing.postId };
-      if (item.replyToSourceId && !this.posts.has(this.key(params.oxyUserId, params.platform, item.replyToSourceId))) {
+      if (existing)
+        return { sourceId: item.sourceId, status: 'existing', destinationId: existing.postId };
+      if (
+        item.replyToSourceId &&
+        !this.posts.has(this.key(params.oxyUserId, params.platform, item.replyToSourceId))
+      ) {
         this.deferredAnswers.push(item.sourceId);
         return { sourceId: item.sourceId, status: 'deferred', error: 'parent_not_imported' };
       }
-      if (item.quoteSourceId && !this.posts.has(this.key(params.oxyUserId, params.platform, item.quoteSourceId))) {
+      if (
+        item.quoteSourceId &&
+        !this.posts.has(this.key(params.oxyUserId, params.platform, item.quoteSourceId))
+      ) {
         this.deferredAnswers.push(item.sourceId);
         return { sourceId: item.sourceId, status: 'deferred', error: 'quote_not_imported' };
       }
@@ -106,7 +124,10 @@ class FakeMention implements ContentDestination {
     return results;
   }
 
-  async undo(params: { oxyUserId: string; batchId: string }): Promise<{ deleted: number; failed: number }> {
+  async undo(params: {
+    oxyUserId: string;
+    batchId: string;
+  }): Promise<{ deleted: number; failed: number }> {
     let deleted = 0;
     let failed = 0;
     for (const [key, post] of this.posts) {
@@ -122,9 +143,17 @@ class FakeMention implements ContentDestination {
     return { deleted, failed };
   }
 
-  async lookupImported(params: { oxyUserId: string; platform: 'mastodon' | 'bluesky'; sourceIds: string[] }): Promise<Set<string>> {
+  async lookupImported(params: {
+    oxyUserId: string;
+    platform: 'mastodon' | 'bluesky';
+    sourceIds: string[];
+  }): Promise<Set<string>> {
     this.lookups.push(params.sourceIds);
-    return new Set(params.sourceIds.filter((id) => this.posts.has(this.key(params.oxyUserId, params.platform, id))));
+    return new Set(
+      params.sourceIds.filter((id) =>
+        this.posts.has(this.key(params.oxyUserId, params.platform, id)),
+      ),
+    );
   }
 }
 
@@ -135,21 +164,33 @@ class FakeOxy {
     linkedAccounts: {
       forUser: async (userId: string): Promise<ServiceLinkedAccountListResponse> => ({
         userId,
-        linkedAccounts: this.linkedAccounts.filter((account) => account.ownerId === userId).map(({ ownerId: _, ...account }) => account),
+        linkedAccounts: this.linkedAccounts
+          .filter((account) => account.ownerId === userId)
+          .map(({ ownerId: _, ...account }) => account),
       }),
     },
-    serviceRequest: async <R,>(method: string, path: string, body?: unknown): Promise<R> => (await this.serviceRequest(method, path, body)) as R,
+    serviceRequest: async <R>(method: string, path: string, body?: unknown): Promise<R> =>
+      (await this.serviceRequest(method, path, body)) as R,
   } satisfies OxyServiceClient;
   private async serviceRequest(method: string, path: string, body?: unknown): Promise<unknown> {
     if (method === 'POST' && path === '/federation/identities/lookup') {
       const identifiers = (body as { identifiers: string[] }).identifiers;
       // Oxy already knows every other account; the rest need a resolve.
-      return { identities: identifiers.map((identifier, index) => ({ identifier, userId: index % 2 === 0 ? `oxy-${identifier.length}-${index}` : null })) };
+      return {
+        identities: identifiers.map((identifier, index) => ({
+          identifier,
+          userId: index % 2 === 0 ? `oxy-${identifier.length}-${index}` : null,
+        })),
+      };
     }
     if (method === 'POST' && path === '/federation/identities/resolve') {
       const actorUri = (body as { actorUri: string }).actorUri;
       // DIDs all have one length, so they get an id of their own.
-      return { user: { id: actorUri.startsWith('did:') ? `oxy-${actorUri}` : `oxy-resolved-${actorUri.length}` } };
+      return {
+        user: {
+          id: actorUri.startsWith('did:') ? `oxy-${actorUri}` : `oxy-resolved-${actorUri.length}`,
+        },
+      };
     }
     if (method === 'POST' && path === '/notifications') {
       this.notifications.push(body as Record<string, unknown>);
@@ -190,14 +231,17 @@ function build(maxBatchSize = 50): void {
       download: async () => ({ buffer: Buffer.from('jpeg-bytes'), contentType: 'image/jpeg' }),
       upload: async () => {
         uploads++;
-        if (uploadFailures.includes(uploads)) throw new OxyUploadError('Too many uploads', 429, '90');
+        if (uploadFailures.includes(uploads))
+          throw new OxyUploadError('Too many uploads', 429, '90');
         return { fileId: `file-${uploads}` };
       },
       sleep: async () => undefined,
     }),
     sourceFactory: async (account) =>
       account.platform === 'bluesky'
-        ? new BlueskySource(account, createFixtureFetcher(blueskyRoutes()), { pdsEndpoint: BSKY_PDS })
+        ? new BlueskySource(account, createFixtureFetcher(blueskyRoutes()), {
+            pdsEndpoint: BSKY_PDS,
+          })
         : new MastodonSource(account, fetcher),
     progress,
   };
@@ -208,7 +252,9 @@ function build(maxBatchSize = 50): void {
     destination: deps.destination,
     sourceFactory: deps.sourceFactory,
     progress,
-    enqueue: async (jobId) => { enqueued.push(jobId); },
+    enqueue: async (jobId) => {
+      enqueued.push(jobId);
+    },
   });
 }
 
@@ -228,26 +274,34 @@ afterAll(async () => {
 beforeEach(async () => {
   await database.db.delete(migrationJobs);
   oxy = new FakeOxy();
-  const linked = { proofMethod: 'oauth' as const, verifiedAt: '2026-09-25T00:00:00.000Z', createdAt: '2026-09-25T00:00:00.000Z', federatedUserId: null };
-  oxy.linkedAccounts = [{
-    ownerId: USER,
-    id: LINKED,
-    network: 'activitypub' as const,
-    accountKey: 'Gargron@mastodon.social',
-    actorUri: GARGRON,
-    handle: 'Gargron',
-    host: 'mastodon.social',
-    ...linked,
-  }, {
-    ownerId: USER,
-    id: LINKED_BSKY,
-    network: 'atproto' as const,
-    accountKey: JAY_DID,
-    actorUri: JAY_DID,
-    handle: 'jay.bsky.team',
-    host: 'bsky.social',
-    ...linked,
-  }];
+  const linked = {
+    proofMethod: 'oauth' as const,
+    verifiedAt: '2026-09-25T00:00:00.000Z',
+    createdAt: '2026-09-25T00:00:00.000Z',
+    federatedUserId: null,
+  };
+  oxy.linkedAccounts = [
+    {
+      ownerId: USER,
+      id: LINKED,
+      network: 'activitypub' as const,
+      accountKey: 'Gargron@mastodon.social',
+      actorUri: GARGRON,
+      handle: 'Gargron',
+      host: 'mastodon.social',
+      ...linked,
+    },
+    {
+      ownerId: USER,
+      id: LINKED_BSKY,
+      network: 'atproto' as const,
+      accountKey: JAY_DID,
+      actorUri: JAY_DID,
+      handle: 'jay.bsky.team',
+      host: 'bsky.social',
+      ...linked,
+    },
+  ];
   uploadFailures = [];
   build();
 });
@@ -256,29 +310,59 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
   for (const deniedStatus of [401, 403]) {
     test(`Mention HTTP ${deniedStatus} preserves the stored intent and finishes without rescheduling`, async () => {
       const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
-      await database.db.update(migrationJobs).set({
-        phases: { profile: { status: 'done' }, graph: { status: 'done' }, content: { status: 'running' } },
-        plan: { profile: { displayName: 'Preserve this plan' }, graph: { followBatches: [['target-fixture']], unresolved: 0, hidden: false }, blocks: null },
-      }).where(eq(migrationJobs.id, created.id));
+      await database.db
+        .update(migrationJobs)
+        .set({
+          phases: {
+            profile: { status: 'done' },
+            graph: { status: 'done' },
+            content: { status: 'running' },
+          },
+          plan: {
+            profile: { displayName: 'Preserve this plan' },
+            graph: { followBatches: [['target-fixture']], unresolved: 0, hidden: false },
+            blocks: null,
+          },
+        })
+        .where(eq(migrationJobs.id, created.id));
       let before: MigrationJob | undefined;
       let itemsBefore: Array<typeof migrationItems.$inferSelect> = [];
       let calls = 0;
-      const denied = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
-        calls++;
-        expect(request.method).toBe('POST');
-        expect(new URL(request.url).pathname).toBe('/imports/v1/posts:batch');
-        expect(request.headers.get('X-Oxy-User-Id')).toBe(USER);
-        expect(request.headers.get('Authorization')).toBe('Bearer fixture-service-token');
-        before = await job(created.id);
-        itemsBefore = await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id));
-        expect(itemsBefore.length).toBeGreaterThan(0);
-        return Response.json({ code: 'SERVICE_ACTING_AS_UNAUTHORIZED' }, { status: deniedStatus });
-      } });
-      const destination = new MentionDestination({ baseUrl: `http://127.0.0.1:${denied.port}`, oxy: { serviceToken: async () => 'fixture-service-token' } });
+      const denied = Bun.serve({
+        hostname: '127.0.0.1',
+        port: 0,
+        async fetch(request) {
+          calls++;
+          expect(request.method).toBe('POST');
+          expect(new URL(request.url).pathname).toBe('/imports/v1/posts:batch');
+          expect(request.headers.get('X-Oxy-User-Id')).toBe(USER);
+          expect(request.headers.get('Authorization')).toBe('Bearer fixture-service-token');
+          before = await job(created.id);
+          itemsBefore = await database.db
+            .select()
+            .from(migrationItems)
+            .where(eq(migrationItems.jobId, created.id));
+          expect(itemsBefore.length).toBeGreaterThan(0);
+          return Response.json(
+            { code: 'SERVICE_ACTING_AS_UNAUTHORIZED' },
+            { status: deniedStatus },
+          );
+        },
+      });
+      const destination = new MentionDestination({
+        baseUrl: `http://127.0.0.1:${denied.port}`,
+        oxy: { serviceToken: async () => 'fixture-service-token' },
+      });
       const deniedDeps = { ...deps, destination };
       const rescheduled: unknown[] = [];
       try {
-        await processMigrationMessage({ data: { jobId: created.id }, attemptsMade: 0 }, deniedDeps, async (...args) => { rescheduled.push(args); });
+        await processMigrationMessage(
+          { data: { jobId: created.id }, attemptsMade: 0 },
+          deniedDeps,
+          async (...args) => {
+            rescheduled.push(args);
+          },
+        );
         expect(calls).toBe(1);
         expect(rescheduled).toEqual([]);
         expect(before).toBeDefined();
@@ -287,17 +371,43 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
         expect(failed.status).toBe('failed');
         expect(failed.error).toContain('destination-rejected');
         expect(failed.finishedAt).not.toBeNull();
-        expect(emitted.filter((event) => event.id === created.id && event.status === 'failed')).toHaveLength(1);
-        for (const field of ['cursor', 'plan', 'counters', 'phases', 'options', 'planAck', 'undoFacts', 'sourceActor', 'linkedAccountId', 'oxyUserId'] as const) {
+        expect(
+          emitted.filter((event) => event.id === created.id && event.status === 'failed'),
+        ).toHaveLength(1);
+        for (const field of [
+          'cursor',
+          'plan',
+          'counters',
+          'phases',
+          'options',
+          'planAck',
+          'undoFacts',
+          'sourceActor',
+          'linkedAccountId',
+          'oxyUserId',
+        ] as const) {
           expect(failed[field]).toEqual(before[field]);
         }
-        expect(await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id))).toEqual(itemsBefore);
+        expect(
+          await database.db
+            .select()
+            .from(migrationItems)
+            .where(eq(migrationItems.jobId, created.id)),
+        ).toEqual(itemsBefore);
         // A duplicate queue delivery observes terminal failure and creates no retry/effect.
-        await processMigrationMessage({ data: { jobId: created.id }, attemptsMade: 1 }, deniedDeps, async (...args) => { rescheduled.push(args); });
+        await processMigrationMessage(
+          { data: { jobId: created.id }, attemptsMade: 1 },
+          deniedDeps,
+          async (...args) => {
+            rescheduled.push(args);
+          },
+        );
         expect(calls).toBe(1);
         expect(rescheduled).toEqual([]);
         expect(await job(created.id)).toEqual(failed);
-      } finally { denied.stop(true); }
+      } finally {
+        denied.stop(true);
+      }
     });
   }
   test('a full run imports every public own post, parents before children, and plans profile + graph', async () => {
@@ -307,14 +417,22 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
     expect([...mention.received].sort()).toEqual([...EXPECTED_IMPORTS].sort());
     const order = mention.received;
-    expect(order.indexOf(STATUS('117293597728332882'))).toBeLessThan(order.indexOf(STATUS('117294179974600212')));
-    expect(order.indexOf(STATUS('117327932994028225'))).toBeLessThan(order.indexOf(STATUS('117330917869779654')));
+    expect(order.indexOf(STATUS('117293597728332882'))).toBeLessThan(
+      order.indexOf(STATUS('117294179974600212')),
+    );
+    expect(order.indexOf(STATUS('117327932994028225'))).toBeLessThan(
+      order.indexOf(STATUS('117330917869779654')),
+    );
 
     const done = await job(created.id);
     expect(done.status).toBe('done');
     expect(done.counters.created).toBe(EXPECTED_IMPORTS.length);
     expect(done.counters.skipped).toBeGreaterThan(0);
-    expect(done.phases).toEqual({ profile: { status: 'done' }, graph: { status: 'done' }, content: { status: 'done' } });
+    expect(done.phases).toEqual({
+      profile: { status: 'done' },
+      graph: { status: 'done' },
+      content: { status: 'done' },
+    });
     expect(done.plan.profile?.displayName).toBe('Eugen Rochko');
     expect(done.plan.profile?.avatarFileId).toStartWith('file-');
     expect(done.plan.graph?.followBatches.flat().length).toBe(5);
@@ -327,15 +445,24 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
       entityType: 'app',
       url: `https://move.oxy.so/jobs/${created.id}`,
     });
-    const note = oxy.notifications[0] as { title: string; message: string; data: Record<string, unknown> };
+    const note = oxy.notifications[0] as {
+      title: string;
+      message: string;
+      data: Record<string, unknown>;
+    };
     expect(note.title.length).toBeLessThanOrEqual(120);
     expect(note.message.length).toBeLessThanOrEqual(500);
     expect(note.data.url).toBeUndefined();
 
-    const media = [...mention.posts.values()].find((post) => post.item.sourceId === STATUS('117293597728332882'));
+    const media = [...mention.posts.values()].find(
+      (post) => post.item.sourceId === STATUS('117293597728332882'),
+    );
     expect(media?.item.media[0].assetId).toStartWith('file-');
 
-    const items = await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id));
+    const items = await database.db
+      .select()
+      .from(migrationItems)
+      .where(eq(migrationItems.jobId, created.id));
     expect(items.filter((item) => item.status === 'sent')).toHaveLength(EXPECTED_IMPORTS.length);
     expect(items.every((item) => item.payload === null)).toBe(true);
     expect(emitted.length).toBeGreaterThan(0);
@@ -353,7 +480,13 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
     // The worker turns the pause into a delayed message, not a failure.
     const rescheduled: Array<[string, number]> = [];
-    await processMigrationMessage({ data: { jobId: created.id }, attemptsMade: 0 }, deps, async (id, delay) => { rescheduled.push([id, delay]); });
+    await processMigrationMessage(
+      { data: { jobId: created.id }, attemptsMade: 0 },
+      deps,
+      async (id, delay) => {
+        rescheduled.push([id, delay]);
+      },
+    );
     expect(rescheduled).toHaveLength(1);
     expect(rescheduled[0][1]).toBeGreaterThan(60_000);
 
@@ -371,7 +504,9 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     fetcher = createFixtureFetcher(routes);
     deps.sourceFactory = async (account) => {
       const source = new MastodonSource(account, fetcher);
-      source.graph = () => { throw new Error('the graph of a hidden follow list was read'); };
+      source.graph = () => {
+        throw new Error('the graph of a hidden follow list was read');
+      };
       return source;
     };
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
@@ -419,41 +554,64 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     expect(uploads).toBe(2);
     const done = await job(created.id);
     expect(done.counters.existing).toBeGreaterThan(0);
-    expect(done.counters.created + done.counters.existing).toBeGreaterThanOrEqual(EXPECTED_IMPORTS.length);
+    expect(done.counters.created + done.counters.existing).toBeGreaterThanOrEqual(
+      EXPECTED_IMPORTS.length,
+    );
   });
 
   test('a self-reply whose parent never arrives imports STANDALONE with a link to the parent', async () => {
     const routes = mastodonRoutes();
-    const page2 = routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] as { orderedItems: unknown[] };
-    routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] = { ...page2, orderedItems: page2.orderedItems.slice(1) };
+    const page2 = routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] as {
+      orderedItems: unknown[];
+    };
+    routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] = {
+      ...page2,
+      orderedItems: page2.orderedItems.slice(1),
+    };
     fetcher = createFixtureFetcher(routes);
     deps.sourceFactory = async (account) => new MastodonSource(account, fetcher);
 
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
-    const reply = [...mention.posts.values()].find((post) => post.item.sourceId === STATUS('117294179974600212'));
+    const reply = [...mention.posts.values()].find(
+      (post) => post.item.sourceId === STATUS('117294179974600212'),
+    );
     expect(reply).toBeDefined();
     expect(reply!.item.replyToSourceId).toBeUndefined();
     expect(reply!.item.links).toContain(STATUS('117293597728332882'));
     // It was never sent with a reference Mention could not resolve.
     expect(mention.deferredAnswers).not.toContain(STATUS('117294179974600212'));
-    const items = await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id));
+    const items = await database.db
+      .select()
+      .from(migrationItems)
+      .where(eq(migrationItems.jobId, created.id));
     expect(items.filter((item) => item.status === 'deferred')).toHaveLength(0);
     expect((await job(created.id)).counters.deferred).toBe(0);
   });
 
   test('a parent imported by an EARLIER job is kept as the reply target (lookup, not standalone)', async () => {
     const routes = mastodonRoutes();
-    const page2 = routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] as { orderedItems: unknown[] };
-    routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] = { ...page2, orderedItems: page2.orderedItems.slice(1) };
+    const page2 = routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] as {
+      orderedItems: unknown[];
+    };
+    routes[`${GARGRON}/outbox?max_id=117293597728332883&page=true`] = {
+      ...page2,
+      orderedItems: page2.orderedItems.slice(1),
+    };
     fetcher = createFixtureFetcher(routes);
     deps.sourceFactory = async (account) => new MastodonSource(account, fetcher);
     const parent = STATUS('117293597728332882');
-    mention.posts.set(`${USER}|mastodon|${parent}`, { postId: 'earlier-post', batchId: 'earlier-job', item: {} as PreparedItem });
+    mention.posts.set(`${USER}|mastodon|${parent}`, {
+      postId: 'earlier-post',
+      batchId: 'earlier-job',
+      item: {} as PreparedItem,
+    });
 
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
-    const reply = [...mention.posts.values()].find((post) => post.item.sourceId === STATUS('117294179974600212'));
+    const reply = [...mention.posts.values()].find(
+      (post) => post.item.sourceId === STATUS('117294179974600212'),
+    );
     expect(reply!.item.replyToSourceId).toBe(parent);
     expect(mention.lookups.flat()).toContain(parent);
   });
@@ -466,7 +624,11 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     mention.deliver = async (params) => {
       calls++;
       if (calls === 2) {
-        return params.items.map((item) => ({ sourceId: item.sourceId, status: 'deferred' as const, error: 'parent_not_imported' }));
+        return params.items.map((item) => ({
+          sourceId: item.sourceId,
+          status: 'deferred' as const,
+          error: 'parent_not_imported',
+        }));
       }
       return original(params);
     };
@@ -492,7 +654,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     expect(mention.posts.size).toBe(0);
   });
 
-  test('undo deletes Mention\'s batch, marks items undone and returns the plan for the client', async () => {
+  test("undo deletes Mention's batch, marks items undone and returns the plan for the client", async () => {
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await runMigrationJob(created.id, deps);
     expect(mention.posts.size).toBe(EXPECTED_IMPORTS.length);
@@ -501,15 +663,22 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     expect(mention.posts.size).toBe(0);
     expect(result.job.status).toBe('undone');
     expect(result.plan.graph?.followBatches.flat()).toHaveLength(5);
-    const items = await database.db.select().from(migrationItems).where(eq(migrationItems.jobId, created.id));
+    const items = await database.db
+      .select()
+      .from(migrationItems)
+      .where(eq(migrationItems.jobId, created.id));
     expect(items.every((item) => item.status === 'undone')).toBe(true);
     // Idempotent: a second undo deletes nothing and does not throw.
     expect((await jobs.undo(USER, created.id)).deleted).toBe(0);
   });
 
-  test('a linked account that is not the caller\'s is rejected before any job exists', async () => {
-    await expect(jobs.create('someone-else', { platform: 'mastodon', linkedAccountId: LINKED })).rejects.toBeInstanceOf(ForeignLinkedAccountError);
-    await expect(jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED })).rejects.toBeInstanceOf(ForeignLinkedAccountError);
+  test("a linked account that is not the caller's is rejected before any job exists", async () => {
+    await expect(
+      jobs.create('someone-else', { platform: 'mastodon', linkedAccountId: LINKED }),
+    ).rejects.toBeInstanceOf(ForeignLinkedAccountError);
+    await expect(
+      jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED }),
+    ).rejects.toBeInstanceOf(ForeignLinkedAccountError);
     expect(await database.db.select().from(migrationJobs)).toHaveLength(0);
   });
 
@@ -523,7 +692,9 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
   test('at most one active job per user and platform, enforced by the database', async () => {
     const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
-    await expect(jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED })).rejects.toBeInstanceOf(JobConflictError);
+    await expect(
+      jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED }),
+    ).rejects.toBeInstanceOf(JobConflictError);
     await runMigrationJob(created.id, deps);
     // Finished jobs are history; they do not hold the slot. A second finished
     // migration notifies under its OWN entity id (Oxy dedupes on entityId).
@@ -553,7 +724,12 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
  * the same account, which is what makes a second device meaningful.
  */
 class FakeOxyAccount {
-  profile: { name: { displayName?: string }; bio?: string; avatar?: string | null; links?: string[] } = {
+  profile: {
+    name: { displayName?: string };
+    bio?: string;
+    avatar?: string | null;
+    links?: string[];
+  } = {
     name: { displayName: 'Jay before Move' },
     bio: 'bio before Move',
     avatar: 'file-before',
@@ -632,7 +808,12 @@ describe('the client plan: resumable and undoable from any device (real JobServi
     account.blocked.add(blocks[1]); // and already blocked this one
 
     // Device A applies the profile, follows batch 0, and dies before acking it.
-    await expect(applyPlan({ api: deviceApi({ crashAfterFirstFollow: true }), sdk: account.session() }, created.id)).rejects.toThrow('app closed');
+    await expect(
+      applyPlan(
+        { api: deviceApi({ crashAfterFirstFollow: true }), sdk: account.session() },
+        created.id,
+      ),
+    ).rejects.toThrow('app closed');
     expect(account.profile.name.displayName).toBe(plan.profile?.displayName);
 
     // Device B resumes. It now sees every target followed — the backend must
@@ -654,7 +835,13 @@ describe('the client plan: resumable and undoable from any device (real JobServi
     const result = await jobs.undo(USER, created.id);
     const client = await undoPlan({ sdk: account.session() }, result);
 
-    expect(client).toMatchObject({ unfollowed: 2, unblocked: 4, kept: 2, profileRestored: true, profileKept: false });
+    expect(client).toMatchObject({
+      unfollowed: 2,
+      unblocked: 4,
+      kept: 2,
+      profileRestored: true,
+      profileKept: false,
+    });
     expect([...account.following]).toEqual([follows[0]]);
     expect([...account.blocked]).toEqual([blocks[1]]);
     expect(account.profile.name.displayName).toBe(original.name.displayName);
@@ -682,15 +869,29 @@ describe('the client plan: resumable and undoable from any device (real JobServi
     const { plan } = await jobs.plan(USER, created.id);
     const [first, second] = plan.graph!.followBatches[0];
 
-    await expect(jobs.ackPlan(USER, created.id, { alreadyFollowing: { 0: ['someone-else'] } })).rejects.toThrow('outside its batch');
-    await expect(jobs.ackPlan(USER, created.id, { alreadyBlocked: { 7: [] } })).rejects.toThrow('out of range');
-    await expect(jobs.ackPlan(USER, created.id, { blockBatchesApplied: [1] })).rejects.toThrow('out of range');
+    await expect(
+      jobs.ackPlan(USER, created.id, { alreadyFollowing: { 0: ['someone-else'] } }),
+    ).rejects.toThrow('outside its batch');
+    await expect(jobs.ackPlan(USER, created.id, { alreadyBlocked: { 7: [] } })).rejects.toThrow(
+      'out of range',
+    );
+    await expect(jobs.ackPlan(USER, created.id, { blockBatchesApplied: [1] })).rejects.toThrow(
+      'out of range',
+    );
 
-    await jobs.ackPlan(USER, created.id, { alreadyFollowing: { 0: [first] }, profileBefore: { bio: 'first' } });
-    await jobs.ackPlan(USER, created.id, { alreadyFollowing: { 0: [first, second] }, profileBefore: { bio: 'second' } });
+    await jobs.ackPlan(USER, created.id, {
+      alreadyFollowing: { 0: [first] },
+      profileBefore: { bio: 'first' },
+    });
+    await jobs.ackPlan(USER, created.id, {
+      alreadyFollowing: { 0: [first, second] },
+      profileBefore: { bio: 'second' },
+    });
     const facts = (await jobs.plan(USER, created.id)).undoFacts;
     expect(facts?.alreadyFollowing).toEqual({ 0: [first] });
     expect(facts?.profileBefore).toEqual({ bio: 'first' });
-    await expect(jobs.ackPlan('intruder', created.id, { profileApplied: true })).rejects.toThrow('job not found');
+    await expect(jobs.ackPlan('intruder', created.id, { profileApplied: true })).rejects.toThrow(
+      'job not found',
+    );
   });
 });

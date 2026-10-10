@@ -40,7 +40,12 @@ import {
   type AtprotoRecordEmbed,
   type AtprotoEmbedView,
 } from '../connectors/atproto/postView';
-import { SourceHttpError, SourceUnavailableError, type JsonFetcher, type JsonResponse } from './http';
+import {
+  SourceHttpError,
+  SourceUnavailableError,
+  type JsonFetcher,
+  type JsonResponse,
+} from './http';
 import type {
   GraphAccount,
   Positioned,
@@ -87,8 +92,13 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
     return this.account.actor;
   }
 
-  private async xrpc<T>(nsid: string, params: Record<string, string | number | undefined>): Promise<T> {
-    const response = await this.fetchJson(buildXrpcUrl(PUBLIC_APPVIEW, nsid, params), { accept: 'application/json' });
+  private async xrpc<T>(
+    nsid: string,
+    params: Record<string, string | number | undefined>,
+  ): Promise<T> {
+    const response = await this.fetchJson(buildXrpcUrl(PUBLIC_APPVIEW, nsid, params), {
+      accept: 'application/json',
+    });
     if (response.status < 200 || response.status >= 300) {
       throw new SourceHttpError(`${nsid} answered ${response.status}`, response.status);
     }
@@ -96,14 +106,20 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
   }
 
   async profile(): Promise<SourceProfile> {
-    const view = await this.xrpc<AtprotoProfileView>('app.bsky.actor.getProfile', { actor: this.did });
-    if (view.did !== this.did) throw new SourceHttpError('profile DID does not match the linked account', 200);
+    const view = await this.xrpc<AtprotoProfileView>('app.bsky.actor.getProfile', {
+      actor: this.did,
+    });
+    if (view.did !== this.did)
+      throw new SourceHttpError('profile DID does not match the linked account', 200);
     // An unverified handle reads `handle.invalid`; the linked handle is better.
-    const handle = view.handle && view.handle !== 'handle.invalid' ? view.handle : this.account.handle;
+    const handle =
+      view.handle && view.handle !== 'handle.invalid' ? view.handle : this.account.handle;
     return {
       actor: this.did,
       handle,
-      displayName: view.displayName ? normalizeInlineText(view.displayName) || undefined : undefined,
+      displayName: view.displayName
+        ? normalizeInlineText(view.displayName) || undefined
+        : undefined,
       bio: view.description ? normalizeMultilineText(view.description) || undefined : undefined,
       avatarUrl: view.avatar || undefined,
       postsCount: view.postsCount,
@@ -126,7 +142,9 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
   async *items(
     context: SourceReadContext<PageCursor>,
   ): AsyncIterable<Positioned<SourceItem | SkippedItem, PageCursor>> {
-    const filter = context.options.includeRepliesToOthers ? 'posts_with_replies' : 'posts_and_author_threads';
+    const filter = context.options.includeRepliesToOthers
+      ? 'posts_with_replies'
+      : 'posts_and_author_threads';
     let page = context.cursor?.page;
     let offset = context.cursor?.index ?? 0;
     for (let pages = 0; pages < MAX_PAGES; pages++) {
@@ -147,24 +165,31 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
     }
   }
 
-  async *graph(context: SourceReadContext<PageCursor>): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
+  async *graph(
+    context: SourceReadContext<PageCursor>,
+  ): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
     if (context.cursor?.stage !== 'blocks') yield* this.follows(context.cursor);
     yield* this.blocks(context.cursor?.stage === 'blocks' ? context.cursor : null);
   }
 
-  private async *follows(cursor: PageCursor | null): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
+  private async *follows(
+    cursor: PageCursor | null,
+  ): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
     let page = cursor?.page;
     let offset = cursor?.index ?? 0;
     for (let pages = 0; pages < MAX_PAGES; pages++) {
-      const response = await this.xrpc<{ follows?: Array<{ did?: string; handle?: string }>; cursor?: string }>(
-        'app.bsky.graph.getFollows',
-        { actor: this.did, limit: PAGE_LIMIT, cursor: page },
-      );
+      const response = await this.xrpc<{
+        follows?: Array<{ did?: string; handle?: string }>;
+        cursor?: string;
+      }>('app.bsky.graph.getFollows', { actor: this.did, limit: PAGE_LIMIT, cursor: page });
       const follows = Array.isArray(response.follows) ? response.follows : [];
       for (let index = Math.min(offset, follows.length); index < follows.length; index++) {
         const follow = follows[index];
         if (typeof follow?.did !== 'string' || !follow.did.startsWith('did:')) continue;
-        yield { value: { actor: follow.did, handle: follow.handle }, cursor: { page, index: index + 1 } };
+        yield {
+          value: { actor: follow.did, handle: follow.handle },
+          cursor: { page, index: index + 1 },
+        };
       }
       offset = 0;
       if (!response.cursor || follows.length === 0 || response.cursor === page) return;
@@ -178,7 +203,9 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
    * a PDS that refuses the read (repo moved, 404) loses only the blocks. A 429
    * or 5xx is the backoff layer's: it pauses or retries like every other read.
    */
-  private async *blocks(cursor: PageCursor | null): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
+  private async *blocks(
+    cursor: PageCursor | null,
+  ): AsyncIterable<Positioned<GraphAccount, PageCursor>> {
     let pdsHost: string | undefined;
     try {
       pdsHost = this.options.pdsEndpoint ? new URL(this.options.pdsEndpoint).host : undefined;
@@ -203,12 +230,23 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
         throw error;
       }
       if (response.status < 200 || response.status >= 300) return;
-      const body = response.body as { records?: Array<{ value?: { $type?: string; subject?: unknown } }>; cursor?: string };
+      const body = response.body as {
+        records?: Array<{ value?: { $type?: string; subject?: unknown } }>;
+        cursor?: string;
+      };
       const records = Array.isArray(body.records) ? body.records : [];
       for (let index = Math.min(offset, records.length); index < records.length; index++) {
         const subject = records[index]?.value?.subject;
-        if (records[index]?.value?.$type !== BLOCK_COLLECTION || typeof subject !== 'string' || !subject.startsWith('did:')) continue;
-        yield { value: { actor: subject, relation: 'block' }, cursor: { stage: 'blocks', page, index: index + 1 } };
+        if (
+          records[index]?.value?.$type !== BLOCK_COLLECTION ||
+          typeof subject !== 'string' ||
+          !subject.startsWith('did:')
+        )
+          continue;
+        yield {
+          value: { actor: subject, relation: 'block' },
+          cursor: { stage: 'blocks', page, index: index + 1 },
+        };
       }
       offset = 0;
       if (!body.cursor || records.length === 0 || body.cursor === page) return;
@@ -224,28 +262,38 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
     return `${base}/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(this.did)}&cid=${encodeURIComponent(cid)}`;
   }
 
-  private media(recordEmbed: AtprotoRecordEmbed | undefined, viewEmbed: AtprotoEmbedView | undefined): SourceMedia[] {
+  private media(
+    recordEmbed: AtprotoRecordEmbed | undefined,
+    viewEmbed: AtprotoEmbedView | undefined,
+  ): SourceMedia[] {
     const out: SourceMedia[] = [];
-    const record = recordEmbed?.$type === 'app.bsky.embed.recordWithMedia' ? recordEmbed.media : recordEmbed;
-    const view = viewEmbed?.$type === 'app.bsky.embed.recordWithMedia#view' ? viewEmbed.media : viewEmbed;
+    const record =
+      recordEmbed?.$type === 'app.bsky.embed.recordWithMedia' ? recordEmbed.media : recordEmbed;
+    const view =
+      viewEmbed?.$type === 'app.bsky.embed.recordWithMedia#view' ? viewEmbed.media : viewEmbed;
     if (record?.$type === 'app.bsky.embed.images') {
       (record.images ?? []).forEach((image, index) => {
         const url = this.blobUrl(image.image) ?? view?.images?.[index]?.fullsize;
         if (!url) return;
-        const alt = typeof image.alt === 'string' && image.alt.trim() ? image.alt.trim() : undefined;
+        const alt =
+          typeof image.alt === 'string' && image.alt.trim() ? image.alt.trim() : undefined;
         out.push({ url, mimeType: image.image?.mimeType ?? 'image/jpeg', ...(alt ? { alt } : {}) });
       });
     } else if (record?.$type === 'app.bsky.embed.video') {
       const url = this.blobUrl(record.video);
       if (url) {
-        const alt = typeof record.alt === 'string' && record.alt.trim() ? record.alt.trim() : undefined;
+        const alt =
+          typeof record.alt === 'string' && record.alt.trim() ? record.alt.trim() : undefined;
         out.push({ url, mimeType: record.video?.mimeType ?? 'video/mp4', ...(alt ? { alt } : {}) });
       }
     }
     return out;
   }
 
-  private mapFeedItem(item: AtprotoFeedItem, context: SourceReadContext<PageCursor>): SourceItem | SkippedItem | null {
+  private mapFeedItem(
+    item: AtprotoFeedItem,
+    context: SourceReadContext<PageCursor>,
+  ): SourceItem | SkippedItem | null {
     const post = item.post;
     if (!post || typeof post.uri !== 'string') return null;
     const reasonType = item.reason?.$type;
@@ -256,7 +304,8 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
 
     if (reasonType === 'app.bsky.feed.defs#reasonRepost') {
       const sourceId = item.reason?.uri ?? `${post.uri}#repost:${this.did}`;
-      if (!context.options.includeBoosts) return { kind: 'skipped', sourceId, reason: 'boost-disabled' };
+      if (!context.options.includeBoosts)
+        return { kind: 'skipped', sourceId, reason: 'boost-disabled' };
       const parsed = parseAtUri(post.uri);
       const createdAt = parseCreatedAt(item.reason?.indexedAt) ?? parseCreatedAt(post.indexedAt);
       if (!parsed || !createdAt) return { kind: 'skipped', sourceId, reason: 'unsupported' };
@@ -275,7 +324,8 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
 
     const parsed = parseAtUri(post.uri);
     const record = post.record;
-    if (!parsed || parsed.collection !== POST_COLLECTION || post.author?.did !== this.did) return null;
+    if (!parsed || parsed.collection !== POST_COLLECTION || post.author?.did !== this.did)
+      return null;
     if (!record || record.$type !== POST_COLLECTION) return null;
 
     const links: string[] = [];
@@ -303,19 +353,31 @@ export class BlueskySource implements Source<PageCursor, PageCursor> {
         if (target) links.push(bskyPostUrl(quoted.authorHandle || target.authority, target.rkey));
       }
     }
-    if (record.embed?.$type === 'app.bsky.embed.external' && typeof record.embed.external?.uri === 'string') {
+    if (
+      record.embed?.$type === 'app.bsky.embed.external' &&
+      typeof record.embed.external?.uri === 'string'
+    ) {
       links.push(record.embed.external.uri);
     }
 
     const createdAt = parseCreatedAt(record.createdAt) ?? parseCreatedAt(post.indexedAt);
     if (!createdAt) return { kind: 'skipped', sourceId: post.uri, reason: 'unsupported' };
 
-    const text = normalizeMultilineText(applyFacetReplacements(typeof record.text === 'string' ? record.text : '', buildFacetReplacements(record)));
+    const text = normalizeMultilineText(
+      applyFacetReplacements(
+        typeof record.text === 'string' ? record.text : '',
+        buildFacetReplacements(record),
+      ),
+    );
     const media = this.media(record.embed, post.embed);
-    if (!text && media.length === 0 && links.length === 0) return { kind: 'skipped', sourceId: post.uri, reason: 'empty' };
+    if (!text && media.length === 0 && links.length === 0)
+      return { kind: 'skipped', sourceId: post.uri, reason: 'empty' };
 
     const labels = adultLabels(record);
-    const contentWarning = labels.length > 0 ? labels.map((label) => LABEL_WARNINGS[label] ?? label).join(', ') : undefined;
+    const contentWarning =
+      labels.length > 0
+        ? labels.map((label) => LABEL_WARNINGS[label] ?? label).join(', ')
+        : undefined;
     const language = normalizeLangs(record.langs)[0];
 
     return {

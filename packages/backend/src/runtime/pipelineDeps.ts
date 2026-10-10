@@ -34,14 +34,18 @@ export function createPipelineDeps(): PipelineDeps {
  * in-process and a pause or a transient failure is a timer.
  */
 function runInline(deps: PipelineDeps, jobId: string, delayMs = 0): void {
-  setTimeout(() => {
-    void runMigrationJob(jobId, deps)
-      .then((outcome) => {
-        if (outcome.status === 'paused') runInline(deps, jobId, outcome.resumeAt.getTime() - Date.now());
-        if (outcome.status === 'retry') runInline(deps, jobId, 30_000);
-      })
-      .catch((error) => logger.error('[pipeline] inline run failed', error));
-  }, Math.max(0, delayMs)).unref();
+  setTimeout(
+    () => {
+      void runMigrationJob(jobId, deps)
+        .then((outcome) => {
+          if (outcome.status === 'paused')
+            runInline(deps, jobId, outcome.resumeAt.getTime() - Date.now());
+          if (outcome.status === 'retry') runInline(deps, jobId, 30_000);
+        })
+        .catch((error) => logger.error('[pipeline] inline run failed', error));
+    },
+    Math.max(0, delayMs),
+  ).unref();
 }
 
 export function createJobService(deps: PipelineDeps): JobService {

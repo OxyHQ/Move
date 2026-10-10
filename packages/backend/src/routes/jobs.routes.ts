@@ -13,7 +13,13 @@
  *   DELETE /jobs/:id          (undo)
  */
 
-import { Router, type NextFunction, type Request, type RequestHandler, type Response } from 'express';
+import {
+  Router,
+  type NextFunction,
+  type Request,
+  type RequestHandler,
+  type Response,
+} from 'express';
 import { z } from 'zod';
 import { getRequiredOxyUserId, type OxyAuthenticatedRequest } from '@oxy.so/core/server';
 import { FOLLOW_BATCH_SIZE, MIGRATION_PLATFORMS, type PlatformInfo } from '@move/shared-types';
@@ -90,7 +96,9 @@ function handle(fn: Handler): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res).catch((error: unknown) => {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'invalid_request', issues: error.issues.map((issue) => issue.message) });
+        res
+          .status(400)
+          .json({ error: 'invalid_request', issues: error.issues.map((issue) => issue.message) });
       } else if (error instanceof ForeignLinkedAccountError) {
         res.status(403).json({ error: 'linked_account_not_owned', message: error.message });
       } else if (error instanceof JobNotFoundError) {
@@ -125,55 +133,80 @@ export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router
 
   router.use('/jobs', auth);
 
-  router.post('/jobs', handle(async (req, res) => {
-    const body = createJobSchema.parse(req.body);
-    if (body.dryRun) {
-      const preview = await jobs.preview(userId(req), body.platform, body.linkedAccountId);
-      res.json({ preview });
-      return;
-    }
-    const job = await jobs.create(userId(req), body);
-    res.status(201).json({ job: toJobView(job) });
-  }));
+  router.post(
+    '/jobs',
+    handle(async (req, res) => {
+      const body = createJobSchema.parse(req.body);
+      if (body.dryRun) {
+        const preview = await jobs.preview(userId(req), body.platform, body.linkedAccountId);
+        res.json({ preview });
+        return;
+      }
+      const job = await jobs.create(userId(req), body);
+      res.status(201).json({ job: toJobView(job) });
+    }),
+  );
 
-  router.get('/jobs', handle(async (req, res) => {
-    const rows = await jobs.list(userId(req));
-    res.json({ jobs: rows.map(toJobView) });
-  }));
+  router.get(
+    '/jobs',
+    handle(async (req, res) => {
+      const rows = await jobs.list(userId(req));
+      res.json({ jobs: rows.map(toJobView) });
+    }),
+  );
 
-  router.get('/jobs/:id', handle(async (req, res) => {
-    const job = await jobs.get(userId(req), jobIdSchema.parse(req.params.id));
-    res.json({ job: toJobView(job) });
-  }));
+  router.get(
+    '/jobs/:id',
+    handle(async (req, res) => {
+      const job = await jobs.get(userId(req), jobIdSchema.parse(req.params.id));
+      res.json({ job: toJobView(job) });
+    }),
+  );
 
-  router.get('/jobs/:id/plan', handle(async (req, res) => {
-    const result = await jobs.plan(userId(req), jobIdSchema.parse(req.params.id));
-    res.json(result);
-  }));
+  router.get(
+    '/jobs/:id/plan',
+    handle(async (req, res) => {
+      const result = await jobs.plan(userId(req), jobIdSchema.parse(req.params.id));
+      res.json(result);
+    }),
+  );
 
-  router.post('/jobs/:id/plan/ack', handle(async (req, res) => {
-    const job = await jobs.ackPlan(userId(req), jobIdSchema.parse(req.params.id), ackSchema.parse(req.body ?? {}));
-    res.json({ job: toJobView(job) });
-  }));
+  router.post(
+    '/jobs/:id/plan/ack',
+    handle(async (req, res) => {
+      const job = await jobs.ackPlan(
+        userId(req),
+        jobIdSchema.parse(req.params.id),
+        ackSchema.parse(req.body ?? {}),
+      );
+      res.json({ job: toJobView(job) });
+    }),
+  );
 
-  router.post('/jobs/:id/cancel', handle(async (req, res) => {
-    const job = await jobs.cancel(userId(req), jobIdSchema.parse(req.params.id));
-    res.json({ job: toJobView(job) });
-  }));
+  router.post(
+    '/jobs/:id/cancel',
+    handle(async (req, res) => {
+      const job = await jobs.cancel(userId(req), jobIdSchema.parse(req.params.id));
+      res.json({ job: toJobView(job) });
+    }),
+  );
 
-  router.delete('/jobs/:id', handle(async (req, res) => {
-    const result = await jobs.undo(userId(req), jobIdSchema.parse(req.params.id));
-    // The client reverses what only its session can (profile, follows, blocks),
-    // from the facts recorded before it applied them — on any device.
-    res.json({
-      job: toJobView(result.job),
-      deleted: result.deleted,
-      failed: result.failed,
-      plan: result.plan,
-      ack: result.ack,
-      undoFacts: result.undoFacts,
-    });
-  }));
+  router.delete(
+    '/jobs/:id',
+    handle(async (req, res) => {
+      const result = await jobs.undo(userId(req), jobIdSchema.parse(req.params.id));
+      // The client reverses what only its session can (profile, follows, blocks),
+      // from the facts recorded before it applied them — on any device.
+      res.json({
+        job: toJobView(result.job),
+        deleted: result.deleted,
+        failed: result.failed,
+        plan: result.plan,
+        ack: result.ack,
+        undoFacts: result.undoFacts,
+      });
+    }),
+  );
 
   return router;
 }

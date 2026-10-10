@@ -48,7 +48,11 @@ export interface ContentDestination {
   /** Remove everything a batch created, through the destination's normal delete. */
   undo(params: { oxyUserId: string; batchId: string }): Promise<UndoResult>;
   /** Which of these source ids the destination already holds for the user (any batch). */
-  lookupImported(params: { oxyUserId: string; platform: MigrationPlatform; sourceIds: string[] }): Promise<Set<string>>;
+  lookupImported(params: {
+    oxyUserId: string;
+    platform: MigrationPlatform;
+    sourceIds: string[];
+  }): Promise<Set<string>>;
 }
 
 /** The destination refused because it is rate limiting us — pause, never fail. */

@@ -103,7 +103,9 @@ export interface AtprotoAuthorFeed {
 }
 
 /** Parse an AT-URI `at://<authority>/<collection>/<rkey>` into its parts. */
-export function parseAtUri(uri: string): { authority: string; collection: string; rkey: string } | null {
+export function parseAtUri(
+  uri: string,
+): { authority: string; collection: string; rkey: string } | null {
   const match = uri.match(/^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/);
   if (!match) return null;
   return { authority: match[1], collection: match[2], rkey: match[3] };
@@ -130,8 +132,11 @@ export function buildFacetReplacements(record: AtprotoPostRecord): FacetReplacem
     const byteStart = facet.index?.byteStart;
     const byteEnd = facet.index?.byteEnd;
     if (typeof byteStart !== 'number' || typeof byteEnd !== 'number') continue;
-    const link = facet.features?.find((feature) => feature?.$type === 'app.bsky.richtext.facet#link');
-    if (typeof link?.uri === 'string' && link.uri) ops.push({ byteStart, byteEnd, replacement: link.uri });
+    const link = facet.features?.find(
+      (feature) => feature?.$type === 'app.bsky.richtext.facet#link',
+    );
+    if (typeof link?.uri === 'string' && link.uri)
+      ops.push({ byteStart, byteEnd, replacement: link.uri });
   }
   return ops;
 }
@@ -148,7 +153,11 @@ export function applyFacetReplacements(text: string, ops: FacetReplacement[]): s
   let nextStart = buffer.length;
   for (const op of ordered) {
     if (op.byteEnd > nextStart) continue;
-    out = Buffer.concat([out.subarray(0, op.byteStart), Buffer.from(op.replacement, 'utf8'), out.subarray(op.byteEnd)]);
+    out = Buffer.concat([
+      out.subarray(0, op.byteStart),
+      Buffer.from(op.replacement, 'utf8'),
+      out.subarray(op.byteEnd),
+    ]);
     nextStart = op.byteStart;
   }
   return out.toString('utf8');
@@ -159,17 +168,26 @@ export function applyFacetReplacements(text: string, ops: FacetReplacement[]): s
  * for a real, viewable feed post. CHANGED: also returns the quoted author's DID,
  * which a migrator needs to tell a SELF-quote from a quote of someone else.
  */
-export function extractQuoted(embed: AtprotoEmbedView | undefined): { uri: string; authorDid?: string; authorHandle?: string } | undefined {
+export function extractQuoted(
+  embed: AtprotoEmbedView | undefined,
+): { uri: string; authorDid?: string; authorHandle?: string } | undefined {
   const recordView =
     embed?.$type === 'app.bsky.embed.record#view'
       ? embed.record
       : embed?.$type === 'app.bsky.embed.recordWithMedia#view'
         ? embed.record?.record
         : undefined;
-  if (recordView?.$type === 'app.bsky.embed.record#viewRecord' && typeof recordView.uri === 'string') {
+  if (
+    recordView?.$type === 'app.bsky.embed.record#viewRecord' &&
+    typeof recordView.uri === 'string'
+  ) {
     const parsed = parseAtUri(recordView.uri);
     if (parsed && parsed.collection === POST_COLLECTION) {
-      return { uri: recordView.uri, authorDid: recordView.author?.did ?? parsed.authority, authorHandle: recordView.author?.handle };
+      return {
+        uri: recordView.uri,
+        authorDid: recordView.author?.did ?? parsed.authority,
+        authorHandle: recordView.author?.handle,
+      };
     }
   }
   return undefined;

@@ -17,7 +17,10 @@ export type PlatformActivity = ReturnType<typeof createEcosystemTraffic>;
  * 0026). On the infrastructure it publishes; in a local checkout or a test it
  * returns `undefined` and nothing is started.
  */
-export function startPlatformActivity(ready: () => boolean, service = 'move'): PlatformActivity | undefined {
+export function startPlatformActivity(
+  ready: () => boolean,
+  service = 'move',
+): PlatformActivity | undefined {
   if (!canAttestWorkloadIdentity()) return undefined;
   const traffic = createEcosystemTraffic({ service, ready });
   traffic.installFetch();

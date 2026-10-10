@@ -48,19 +48,25 @@ const MAX_PAUSE_MS = 6 * 60 * 60 * 1000;
 export function classify(error: unknown): Disposition {
   if (error instanceof JobCancelledError) return { kind: 'cancelled' };
   if (
-    error instanceof SourceRateLimitedError
-    || error instanceof MediaRateLimitedError
-    || error instanceof DestinationRateLimitedError
+    error instanceof SourceRateLimitedError ||
+    error instanceof MediaRateLimitedError ||
+    error instanceof DestinationRateLimitedError
   ) {
-    return { kind: 'pause', retryAfterMs: Math.min(MAX_PAUSE_MS, Math.max(MIN_PAUSE_MS, error.retryAfterMs)) };
+    return {
+      kind: 'pause',
+      retryAfterMs: Math.min(MAX_PAUSE_MS, Math.max(MIN_PAUSE_MS, error.retryAfterMs)),
+    };
   }
   // Oxy's own 429 on the service calls (identities, linked accounts) arrives as
   // the SDK's plain ApiError object with `status`.
   const status = (error as { status?: unknown } | null)?.status;
   if (status === 429) return { kind: 'pause', retryAfterMs: 60_000 };
-  if (error instanceof ForeignLinkedAccountError) return { kind: 'fail', code: 'linked-account-not-owned' };
-  if (error instanceof SourceAuthRequiredError) return { kind: 'fail', code: 'source-requires-authorized-fetch' };
-  if (error instanceof SourceUnavailableError) return { kind: 'fail', code: 'source-unavailable', detail: String(error.status) };
+  if (error instanceof ForeignLinkedAccountError)
+    return { kind: 'fail', code: 'linked-account-not-owned' };
+  if (error instanceof SourceAuthRequiredError)
+    return { kind: 'fail', code: 'source-requires-authorized-fetch' };
+  if (error instanceof SourceUnavailableError)
+    return { kind: 'fail', code: 'source-unavailable', detail: String(error.status) };
   if (error instanceof DestinationRejectedError) {
     return { kind: 'fail', code: 'destination-rejected', detail: error.message.slice(0, 300) };
   }

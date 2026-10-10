@@ -12,29 +12,83 @@ function expect(label, errors, shouldFail) {
   const failed = errors.length > 0;
   if (failed !== shouldFail) {
     failures++;
-    console.error(`::error::gate self-test "${label}": expected ${shouldFail ? 'a failure' : 'a pass'}, got ${JSON.stringify(errors)}`);
+    console.error(
+      `::error::gate self-test "${label}": expected ${shouldFail ? 'a failure' : 'a pass'}, got ${JSON.stringify(errors)}`,
+    );
   }
 }
 
 // Migration markers.
-expect('pre marker passes', checkMigrationText('a.sql', '-- oxy:deploy-phase=pre\n\nCREATE TABLE x ();'), false);
-expect('post marker passes', checkMigrationText('a.sql', '-- oxy:deploy-phase=post\nDROP TABLE x;'), false);
+expect(
+  'pre marker passes',
+  checkMigrationText('a.sql', '-- oxy:deploy-phase=pre\n\nCREATE TABLE x ();'),
+  false,
+);
+expect(
+  'post marker passes',
+  checkMigrationText('a.sql', '-- oxy:deploy-phase=post\nDROP TABLE x;'),
+  false,
+);
 expect('unmarked fails', checkMigrationText('a.sql', 'CREATE TABLE x ();'), true);
-expect('two markers fail', checkMigrationText('a.sql', '-- oxy:deploy-phase=pre\n-- oxy:deploy-phase=post\n'), true);
-expect('indented marker fails', checkMigrationText('a.sql', '  -- oxy:deploy-phase=pre\nCREATE TABLE x ();'), true);
-expect('unknown phase fails', checkMigrationText('a.sql', '-- oxy:deploy-phase=all\nCREATE TABLE x ();'), true);
-expect('prose mention does not count', checkMigrationText('a.sql', '-- see oxy:deploy-phase=pre docs\nCREATE TABLE x ();'), true);
-expect('bound parameter fails', checkMigrationText('a.sql', "-- oxy:deploy-phase=pre\nALTER TABLE x ADD CHECK (s in ($1));"), true);
+expect(
+  'two markers fail',
+  checkMigrationText('a.sql', '-- oxy:deploy-phase=pre\n-- oxy:deploy-phase=post\n'),
+  true,
+);
+expect(
+  'indented marker fails',
+  checkMigrationText('a.sql', '  -- oxy:deploy-phase=pre\nCREATE TABLE x ();'),
+  true,
+);
+expect(
+  'unknown phase fails',
+  checkMigrationText('a.sql', '-- oxy:deploy-phase=all\nCREATE TABLE x ();'),
+  true,
+);
+expect(
+  'prose mention does not count',
+  checkMigrationText('a.sql', '-- see oxy:deploy-phase=pre docs\nCREATE TABLE x ();'),
+  true,
+);
+expect(
+  'bound parameter fails',
+  checkMigrationText('a.sql', '-- oxy:deploy-phase=pre\nALTER TABLE x ADD CHECK (s in ($1));'),
+  true,
+);
 
 // Workflow secrets.
-expect('named CI-only secret passes', checkWorkflowText('w.yml', 'env:\n  A: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n'), false);
-expect('runtime secret read fails', checkWorkflowText('w.yml', 'env:\n  DATABASE_URL: ${{ secrets.DATABASE_URL }}\n'), true);
-expect('ssm put-parameter fails', checkWorkflowText('w.yml', 'run: aws ssm put-parameter --name /oxy/move/X --overwrite\n'), true);
-expect('ssm write in a comment passes', checkWorkflowText('w.yml', '# set with `aws ssm put-parameter --overwrite`\nrun: true\n'), false);
-expect('toJSON(secrets) fails', checkWorkflowText('w.yml', 'env:\n  ALL: ${{ toJSON(secrets) }}\n'), true);
+expect(
+  'named CI-only secret passes',
+  checkWorkflowText('w.yml', 'env:\n  A: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n'),
+  false,
+);
+expect(
+  'runtime secret read fails',
+  checkWorkflowText('w.yml', 'env:\n  DATABASE_URL: ${{ secrets.DATABASE_URL }}\n'),
+  true,
+);
+expect(
+  'ssm put-parameter fails',
+  checkWorkflowText('w.yml', 'run: aws ssm put-parameter --name /oxy/move/X --overwrite\n'),
+  true,
+);
+expect(
+  'ssm write in a comment passes',
+  checkWorkflowText('w.yml', '# set with `aws ssm put-parameter --overwrite`\nrun: true\n'),
+  false,
+);
+expect(
+  'toJSON(secrets) fails',
+  checkWorkflowText('w.yml', 'env:\n  ALL: ${{ toJSON(secrets) }}\n'),
+  true,
+);
 expect('spaced tojson fails', checkWorkflowText('w.yml', 'x: ${{ tojson( secrets ) }}'), true);
 expect('bare secrets fails', checkWorkflowText('w.yml', 'x: ${{ secrets }}'), true);
-expect('wrangler-action fails', checkWorkflowText('w.yml', '- uses: cloudflare/wrangler-action@v3'), true);
+expect(
+  'wrangler-action fails',
+  checkWorkflowText('w.yml', '- uses: cloudflare/wrangler-action@v3'),
+  true,
+);
 
 if (failures > 0) process.exit(1);
 console.log('gate self-tests: all controls behaved');

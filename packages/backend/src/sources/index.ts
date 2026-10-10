@@ -7,7 +7,13 @@
 import { resolvePdsEndpoint } from '../connectors/atproto/xrpcClient';
 import { logger } from '../utils/logger';
 import { BlueskySource } from './bluesky';
-import { PLATFORM_BACKOFF, createPublicJsonFetcher, fetchPublicJson, withBackoff, type RequestSigner } from './http';
+import {
+  PLATFORM_BACKOFF,
+  createPublicJsonFetcher,
+  fetchPublicJson,
+  withBackoff,
+  type RequestSigner,
+} from './http';
 import { MastodonSource } from './mastodon';
 import type { Source, SourceAccount } from './types';
 
@@ -29,9 +35,14 @@ export function createSourceFactory(signer?: RequestSigner): SourceFactory {
         try {
           pdsEndpoint = await resolvePdsEndpoint(account.actor);
         } catch (error) {
-          logger.warn('[sources] Bluesky DID document unavailable; images fall back to the CDN and blocks are skipped', error);
+          logger.warn(
+            '[sources] Bluesky DID document unavailable; images fall back to the CDN and blocks are skipped',
+            error,
+          );
         }
-        return new BlueskySource(account, withBackoff(fetchPublicJson, PLATFORM_BACKOFF.bluesky), { pdsEndpoint });
+        return new BlueskySource(account, withBackoff(fetchPublicJson, PLATFORM_BACKOFF.bluesky), {
+          pdsEndpoint,
+        });
       }
       default: {
         const exhaustive: never = account.platform;

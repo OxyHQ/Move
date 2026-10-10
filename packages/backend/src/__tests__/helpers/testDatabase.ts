@@ -13,7 +13,12 @@ import { runMigrations } from '@oxy.so/db/migrate';
 import { MIGRATIONS_FOLDER } from '../../db/migrationsFolder';
 import { closePostgres, connectPostgres, type Database } from '../../db/postgres';
 
-const quietLogger = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined };
+const quietLogger = {
+  debug: () => undefined,
+  info: () => undefined,
+  warn: () => undefined,
+  error: () => undefined,
+};
 
 export interface TestDatabase {
   db: Database;

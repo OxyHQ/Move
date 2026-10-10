@@ -32,7 +32,9 @@ export function MastodonMoveStep({ sourceActor, ready }: { sourceActor: string; 
     <Card appearance="outline" radius="radius-16" testID="mastodon-move-step">
       <CardHeader>
         <CardTitle>{t('mastodonMove.title')}</CardTitle>
-        <CardDescription>{ready ? t('mastodonMove.body') : t('mastodonMove.notYet')}</CardDescription>
+        <CardDescription>
+          {ready ? t('mastodonMove.body') : t('mastodonMove.notYet')}
+        </CardDescription>
       </CardHeader>
       {ready ? (
         <CardBody>

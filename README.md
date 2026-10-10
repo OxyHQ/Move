@@ -123,7 +123,8 @@ bun run dev:frontend
 
 ```bash
 bun run check                                   # AGENTS.md budget, gates (+ self-tests), typecheck, build
-bun run lint
+bun run lint                                    # Biome (format + lint) + the frontend's Expo-only ESLint rules
+bun run format                                  # apply Biome formatting
 TEST_DATABASE_URL=postgres://… bun run test     # sources on recorded fixtures + pipeline on real Postgres
 ```
 

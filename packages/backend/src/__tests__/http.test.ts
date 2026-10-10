@@ -11,7 +11,11 @@ import {
   type JsonFetcher,
   type JsonResponse,
 } from '../sources/http';
-import { createMediaCopier, createMemoryUploadLimiter, MediaRateLimitedError } from '../destinations/media';
+import {
+  createMediaCopier,
+  createMemoryUploadLimiter,
+  MediaRateLimitedError,
+} from '../destinations/media';
 import { OxyUploadError } from '../utils/oxyHelpers';
 import { createInstanceFetchSigner } from '../destinations/oxy';
 
@@ -31,15 +35,24 @@ const policy = { ...DEFAULT_BACKOFF, minIntervalMs: 0 };
 describe('per-platform backoff', () => {
   test('a short 429 is retried inline, honouring Retry-After', async () => {
     const waits: number[] = [];
-    const fetcher = scripted([{ status: 429, headers: { 'retry-after': '2' } }, { status: 200, body: { ok: true } }]);
-    const wrapped = withBackoff(fetcher, policy, async (ms) => { waits.push(ms); });
+    const fetcher = scripted([
+      { status: 429, headers: { 'retry-after': '2' } },
+      { status: 200, body: { ok: true } },
+    ]);
+    const wrapped = withBackoff(fetcher, policy, async (ms) => {
+      waits.push(ms);
+    });
     const response = await wrapped('https://x.example/a', { accept: 'application/json' });
     expect(response.body).toEqual({ ok: true });
     expect(waits).toEqual([2_000]);
   });
 
   test('a long 429 pauses the job instead of holding the worker', async () => {
-    const wrapped = withBackoff(scripted([{ status: 429, headers: { 'retry-after': '600' } }]), policy, noSleep);
+    const wrapped = withBackoff(
+      scripted([{ status: 429, headers: { 'retry-after': '600' } }]),
+      policy,
+      noSleep,
+    );
     const error = await wrapped('https://x.example/a', { accept: '*/*' }).catch((caught) => caught);
     expect(error).toBeInstanceOf(SourceRateLimitedError);
     expect((error as SourceRateLimitedError).retryAfterMs).toBe(600_000);
@@ -47,12 +60,18 @@ describe('per-platform backoff', () => {
 
   test('404/410 are permanent', async () => {
     const wrapped = withBackoff(scripted([{ status: 410 }]), policy, noSleep);
-    await expect(wrapped('https://x.example/a', { accept: '*/*' })).rejects.toBeInstanceOf(SourceUnavailableError);
+    await expect(wrapped('https://x.example/a', { accept: '*/*' })).rejects.toBeInstanceOf(
+      SourceUnavailableError,
+    );
   });
 
   test('5xx is retried up to the attempt budget', async () => {
     const fetcher = scripted([{ status: 503 }, { status: 503 }, { status: 200, body: 1 }]);
-    const response = await withBackoff(fetcher, policy, noSleep)('https://x.example/a', { accept: '*/*' });
+    const response = await withBackoff(
+      fetcher,
+      policy,
+      noSleep,
+    )('https://x.example/a', { accept: '*/*' });
     expect(response.body).toBe(1);
     expect(fetcher.calls).toBe(3);
   });
@@ -63,7 +82,9 @@ describe('per-platform backoff', () => {
       calls++;
       throw new SsrfRejection('private address');
     };
-    await expect(withBackoff(blocked, policy, noSleep)('https://x.example/a', { accept: '*/*' })).rejects.toBeInstanceOf(SourceUnavailableError);
+    await expect(
+      withBackoff(blocked, policy, noSleep)('https://x.example/a', { accept: '*/*' }),
+    ).rejects.toBeInstanceOf(SourceUnavailableError);
     expect(calls).toBe(1);
   });
 
@@ -104,7 +125,9 @@ describe('media copy behind the shared upload limiter', () => {
     const copier = createMediaCopier({
       limiter,
       download,
-      upload: async () => { throw new OxyUploadError('slow down', 429, '120'); },
+      upload: async () => {
+        throw new OxyUploadError('slow down', 429, '120');
+      },
       sleep: noSleep,
     });
     const error = await copier.copy('u1', media).catch((caught) => caught);
@@ -138,7 +161,9 @@ describe('media copy behind the shared upload limiter', () => {
     const copier = createMediaCopier({
       limiter: createMemoryUploadLimiter(30),
       download: async () => null,
-      upload: async () => { throw new Error('never called'); },
+      upload: async () => {
+        throw new Error('never called');
+      },
       sleep: noSleep,
     });
     expect(await copier.copy('u1', media)).toEqual([]);
@@ -149,7 +174,8 @@ describe('signed reads through Oxy', () => {
   const signedHeaders = {
     Host: 'mastodon.example',
     Date: 'Sat, 26 Sep 2026 00:00:00 GMT',
-    Signature: 'keyId="https://oxy.so/ap/users/instance#main-key",algorithm="rsa-sha256",headers="(request-target) host date",signature="c2ln"',
+    Signature:
+      'keyId="https://oxy.so/ap/users/instance#main-key",algorithm="rsa-sha256",headers="(request-target) host date",signature="c2ln"',
   };
 
   test('the signer asks Oxy to sign exactly that URL and returns the three headers', async () => {
@@ -160,10 +186,16 @@ describe('signed reads through Oxy', () => {
         return { keyId: 'https://oxy.so/ap/users/instance#main-key', headers: signedHeaders };
       },
     } as unknown as Pick<OxyServer, 'serviceRequest'>;
-    const headers = await createInstanceFetchSigner(oxy)('https://mastodon.example/users/ada/outbox?page=true');
+    const headers = await createInstanceFetchSigner(oxy)(
+      'https://mastodon.example/users/ada/outbox?page=true',
+    );
     expect(headers).toEqual(signedHeaders);
     expect(requests).toEqual([
-      { method: 'POST', url: '/federation/instance-fetch/sign', data: { url: 'https://mastodon.example/users/ada/outbox?page=true' } },
+      {
+        method: 'POST',
+        url: '/federation/instance-fetch/sign',
+        data: { url: 'https://mastodon.example/users/ada/outbox?page=true' },
+      },
     ]);
   });
 
@@ -173,9 +205,14 @@ describe('signed reads through Oxy', () => {
         throw Object.assign(new Error('Too many requests'), { status: 429 });
       },
     } as unknown as Pick<OxyServer, 'serviceRequest'>;
-    await expect(createInstanceFetchSigner(limited)('https://m.example/a')).rejects.toBeInstanceOf(SourceRateLimitedError);
+    await expect(createInstanceFetchSigner(limited)('https://m.example/a')).rejects.toBeInstanceOf(
+      SourceRateLimitedError,
+    );
     const malformed = {
-      serviceRequest: async () => ({ keyId: 'https://oxy.so/ap/users/instance#main-key', headers: { ...signedHeaders, Digest: 'x' } }),
+      serviceRequest: async () => ({
+        keyId: 'https://oxy.so/ap/users/instance#main-key',
+        headers: { ...signedHeaders, Digest: 'x' },
+      }),
     } as unknown as Pick<OxyServer, 'serviceRequest'>;
     await expect(createInstanceFetchSigner(malformed)('https://m.example/a')).rejects.toThrow();
     // Before the scope is granted (or for a URL Oxy refuses) the read is simply
@@ -185,21 +222,34 @@ describe('signed reads through Oxy', () => {
         throw Object.assign(new Error('Missing required scope'), { status: 403 });
       },
     } as unknown as Pick<OxyServer, 'serviceRequest'>;
-    await expect(createInstanceFetchSigner(forbidden)('https://m.example/a')).rejects.toBeInstanceOf(SourceAuthRequiredError);
+    await expect(
+      createInstanceFetchSigner(forbidden)('https://m.example/a'),
+    ).rejects.toBeInstanceOf(SourceAuthRequiredError);
   });
 
   test('a fetcher with no signer refuses a signed read as authorized-fetch, before any network', async () => {
-    await expect(createPublicJsonFetcher()('https://m.example/a', { accept: '*/*', signed: true })).rejects.toBeInstanceOf(SourceAuthRequiredError);
+    await expect(
+      createPublicJsonFetcher()('https://m.example/a', { accept: '*/*', signed: true }),
+    ).rejects.toBeInstanceOf(SourceAuthRequiredError);
   });
 
   test('the backoff never retries an authorized-fetch refusal or a paused signing budget', async () => {
-    for (const failure of [new SourceAuthRequiredError('refused', 401), new SourceRateLimitedError('budget', 60_000)]) {
+    for (const failure of [
+      new SourceAuthRequiredError('refused', 401),
+      new SourceRateLimitedError('budget', 60_000),
+    ]) {
       let calls = 0;
       const failing: JsonFetcher = async () => {
         calls++;
         throw failure;
       };
-      await expect(withBackoff(failing, policy, noSleep)('https://m.example/a', { accept: '*/*', signed: true })).rejects.toBe(failure);
+      await expect(
+        withBackoff(
+          failing,
+          policy,
+          noSleep,
+        )('https://m.example/a', { accept: '*/*', signed: true }),
+      ).rejects.toBe(failure);
       expect(calls).toBe(1);
     }
   });

@@ -45,7 +45,9 @@ export function checkWorkflowText(name, text) {
     .filter((line) => !line.trimStart().startsWith('#'))
     .join('\n');
   if (SSM_WRITE.test(code)) {
-    errors.push(`${name}: writes SSM; runtime secrets are set in SSM by their owner, never by a workflow`);
+    errors.push(
+      `${name}: writes SSM; runtime secrets are set in SSM by their owner, never by a workflow`,
+    );
   }
   for (const [, secret] of code.matchAll(SECRET_READ)) {
     if (!CI_ONLY_SECRETS.has(secret)) {
@@ -53,7 +55,9 @@ export function checkWorkflowText(name, text) {
     }
   }
   if (/uses:\s*cloudflare\/wrangler-action/i.test(text)) {
-    errors.push(`${name}: cloudflare/wrangler-action is forbidden fleet-wide; call bunx wrangler@4`);
+    errors.push(
+      `${name}: cloudflare/wrangler-action is forbidden fleet-wide; call bunx wrangler@4`,
+    );
   }
   return errors;
 }
@@ -65,7 +69,9 @@ if (import.meta.main) {
     console.error('::error::no workflows found (vacuity floor)');
     process.exit(1);
   }
-  const errors = files.flatMap((file) => checkWorkflowText(file, readFileSync(join(folder, file), 'utf8')));
+  const errors = files.flatMap((file) =>
+    checkWorkflowText(file, readFileSync(join(folder, file), 'utf8')),
+  );
   if (errors.length > 0) {
     for (const error of errors) console.error(`::error::${error}`);
     process.exit(1);

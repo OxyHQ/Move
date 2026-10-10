@@ -11,7 +11,9 @@
     "dev:frontend": "bun run --cwd packages/frontend start",
     "build:shared-types": "bun run --cwd packages/shared-types build",
     "build:frontend": "bun run --cwd packages/frontend export:web",
-    "lint": "bun run --cwd packages/frontend lint",
+    "lint": "biome check . && bun run --cwd packages/frontend lint",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
     "validate:agents-md": "bun ./scripts/check-agents-md-size.mjs && bun ./scripts/test-check-agents-md-size.mjs",
     "postinstall": "bun run build:shared-types",
     "dev:backend": "bun run --cwd packages/backend dev",
@@ -23,6 +25,9 @@
     "validate:gates": "bun ./scripts/check-migration-phase-markers.mjs && bun ./scripts/check-workflow-secrets.mjs && bun ./scripts/test-gates.mjs",
     "check": "bun run validate:agents-md && bun run validate:gates && bun run typecheck && bun run build",
     "test": "bun run build:shared-types && bun run --cwd packages/frontend test && bun run --cwd packages/backend test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15"
   },
   "overrides": {
     "@oxy.so/contracts": "^4.9.1",

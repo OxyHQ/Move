@@ -37,7 +37,12 @@ export async function connectPostgres(): Promise<Database> {
   const instance = createDatabase({
     databaseUrl,
     schema,
-    client: { max: 10, idle_timeout: 30, connect_timeout: 10, onnotice: (notice) => logger.info('Postgres notice', notice.message) },
+    client: {
+      max: 10,
+      idle_timeout: 30,
+      connect_timeout: 10,
+      onnotice: (notice) => logger.info('Postgres notice', notice.message),
+    },
   });
   try {
     await instance.client`select 1`;

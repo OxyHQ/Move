@@ -6,7 +6,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useOxy } from '@oxy.so/services';
-import { Admonition, AdmonitionButton, AdmonitionContent, AdmonitionIcon, AdmonitionRoot, AdmonitionRow, AdmonitionText } from '@oxy.so/bloom/admonition';
+import {
+  Admonition,
+  AdmonitionButton,
+  AdmonitionContent,
+  AdmonitionIcon,
+  AdmonitionRoot,
+  AdmonitionRow,
+  AdmonitionText,
+} from '@oxy.so/bloom/admonition';
 import { AlertDialog } from '@oxy.so/bloom/alert-dialog';
 import { Avatar } from '@oxy.so/bloom/avatar';
 import { Button } from '@oxy.so/bloom/button';
@@ -73,7 +81,9 @@ function JobProgress({ job }: { job: MigrationJobView }) {
         <View className="flex-row items-center gap-3 p-4">
           <Avatar name={platformName} size={44} />
           <View className="flex-1 gap-0.5">
-            <Text variant="headline-semibold">{t('progress.from', { platform: platformName })}</Text>
+            <Text variant="headline-semibold">
+              {t('progress.from', { platform: platformName })}
+            </Text>
             <Muted numberOfLines={1}>{job.sourceHandle ?? job.sourceActor}</Muted>
           </View>
           <JobStatusBadge status={job.status} />
@@ -83,7 +93,11 @@ function JobProgress({ job }: { job: MigrationJobView }) {
       <StatusNotice job={job} locale={locale} />
 
       <Card appearance="outline" radius="radius-16">
-        <View className="gap-1 p-2" accessibilityRole="list" accessibilityLabel={t('progress.phases')}>
+        <View
+          className="gap-1 p-2"
+          accessibilityRole="list"
+          accessibilityLabel={t('progress.phases')}
+        >
           <Item
             role="listitem"
             title={t('phases.profile')}
@@ -127,7 +141,9 @@ function JobProgress({ job }: { job: MigrationJobView }) {
             <AdmonitionIcon />
             <AdmonitionContent>
               <AdmonitionText>{t('progress.applyFailed')}</AdmonitionText>
-              <AdmonitionButton onPress={() => void applier.retry()}>{t('common.retry')}</AdmonitionButton>
+              <AdmonitionButton onPress={() => void applier.retry()}>
+                {t('common.retry')}
+              </AdmonitionButton>
             </AdmonitionContent>
           </AdmonitionRow>
         </AdmonitionRoot>
@@ -153,7 +169,12 @@ function JobProgress({ job }: { job: MigrationJobView }) {
           {t('history.title')}
         </Button>
         {active ? (
-          <Button tone="danger" appearance="plain" onPress={() => setConfirmCancel(true)} testID="cancel-job">
+          <Button
+            tone="danger"
+            appearance="plain"
+            onPress={() => setConfirmCancel(true)}
+            testID="cancel-job"
+          >
             {t('progress.cancel')}
           </Button>
         ) : null}
@@ -187,7 +208,10 @@ function profileSubtitle(t: TFunction, state: ApplierState): string {
 function FollowMeter({ progress }: { progress: PlanProgress | null }) {
   const { t } = useTranslation();
   if (!progress || progress.batchesTotal === 0) return null;
-  const valueText = t('progress.batches', { applied: progress.batchesApplied, total: progress.batchesTotal });
+  const valueText = t('progress.batches', {
+    applied: progress.batchesApplied,
+    total: progress.batchesTotal,
+  });
   return (
     <View className="gap-1 px-3 pb-2">
       <Meter
@@ -208,7 +232,10 @@ function BlocksRow({ progress }: { progress: PlanProgress | null }) {
     <Item
       role="listitem"
       title={t('phases.blocks')}
-      subtitle={t('progress.blocks', { applied: progress.blocksApplied, total: progress.blocksTotal })}
+      subtitle={t('progress.blocks', {
+        applied: progress.blocksApplied,
+        total: progress.blocksTotal,
+      })}
     />
   );
 }
@@ -221,11 +248,15 @@ function StatusNotice({ job, locale }: { job: MigrationJobView; locale: string }
     case 'paused':
       return (
         <Admonition type="info">
-          {t('progress.paused', { until: formatDateTime(job.pausedUntil, locale) ?? t('progress.soon') })}
+          {t('progress.paused', {
+            until: formatDateTime(job.pausedUntil, locale) ?? t('progress.soon'),
+          })}
         </Admonition>
       );
     case 'failed':
-      return <Admonition type="error">{t('progress.failed', { error: job.error ?? '' })}</Admonition>;
+      return (
+        <Admonition type="error">{t('progress.failed', { error: job.error ?? '' })}</Admonition>
+      );
     case 'done':
       return <Admonition type="tip">{t('progress.done')}</Admonition>;
     case 'cancelled':

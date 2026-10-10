@@ -23,7 +23,9 @@ export function getServiceOxyClient(): OxyServer {
   const serviceAuth = apiKey && apiSecret ? { apiKey, apiSecret } : undefined;
   if (!serviceAuth) {
     if (canAttestWorkloadIdentity()) {
-      logger.info('[oxyHelpers] no service key pair; the Oxy client attests this task role instead');
+      logger.info(
+        '[oxyHelpers] no service key pair; the Oxy client attests this task role instead',
+      );
     } else {
       logger.warn(
         '[oxyHelpers] no Oxy service identity: neither a key pair nor an attestable task role. Calls needing one will fail.',
@@ -34,7 +36,6 @@ export function getServiceOxyClient(): OxyServer {
   serviceClient = client;
   return client;
 }
-
 
 /** A failed upload, with what the caller needs to decide between retry and pause. */
 export class OxyUploadError extends Error {

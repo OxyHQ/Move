@@ -19,12 +19,20 @@
  */
 
 import { z } from 'zod';
-import { instanceFetchSignResponseSchema, type CreateOxyNotificationRequest, type LinkedAccountNetwork } from '@oxy.so/contracts';
+import {
+  instanceFetchSignResponseSchema,
+  type CreateOxyNotificationRequest,
+  type LinkedAccountNetwork,
+} from '@oxy.so/contracts';
 import type { OxyServer } from '@oxy.so/core/server';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
-import { SourceAuthRequiredError, SourceRateLimitedError, type RequestSigner } from '../sources/http';
+import {
+  SourceAuthRequiredError,
+  SourceRateLimitedError,
+  type RequestSigner,
+} from '../sources/http';
 
 /** The part of Move's service `OxyServer` client the gateway uses. */
 export type OxyServiceClient = {
@@ -50,7 +58,9 @@ const lookupResponseSchema = z.object({
   identities: z.array(z.object({ identifier: z.string(), userId: z.string().nullable() }).loose()),
 });
 
-const resolveResponseSchema = z.object({ user: z.object({ id: z.string().min(1) }).loose() }).loose();
+const resolveResponseSchema = z
+  .object({ user: z.object({ id: z.string().min(1) }).loose() })
+  .loose();
 
 const LOOKUP_BATCH = 100;
 const RESOLVE_CONCURRENCY = 2;
@@ -66,11 +76,19 @@ export class OxyGateway {
    * Throws {@link ForeignLinkedAccountError} otherwise — a job never runs for
    * an account the user has not proven they own.
    */
-  async verifyLinkedAccount(oxyUserId: string, linkedAccountId: string, platform: MigrationPlatform): Promise<SourceAccount> {
+  async verifyLinkedAccount(
+    oxyUserId: string,
+    linkedAccountId: string,
+    platform: MigrationPlatform,
+  ): Promise<SourceAccount> {
     const { linkedAccounts } = await this.oxy.linkedAccounts.forUser(oxyUserId);
     const account = linkedAccounts.find((entry) => entry.id === linkedAccountId);
-    if (!account || account.network !== PLATFORM_NETWORK[platform]) throw new ForeignLinkedAccountError();
-    const usable = platform === 'bluesky' ? account.actorUri.startsWith('did:') : /^https:\/\//i.test(account.actorUri);
+    if (!account || account.network !== PLATFORM_NETWORK[platform])
+      throw new ForeignLinkedAccountError();
+    const usable =
+      platform === 'bluesky'
+        ? account.actorUri.startsWith('did:')
+        : /^https:\/\//i.test(account.actorUri);
     if (!usable) throw new ForeignLinkedAccountError('linked account has no usable actor');
     return { platform, actor: account.actorUri, handle: account.handle };
   }
@@ -84,7 +102,9 @@ export class OxyGateway {
     const resolved = new Map<string, string>();
     const actors = [...new Set(accounts.map((account) => account.actor))];
     for (let start = 0; start < actors.length; start += LOOKUP_BATCH) {
-      const raw = await this.oxy.serviceRequest('POST', '/federation/identities/lookup', { identifiers: actors.slice(start, start + LOOKUP_BATCH) });
+      const raw = await this.oxy.serviceRequest('POST', '/federation/identities/lookup', {
+        identifiers: actors.slice(start, start + LOOKUP_BATCH),
+      });
       for (const identity of lookupResponseSchema.parse(raw).identities) {
         if (identity.userId) resolved.set(identity.identifier, identity.userId);
       }
@@ -120,7 +140,12 @@ export class OxyGateway {
    * (recipient, actor, type, entityId), so the user id there would 409 a user's
    * second migration — and `entityType: 'app'` names an id in Move's namespace.
    */
-  async notifyMigrationDone(params: { oxyUserId: string; jobId: string; platform: MigrationPlatform; created: number }): Promise<void> {
+  async notifyMigrationDone(params: {
+    oxyUserId: string;
+    jobId: string;
+    platform: MigrationPlatform;
+    created: number;
+  }): Promise<void> {
     const platform = params.platform === 'mastodon' ? 'Mastodon' : 'Bluesky';
     const notification: CreateOxyNotificationRequest = {
       recipientId: params.oxyUserId,
@@ -129,7 +154,10 @@ export class OxyGateway {
       entityId: params.jobId,
       entityType: 'app',
       title: `Your move from ${platform} is complete`.slice(0, SYSTEM_TITLE_MAX),
-      message: `Oxy Move brought ${params.created} posts over from ${platform}.`.slice(0, SYSTEM_MESSAGE_MAX),
+      message: `Oxy Move brought ${params.created} posts over from ${platform}.`.slice(
+        0,
+        SYSTEM_MESSAGE_MAX,
+      ),
       url: `https://move.oxy.so/jobs/${encodeURIComponent(params.jobId)}`,
       data: { app: 'move', jobId: params.jobId, platform: params.platform },
     };
@@ -141,7 +169,8 @@ export class OxyGateway {
 export function toFollowBatches(userIds: Iterable<string>, size = FOLLOW_BATCH_SIZE): string[][] {
   const unique = [...new Set(userIds)];
   const batches: string[][] = [];
-  for (let start = 0; start < unique.length; start += size) batches.push(unique.slice(start, start + size));
+  for (let start = 0; start < unique.length; start += size)
+    batches.push(unique.slice(start, start + size));
   return batches;
 }
 
@@ -163,7 +192,10 @@ export function createInstanceFetchSigner(oxy: Pick<OxyServer, 'serviceRequest'>
     } catch (error) {
       const status = (error as { status?: unknown } | null)?.status;
       if (status === 429) {
-        throw new SourceRateLimitedError('Oxy instance-fetch signing budget exhausted', SIGNING_BUDGET_PAUSE_MS);
+        throw new SourceRateLimitedError(
+          'Oxy instance-fetch signing budget exhausted',
+          SIGNING_BUDGET_PAUSE_MS,
+        );
       }
       // Oxy will not sign this (no scope, a URL it refuses): the read stays
       // unsigned-refused, so the actor still falls back to the REST lookup and a

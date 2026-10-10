@@ -57,10 +57,14 @@ export function registerGracefulShutdown({ server, io, stopActivity }: GracefulS
     hardTimeout.unref();
 
     void (async () => {
-      await shutdownQueues().catch((error) => logger.error('Error shutting down the migration queue', error));
+      await shutdownQueues().catch((error) =>
+        logger.error('Error shutting down the migration queue', error),
+      );
       const socketsClosed = new Promise<void>((resolve) => io.close(() => resolve()));
       await Promise.allSettled([httpClosed, socketsClosed, closeRedis(), closePostgres()]);
-      await stopActivity?.().catch((error) => logger.warn('Platform activity publisher did not stop cleanly', error));
+      await stopActivity?.().catch((error) =>
+        logger.warn('Platform activity publisher did not stop cleanly', error),
+      );
       clearTimeout(hardTimeout);
       logger.info('HTTP, sockets, queue, Redis and PostgreSQL closed');
       process.exit(0);

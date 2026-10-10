@@ -80,8 +80,10 @@ jobs:
         run: bun run validate:agents-md && bun run validate:gates
       - name: Typecheck backend and frontend
         run: bun run typecheck
-      - name: Lint frontend
-        run: bun run lint
+      - name: Biome (format and lint, whole repository)
+        run: bunx biome ci .
+      - name: Expo ESLint rules Biome lacks (frontend)
+        run: bun run --cwd packages/frontend lint
       - name: Build backend
         run: bun run build
 

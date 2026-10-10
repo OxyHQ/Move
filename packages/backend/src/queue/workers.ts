@@ -40,7 +40,12 @@ export async function processMigrationMessage(
     await reschedule(jobId, outcome.resumeAt.getTime() - Date.now());
   } else if (outcome.status === 'retry') {
     if (job.attemptsMade + 1 >= MIGRATION_JOB_ATTEMPTS) {
-      await failJob(deps, jobId, 'retries-exhausted', outcome.error instanceof Error ? outcome.error.message.slice(0, 200) : undefined);
+      await failJob(
+        deps,
+        jobId,
+        'retries-exhausted',
+        outcome.error instanceof Error ? outcome.error.message.slice(0, 200) : undefined,
+      );
       return;
     }
     throw outcome.error instanceof Error ? outcome.error : new Error('transient migration failure');
@@ -60,13 +65,21 @@ async function sweepStalledJobs(deps: Pick<PipelineDeps, 'db'>): Promise<number>
     .from(migrationJobs)
     .where(
       or(
-        and(inArray(migrationJobs.status, ['queued', 'running']), lt(migrationJobs.updatedAt, stalledBefore)),
-        and(eq(migrationJobs.status, 'paused'), isNotNull(migrationJobs.pausedUntil), lt(migrationJobs.pausedUntil, stalledBefore)),
+        and(
+          inArray(migrationJobs.status, ['queued', 'running']),
+          lt(migrationJobs.updatedAt, stalledBefore),
+        ),
+        and(
+          eq(migrationJobs.status, 'paused'),
+          isNotNull(migrationJobs.pausedUntil),
+          lt(migrationJobs.pausedUntil, stalledBefore),
+        ),
       ),
     )
     .limit(100);
   for (const row of rows) await enqueueMigrationRun(row.id);
-  if (rows.length > 0) logger.info('[queue] re-enqueued stalled migrations', { count: rows.length });
+  if (rows.length > 0)
+    logger.info('[queue] re-enqueued stalled migrations', { count: rows.length });
   return rows.length;
 }
 
@@ -81,7 +94,9 @@ export function startWorkers(deps: PipelineDeps, concurrency: number): void {
     },
     { connection: getQueueConnection(), concurrency, lockDuration: MIGRATION_LOCK_DURATION_MS },
   );
-  migrationWorker.on('failed', (_job, error) => logger.warn('[queue] migration attempt failed', { error }));
+  migrationWorker.on('failed', (_job, error) =>
+    logger.warn('[queue] migration attempt failed', { error }),
+  );
   migrationWorker.on('error', (error) => logger.error('[queue] migration worker error', error));
 }
 

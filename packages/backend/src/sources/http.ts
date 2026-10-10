@@ -94,7 +94,10 @@ export class SourceHttpError extends Error {
 export function createPublicJsonFetcher(signer?: RequestSigner): JsonFetcher {
   return async (url, request) => {
     if (request.signed && !signer) {
-      throw new SourceAuthRequiredError('the source needs a signed read and no signer is configured', 401);
+      throw new SourceAuthRequiredError(
+        'the source needs a signed read and no signer is configured',
+        401,
+      );
     }
     return fetchJsonOnce(url, request, request.signed ? signer : undefined);
   };
@@ -103,7 +106,11 @@ export function createPublicJsonFetcher(signer?: RequestSigner): JsonFetcher {
 /** Unsigned reads only (Bluesky's public XRPC never needs a signature). */
 export const fetchPublicJson: JsonFetcher = createPublicJsonFetcher();
 
-async function fetchJsonOnce(url: string, request: JsonRequest, signer: RequestSigner | undefined): Promise<JsonResponse> {
+async function fetchJsonOnce(
+  url: string,
+  request: JsonRequest,
+  signer: RequestSigner | undefined,
+): Promise<JsonResponse> {
   const { status, headers, body } = await publicGet(url, {
     accept: request.accept,
     maxBytes: SOURCE_JSON_MAX_BYTES,
@@ -111,7 +118,8 @@ async function fetchJsonOnce(url: string, request: JsonRequest, signer: RequestS
     ...(signer ? { signHeaders: signer } : {}),
   });
   const flat: Record<string, string | undefined> = {};
-  for (const [key, value] of Object.entries(headers)) flat[key] = Array.isArray(value) ? value.join(', ') : value;
+  for (const [key, value] of Object.entries(headers))
+    flat[key] = Array.isArray(value) ? value.join(', ') : value;
   if (!body) return { status, headers: flat, body: undefined };
   try {
     return { status, headers: flat, body: JSON.parse(body.toString('utf8')) };
@@ -121,7 +129,10 @@ async function fetchJsonOnce(url: string, request: JsonRequest, signer: RequestS
 }
 
 /** Parse `Retry-After` (seconds or HTTP date) into milliseconds from now. */
-export function parseRetryAfterMs(value: string | undefined, now: number = Date.now()): number | undefined {
+export function parseRetryAfterMs(
+  value: string | undefined,
+  now: number = Date.now(),
+): number | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (/^\d+$/.test(trimmed)) return Number(trimmed) * 1000;
@@ -197,10 +208,12 @@ export function withBackoff(
         response = await fetcher(url, request);
       } catch (error) {
         // Permanent: retrying cannot change the answer.
-        if (error instanceof SourceHttpError || error instanceof SourceAuthRequiredError) throw error;
+        if (error instanceof SourceHttpError || error instanceof SourceAuthRequiredError)
+          throw error;
         // Oxy's signing budget, not the remote's: pause, never hammer.
         if (error instanceof SourceRateLimitedError) throw error;
-        if (error instanceof SsrfRejection) throw new SourceUnavailableError('source address is not public', 0);
+        if (error instanceof SsrfRejection)
+          throw new SourceUnavailableError('source address is not public', 0);
         if (error instanceof ResponseTooLargeError) throw new SourceHttpError(error.message, 200);
         lastError = error;
         if (attempt === policy.maxAttempts) break;
@@ -216,11 +229,20 @@ export function withBackoff(
       const retryAfter = parseRetryAfterMs(response.headers['retry-after'], now());
       const backoff = Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** (attempt - 1));
       const wait = retryAfter ?? backoff;
-      if (response.status === 429 && (wait > policy.maxInlineWaitMs || attempt === policy.maxAttempts)) {
-        throw new SourceRateLimitedError(`source rate limited (${host})`, Math.max(wait, policy.baseDelayMs));
+      if (
+        response.status === 429 &&
+        (wait > policy.maxInlineWaitMs || attempt === policy.maxAttempts)
+      ) {
+        throw new SourceRateLimitedError(
+          `source rate limited (${host})`,
+          Math.max(wait, policy.baseDelayMs),
+        );
       }
       if (attempt === policy.maxAttempts) {
-        throw new SourceHttpError(`source answered ${response.status} after ${attempt} attempts`, response.status);
+        throw new SourceHttpError(
+          `source answered ${response.status} after ${attempt} attempts`,
+          response.status,
+        );
       }
       await sleep(Math.min(wait, policy.maxInlineWaitMs));
     }

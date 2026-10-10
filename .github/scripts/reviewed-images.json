@@ -3,9 +3,7 @@
   "recipes": [
     {
       "name": "move",
-      "services": [
-        "move"
-      ],
+      "services": ["move"],
       "ecrRepository": "oxy/move",
       "dockerfile": "packages/backend/Dockerfile",
       "dockerfileSha256": "0dd64c236688e07404fd3a2a4e5d76a7a7ca37ffd1cbdf55a120c12c62c40004",

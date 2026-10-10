@@ -7,7 +7,13 @@ import { isAuthSessionPending } from '@/lib/connect';
  * `/linked` too would show the outcome twice, so it is dropped here. A cold
  * start (`initial`) or a return with no session open still routes normally.
  */
-export function redirectSystemPath({ path, initial }: { path: string; initial: boolean }): string | null {
+export function redirectSystemPath({
+  path,
+  initial,
+}: {
+  path: string;
+  initial: boolean;
+}): string | null {
   try {
     if (!initial && isAuthSessionPending() && /(^|\/\/|\/)linked(\?|$)/.test(path)) return null;
   } catch {

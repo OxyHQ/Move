@@ -48,7 +48,13 @@ import {
 } from '../connectors/activitypub/apItems';
 import { extractApLanguage } from '../connectors/activitypub/apLanguage';
 import { extractApMedia } from '../connectors/activitypub/apMedia';
-import { isApActor, isApCollection, isApCollectionPage, isApNote, isApOutboxActivity } from '../connectors/activitypub/apSchemas';
+import {
+  isApActor,
+  isApCollection,
+  isApCollectionPage,
+  isApNote,
+  isApOutboxActivity,
+} from '../connectors/activitypub/apSchemas';
 import { SourceAuthRequiredError, SourceHttpError, type JsonFetcher } from './http';
 import type {
   GraphAccount,
@@ -70,7 +76,10 @@ export interface CollectionCursor {
 const MAX_PAGES = 10_000;
 
 /** Counts carried by an actor built from the REST lookup. */
-function restCount(actor: Record<string, unknown>, key: 'posts' | 'following' | 'followers'): number | undefined {
+function restCount(
+  actor: Record<string, unknown>,
+  key: 'posts' | 'following' | 'followers',
+): number | undefined {
   const counts = asRecord(actor._counts);
   const value = counts?.[key];
   return typeof value === 'number' ? value : undefined;
@@ -106,16 +115,21 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
       // MEASURED 2026-09-25: mastodon.social refuses the unsigned ACTOR while
       // serving its collections unsigned, so only a collection read that
       // needed a signature switches the host to signing everything.
-      if (!isRefusal(response.status) && !actorUrisMatch(url, this.account.actor)) this.signedHosts.add(host);
+      if (!isRefusal(response.status) && !actorUrisMatch(url, this.account.actor))
+        this.signedHosts.add(host);
     }
     if (isRefusal(response.status)) {
-      throw new SourceAuthRequiredError('the instance refused the read, signed by Oxy too', response.status);
+      throw new SourceAuthRequiredError(
+        'the instance refused the read, signed by Oxy too',
+        response.status,
+      );
     }
     if (response.status < 200 || response.status >= 300) {
       throw new SourceHttpError(`ActivityPub GET answered ${response.status}`, response.status);
     }
     const record = asRecord(response.body);
-    if (!record) throw new SourceHttpError('ActivityPub GET returned a non-object', response.status);
+    if (!record)
+      throw new SourceHttpError('ActivityPub GET returned a non-object', response.status);
     return record;
   }
 
@@ -155,7 +169,10 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     const response = await this.fetchJson(lookupUrl, { accept: 'application/json' });
     const account = asRecord(response.body);
     if (response.status !== 200 || !account) {
-      throw new SourceAuthRequiredError('the actor needs a signed fetch and the REST lookup is unavailable', response.status);
+      throw new SourceAuthRequiredError(
+        'the actor needs a signed fetch and the REST lookup is unavailable',
+        response.status,
+      );
     }
     if (typeof account.uri !== 'string' || !actorUrisMatch(account.uri, this.account.actor)) {
       throw new SourceHttpError('REST lookup answered for a different account', 200);
@@ -199,7 +216,8 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
       actor: this.account.actor,
       handle: this.account.handle,
       displayName: htmlToInlineLabel(actor.name),
-      bio: typeof actor.summary === 'string' ? htmlToPlainText(actor.summary) || undefined : undefined,
+      bio:
+        typeof actor.summary === 'string' ? htmlToPlainText(actor.summary) || undefined : undefined,
       avatarUrl: firstStringUrl(actor.icon),
       links: links.length > 0 ? links : undefined,
       postsCount: outbox?.totalItems ?? restCount(actor, 'posts'),
@@ -210,12 +228,15 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
   }
 
   /** `totalItems` of a collection and whether its items are hidden. Fail-soft. */
-  private async collectionHead(ref: unknown): Promise<{ totalItems?: number; hidden: boolean } | null> {
+  private async collectionHead(
+    ref: unknown,
+  ): Promise<{ totalItems?: number; hidden: boolean } | null> {
     const url = activityPubLinkUrl(ref);
     if (!url) return null;
     try {
       const collection = await this.getJson(url);
-      const totalItems = typeof collection.totalItems === 'number' ? collection.totalItems : undefined;
+      const totalItems =
+        typeof collection.totalItems === 'number' ? collection.totalItems : undefined;
       const hasItems = Boolean(collection.first) || activityPubItems(collection).length > 0;
       return { totalItems, hidden: !hasItems && (totalItems ?? 0) > 0 };
     } catch (error) {
@@ -233,7 +254,12 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     const read = async (ref: unknown, pick: 'first' | 'last'): Promise<string | undefined> => {
       const inline = asRecord(ref);
       const url = activityPubLinkUrl(ref);
-      const page = inline && activityPubItems(inline).length > 0 ? inline : url && isSameOriginHttpUrl(url, outboxUrl) ? await this.getJson(url) : null;
+      const page =
+        inline && activityPubItems(inline).length > 0
+          ? inline
+          : url && isSameOriginHttpUrl(url, outboxUrl)
+            ? await this.getJson(url)
+            : null;
       if (!page) return undefined;
       const items = activityPubItems(page);
       const item = asRecord(pick === 'first' ? items[0] : items[items.length - 1]);
@@ -261,7 +287,9 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     }
   }
 
-  async *graph(context: SourceReadContext<CollectionCursor>): AsyncIterable<Positioned<GraphAccount, CollectionCursor>> {
+  async *graph(
+    context: SourceReadContext<CollectionCursor>,
+  ): AsyncIterable<Positioned<GraphAccount, CollectionCursor>> {
     const actor = await this.actor();
     const followingUrl = activityPubLinkUrl(actor.following);
     if (!followingUrl) return;
@@ -292,7 +320,8 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
       }
       const inlineFirst = asRecord(collection.first);
       const firstUrl = activityPubLinkUrl(collection.first);
-      if (activityPubItems(collection).length > 0) next = { url: collectionUrl, inline: collection };
+      if (activityPubItems(collection).length > 0)
+        next = { url: collectionUrl, inline: collection };
       else if (inlineFirst && activityPubItems(inlineFirst).length > 0) {
         next = { url: firstUrl ?? collectionUrl, inline: inlineFirst };
       } else if (firstUrl) next = { url: firstUrl };
@@ -329,7 +358,10 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     }
   }
 
-  private async resolveRecord(item: unknown, pageUrl: string): Promise<Record<string, unknown> | null> {
+  private async resolveRecord(
+    item: unknown,
+    pageUrl: string,
+  ): Promise<Record<string, unknown> | null> {
     const inline = asRecord(item);
     if (inline) return inline;
     if (typeof item !== 'string' || !isSameOriginHttpUrl(item, pageUrl)) return null;
@@ -357,9 +389,11 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
       if (!activityId || !announcedUri) return null;
       if (!actorUrisMatch(extractActorUri(activity.actor), actorUri)) return null;
       if (!activityIdBelongsToActor(activityId, actorUri)) return null;
-      if (!context.options.includeBoosts) return { kind: 'skipped', sourceId: activityId, reason: 'boost-disabled' };
+      if (!context.options.includeBoosts)
+        return { kind: 'skipped', sourceId: activityId, reason: 'boost-disabled' };
       const visibility = apVisibility(activity.to, activity.cc);
-      if (visibility === 'followers') return { kind: 'skipped', sourceId: activityId, reason: 'not-public' };
+      if (visibility === 'followers')
+        return { kind: 'skipped', sourceId: activityId, reason: 'not-public' };
       const createdAt = parseApPublished(activity.published);
       if (!createdAt) return { kind: 'skipped', sourceId: activityId, reason: 'unsupported' };
       return {
@@ -375,7 +409,8 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     }
 
     let note: Record<string, unknown> | null = null;
-    if (activity.type === 'Note' || activity.type === 'Article' || activity.type === 'Question') note = activity;
+    if (activity.type === 'Note' || activity.type === 'Article' || activity.type === 'Question')
+      note = activity;
     else if (activity.type === 'Create') note = await this.resolveRecord(activity.object, pageUrl);
     if (!note || !isApNote(note)) return null;
     if (note.type !== 'Note' && note.type !== 'Article' && note.type !== 'Question') {
@@ -385,11 +420,13 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
     const noteId = typeof note.id === 'string' ? note.id : activityId;
     if (!noteId) return null;
     if (!actorUrisMatch(extractActorUri(note.attributedTo), actorUri)) return null;
-    if (activity.type === 'Create' && !actorUrisMatch(extractActorUri(activity.actor), actorUri)) return null;
+    if (activity.type === 'Create' && !actorUrisMatch(extractActorUri(activity.actor), actorUri))
+      return null;
     if (!activityIdBelongsToActor(noteId, actorUri)) return null;
 
     const visibility = apVisibility(note.to ?? activity.to, note.cc ?? activity.cc);
-    if (visibility === 'followers') return { kind: 'skipped', sourceId: noteId, reason: 'not-public' };
+    if (visibility === 'followers')
+      return { kind: 'skipped', sourceId: noteId, reason: 'not-public' };
 
     const links: string[] = [];
     let replyToSourceId: string | undefined;
@@ -434,7 +471,14 @@ export class MastodonSource implements Source<CollectionCursor, CollectionCursor
       ...(replyToSourceId ? { replyToSourceId } : {}),
       ...(quoteSourceId ? { quoteSourceId } : {}),
       media,
-      ...(isArticle ? { article: { title: title ?? '', ...(extractApSummary(note) ? { summary: extractApSummary(note) } : {}) } } : {}),
+      ...(isArticle
+        ? {
+            article: {
+              title: title ?? '',
+              ...(extractApSummary(note) ? { summary: extractApSummary(note) } : {}),
+            },
+          }
+        : {}),
       ...(links.length > 0 ? { links } : {}),
     };
   }

@@ -107,9 +107,13 @@ export interface Source<TContentCursor = unknown, TGraphCursor = unknown> {
    * `skip` so the pipeline can count what it did not import and still advance
    * the cursor past it.
    */
-  items(context: SourceReadContext<TContentCursor>): AsyncIterable<Positioned<SourceItem | SkippedItem, TContentCursor>>;
+  items(
+    context: SourceReadContext<TContentCursor>,
+  ): AsyncIterable<Positioned<SourceItem | SkippedItem, TContentCursor>>;
   /** Followed accounts, then (where public) blocked accounts, resumable across both. */
-  graph(context: SourceReadContext<TGraphCursor>): AsyncIterable<Positioned<GraphAccount, TGraphCursor>>;
+  graph(
+    context: SourceReadContext<TGraphCursor>,
+  ): AsyncIterable<Positioned<GraphAccount, TGraphCursor>>;
   /** Newest and (if cheaply known) oldest item timestamps, for the preview. */
   dateRange?(): Promise<{ newestAt?: string; oldestAt?: string }>;
 }

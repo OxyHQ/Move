@@ -2,7 +2,12 @@ import 'dotenv/config';
 import http from 'node:http';
 import express from 'express';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
-import { OxyServer, createOxyAuthMiddleware, createOxyCors, createOxyRateLimit } from '@oxy.so/core/server';
+import {
+  OxyServer,
+  createOxyAuthMiddleware,
+  createOxyCors,
+  createOxyRateLimit,
+} from '@oxy.so/core/server';
 import { config } from './src/config';
 import { closePostgres, connectPostgres } from './src/db/postgres';
 import healthRoutes from './src/routes/health.routes';
@@ -69,8 +74,14 @@ async function boot(): Promise<void> {
   await scheduleStalledSweep();
 
   markRuntimeReady();
-  registerGracefulShutdown({ server, io, stopActivity: activity ? () => activity.stop() : undefined });
-  server.listen(config.runtime.port, () => logger.info(`Oxy Move backend listening on :${config.runtime.port}`));
+  registerGracefulShutdown({
+    server,
+    io,
+    stopActivity: activity ? () => activity.stop() : undefined,
+  });
+  server.listen(config.runtime.port, () =>
+    logger.info(`Oxy Move backend listening on :${config.runtime.port}`),
+  );
 }
 
 void boot().catch(async (error) => {

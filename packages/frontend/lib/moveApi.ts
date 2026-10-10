@@ -31,7 +31,11 @@ export interface UndoResult extends PlanResponse {
 export interface MoveApi {
   platforms(): Promise<PlatformInfo[]>;
   preview(platform: MigrationPlatform, linkedAccountId: string): Promise<MigrationPreview>;
-  create(platform: MigrationPlatform, linkedAccountId: string, options: Partial<JobOptions>): Promise<MigrationJobView>;
+  create(
+    platform: MigrationPlatform,
+    linkedAccountId: string,
+    options: Partial<JobOptions>,
+  ): Promise<MigrationJobView>;
   list(): Promise<MigrationJobView[]>;
   get(jobId: string): Promise<MigrationJobView>;
   plan(jobId: string): Promise<PlanResponse>;
@@ -46,13 +50,21 @@ export function createMoveApi(http: MoveHttp): MoveApi {
   return {
     platforms: async () => (await http.get<{ platforms: PlatformInfo[] }>('/platforms')).platforms,
     preview: async (platform, linkedAccountId) =>
-      (await http.post<{ preview: MigrationPreview }>('/jobs', { platform, linkedAccountId, dryRun: true })).preview,
+      (
+        await http.post<{ preview: MigrationPreview }>('/jobs', {
+          platform,
+          linkedAccountId,
+          dryRun: true,
+        })
+      ).preview,
     create: async (platform, linkedAccountId, options) =>
-      (await http.post<{ job: MigrationJobView }>('/jobs', { platform, linkedAccountId, options })).job,
+      (await http.post<{ job: MigrationJobView }>('/jobs', { platform, linkedAccountId, options }))
+        .job,
     list: async () => (await http.get<{ jobs: MigrationJobView[] }>('/jobs')).jobs,
     get: async (id) => (await http.get<{ job: MigrationJobView }>(job(id))).job,
     plan: (id) => http.get<PlanResponse>(`${job(id)}/plan`),
-    ack: async (id, ack) => (await http.post<{ job: MigrationJobView }>(`${job(id)}/plan/ack`, ack)).job,
+    ack: async (id, ack) =>
+      (await http.post<{ job: MigrationJobView }>(`${job(id)}/plan/ack`, ack)).job,
     cancel: async (id) => (await http.post<{ job: MigrationJobView }>(`${job(id)}/cancel`)).job,
     undo: (id) => http.delete<UndoResult>(job(id)),
   };

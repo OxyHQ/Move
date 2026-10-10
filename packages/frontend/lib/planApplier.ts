@@ -27,7 +27,12 @@ import type {
 /** The Oxy SDK methods the plan needs — all run with the user's own session. */
 export interface PlanSdk {
   users: {
-    me(): Promise<{ name?: { displayName?: string } | null; bio?: string; avatar?: string | null; links?: string[] }>;
+    me(): Promise<{
+      name?: { displayName?: string } | null;
+      bio?: string;
+      avatar?: string | null;
+      links?: string[];
+    }>;
     updateMe(update: ProfileUpdate): Promise<unknown>;
   };
   follows: {
@@ -123,7 +128,12 @@ function planProgress(plan: MigrationPlan, ack: PlanAck | null): PlanProgress {
   const count = (batches: string[][], done: Set<number>) =>
     batches.reduce((sum, batch, index) => sum + (done.has(index) ? batch.length : 0), 0);
   return {
-    profile: !plan.profile || !profileUpdateFor(plan.profile) ? 'none' : ack?.profileApplied ? 'applied' : 'pending',
+    profile:
+      !plan.profile || !profileUpdateFor(plan.profile)
+        ? 'none'
+        : ack?.profileApplied
+          ? 'applied'
+          : 'pending',
     batchesTotal: follows.length,
     batchesApplied: follows.filter((_, index) => followsDone.has(index)).length,
     followsApplied: count(follows, followsDone),
@@ -203,7 +213,9 @@ export async function applyPlan(
     const current = blockedNow;
     const recordedAlready = facts.alreadyBlocked?.[index];
     if (!recordedAlready) {
-      await deps.api.ack(jobId, { alreadyBlocked: { [index]: batch.filter((userId) => current.has(userId)) } });
+      await deps.api.ack(jobId, {
+        alreadyBlocked: { [index]: batch.filter((userId) => current.has(userId)) },
+      });
     }
     // The SDK blocks one account per call; skip who is blocked already.
     for (const userId of batch) {
@@ -236,9 +248,19 @@ export async function undoPlan(
   deps: Pick<PlanDeps, 'sdk'>,
   { plan, ack, undoFacts }: PlanResponse,
 ): Promise<UndoPlanResult> {
-  const result: UndoPlanResult = { unfollowed: 0, unblocked: 0, kept: 0, profileRestored: false, profileKept: false };
+  const result: UndoPlanResult = {
+    unfollowed: 0,
+    unblocked: 0,
+    kept: 0,
+    profileRestored: false,
+    profileKept: false,
+  };
 
-  const created = (batches: string[][], applied: number[] | undefined, already: Record<string, string[]> | undefined) => {
+  const created = (
+    batches: string[][],
+    applied: number[] | undefined,
+    already: Record<string, string[]> | undefined,
+  ) => {
     const out: string[] = [];
     for (const index of applied ?? []) {
       const batch = batches[index] ?? [];
@@ -257,13 +279,21 @@ export async function undoPlan(
     return out;
   };
 
-  const toUnfollow = created(plan.graph?.followBatches ?? [], ack?.followBatchesApplied, undoFacts?.alreadyFollowing);
+  const toUnfollow = created(
+    plan.graph?.followBatches ?? [],
+    ack?.followBatchesApplied,
+    undoFacts?.alreadyFollowing,
+  );
   for (let start = 0; start < toUnfollow.length; start += UNFOLLOW_CHUNK) {
     await deps.sdk.follows.unfollowMany(toUnfollow.slice(start, start + UNFOLLOW_CHUNK));
   }
   result.unfollowed = toUnfollow.length;
 
-  const toUnblock = created(plan.blocks?.blockBatches ?? [], ack?.blockBatchesApplied, undoFacts?.alreadyBlocked);
+  const toUnblock = created(
+    plan.blocks?.blockBatches ?? [],
+    ack?.blockBatchesApplied,
+    undoFacts?.alreadyBlocked,
+  );
   for (const userId of toUnblock) await deps.sdk.privacy.unblock(userId);
   result.unblocked = toUnblock.length;
 

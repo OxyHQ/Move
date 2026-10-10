@@ -62,7 +62,14 @@ export type MigrationItemKind = (typeof MIGRATION_ITEM_KINDS)[number];
  * - `failed`   — the destination refused it; `last_error` says why.
  * - `undone`   — removed again by an undo.
  */
-export const MIGRATION_ITEM_STATUSES = ['pending', 'deferred', 'sent', 'existing', 'failed', 'undone'] as const;
+export const MIGRATION_ITEM_STATUSES = [
+  'pending',
+  'deferred',
+  'sent',
+  'existing',
+  'failed',
+  'undone',
+] as const;
 export type MigrationItemStatus = (typeof MIGRATION_ITEM_STATUSES)[number];
 
 /** The resumable position of each phase. Opaque to everything but its source. */
@@ -89,7 +96,10 @@ export const migrationJobs = pgTable(
     cursor: jsonb().notNull().default({}).$type<JobCursor>(),
     options: jsonb().notNull().$type<JobOptions>(),
     /** The client-applied plan (profile fields, resolved follow and block batches). */
-    plan: jsonb().notNull().default({ profile: null, graph: null, blocks: null }).$type<MigrationPlan>(),
+    plan: jsonb()
+      .notNull()
+      .default({ profile: null, graph: null, blocks: null })
+      .$type<MigrationPlan>(),
     planAck: jsonb().$type<PlanAck>(),
     /**
      * What the client recorded BEFORE applying the plan (the profile it
@@ -111,7 +121,10 @@ export const migrationJobs = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    check('migration_jobs_platform_check', sql`${t.platform} in (${sql.raw(inList(MIGRATION_PLATFORMS))})`),
+    check(
+      'migration_jobs_platform_check',
+      sql`${t.platform} in (${sql.raw(inList(MIGRATION_PLATFORMS))})`,
+    ),
     check('migration_jobs_status_check', sql`${t.status} in (${sql.raw(inList(JOB_STATUSES))})`),
     // At most ONE active job per user and platform. Partial, so finished jobs
     // (history) never block a new one, and enforced by the database so two
@@ -160,12 +173,18 @@ export const migrationItems = pgTable(
   },
   (t) => [
     primaryKey({ name: 'migration_items_pkey', columns: [t.jobId, t.sourceId] }),
-    check('migration_items_kind_check', sql`${t.kind} in (${sql.raw(inList(MIGRATION_ITEM_KINDS))})`),
+    check(
+      'migration_items_kind_check',
+      sql`${t.kind} in (${sql.raw(inList(MIGRATION_ITEM_KINDS))})`,
+    ),
     check(
       'migration_items_destination_check',
       sql`${t.destination} in (${sql.raw(inList(MIGRATION_DESTINATIONS))})`,
     ),
-    check('migration_items_status_check', sql`${t.status} in (${sql.raw(inList(MIGRATION_ITEM_STATUSES))})`),
+    check(
+      'migration_items_status_check',
+      sql`${t.status} in (${sql.raw(inList(MIGRATION_ITEM_STATUSES))})`,
+    ),
     check('migration_items_attempts_check', sql`${t.attempts} >= 0`),
     // The deferred pass: "this job's deferred children, oldest first".
     index('migration_items_job_status_idx').on(t.jobId, t.status, t.sourceCreatedAt),

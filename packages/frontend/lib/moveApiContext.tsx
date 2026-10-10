@@ -29,6 +29,7 @@ export const queryKeys = {
   platforms: ['platforms'] as const,
   jobs: ['jobs'] as const,
   job: (id: string) => ['jobs', id] as const,
-  preview: (platform: string, linkedAccountId: string) => ['preview', platform, linkedAccountId] as const,
+  preview: (platform: string, linkedAccountId: string) =>
+    ['preview', platform, linkedAccountId] as const,
   linkedAccounts: ['linked-accounts'] as const,
 };

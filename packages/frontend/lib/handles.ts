@@ -31,20 +31,29 @@ function isLinkedAccountCallbackError(value: string): value is LinkedAccountCall
  * `already_linked` (409: someone else's link) or `expired_or_foreign`
  * (403/404: the code expired, was used, or another user started the flow).
  */
-export type LinkError = LinkedAccountCallbackError | 'already_linked' | 'expired_or_foreign' | 'unknown';
+export type LinkError =
+  | LinkedAccountCallbackError
+  | 'already_linked'
+  | 'expired_or_foreign'
+  | 'unknown';
 
 /** What the callback sent back: a one-time code to complete, or a failure. */
 export type LinkOutcome = { kind: 'code'; code: string } | { kind: 'error'; code: LinkError };
 
 /** The end of the flow: the link exists, or why not. */
-export type LinkResult = { kind: 'linked'; linkedAccountId: string } | { kind: 'error'; code: LinkError };
+export type LinkResult =
+  | { kind: 'linked'; linkedAccountId: string }
+  | { kind: 'error'; code: LinkError };
 
 /**
  * Read `?link_code=` / `?link_error=` off a return URL's query or a route's
  * params. Oxy reports a failed link as `link_error`, not `error`, because
  * `@oxy.so/services` strips any `?error=` (an OAuth error) on web cold boot.
  */
-export function outcomeFromParams(params: { link_code?: unknown; link_error?: unknown }): LinkOutcome | null {
+export function outcomeFromParams(params: {
+  link_code?: unknown;
+  link_error?: unknown;
+}): LinkOutcome | null {
   if (typeof params.link_code === 'string' && params.link_code.length > 0) {
     return { kind: 'code', code: params.link_code };
   }
@@ -89,10 +98,14 @@ export async function completeLink(oxy: LinkCompleter, code: string): Promise<Li
  * Interpolate `{ name }`, the platform's display name.
  */
 export function startFailureKey(platform: MigrationPlatform, error: unknown): string {
-  const parsed = linkedAccountStartErrorDetailsSchema.safeParse((error as { details?: unknown } | null)?.details);
+  const parsed = linkedAccountStartErrorDetailsSchema.safeParse(
+    (error as { details?: unknown } | null)?.details,
+  );
   if (!parsed.success) return 'connect.startFailed.unknown';
   const { reason } = parsed.data;
-  return reason === 'provider_rejected' ? `connect.startFailed.provider_rejected.${platform}` : `connect.startFailed.${reason}`;
+  return reason === 'provider_rejected'
+    ? `connect.startFailed.provider_rejected.${platform}`
+    : `connect.startFailed.${reason}`;
 }
 
 /** The i18n key for a link error code. */

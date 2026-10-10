@@ -7,7 +7,13 @@ import { EmptyState } from '@oxy.so/bloom/empty-state';
 import { RiCheckboxCircleLine, RiErrorWarningLine } from '@oxy.so/bloom/icons';
 import { Loading } from '@oxy.so/bloom/loading';
 import { PageScreen } from '@/components/PageScreen';
-import { completeLink, linkErrorKey, outcomeFromParams, platformForNetwork, type LinkResult } from '@/lib/handles';
+import {
+  completeLink,
+  linkErrorKey,
+  outcomeFromParams,
+  platformForNetwork,
+  type LinkResult,
+} from '@/lib/handles';
 import { queryKeys } from '@/lib/moveApiContext';
 
 /**
@@ -35,7 +41,8 @@ export default function LinkedScreen() {
     if (!code || !isAuthenticated || completing.current === code) return;
     completing.current = code;
     void completeLink(oxyServices, code).then(async (completed) => {
-      if (completed.kind === 'linked') await queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts });
+      if (completed.kind === 'linked')
+        await queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts });
       setResult(completed);
     });
   }, [code, isAuthenticated, oxyServices, queryClient]);
@@ -88,7 +95,11 @@ export default function LinkedScreen() {
         icon={RiCheckboxCircleLine}
         media="circle"
         title={t('linked.successTitle')}
-        description={account ? t('linked.successBody', { handle: account.handle }) : t('linked.successBodyGeneric')}
+        description={
+          account
+            ? t('linked.successBody', { handle: account.handle })
+            : t('linked.successBodyGeneric')
+        }
         action={
           account
             ? {
@@ -96,7 +107,10 @@ export default function LinkedScreen() {
                 onPress: () =>
                   router.replace({
                     pathname: '/confirm',
-                    params: { platform: platformForNetwork(account.network), linkedAccountId: account.id },
+                    params: {
+                      platform: platformForNetwork(account.network),
+                      linkedAccountId: account.id,
+                    },
                   }),
               }
             : { label: t('linked.home'), onPress: () => router.replace('/') }

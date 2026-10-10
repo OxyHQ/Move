@@ -116,7 +116,11 @@ export class JobService {
   }
 
   /** The read-only preview (`dryRun`): verified account, counts, date range, profile. */
-  async preview(oxyUserId: string, platform: MigrationPlatform, linkedAccountId: string): Promise<MigrationPreview> {
+  async preview(
+    oxyUserId: string,
+    platform: MigrationPlatform,
+    linkedAccountId: string,
+  ): Promise<MigrationPreview> {
     const account = await this.deps.oxy.verifyLinkedAccount(oxyUserId, linkedAccountId, platform);
     const source = await this.deps.sourceFactory(account);
     const profile = await source.profile();
@@ -146,7 +150,11 @@ export class JobService {
   ): Promise<MigrationJob> {
     // Ownership is verified BEFORE anything is written: a job never exists for
     // an account the user has not proven is theirs.
-    const account = await this.deps.oxy.verifyLinkedAccount(oxyUserId, input.linkedAccountId, input.platform);
+    const account = await this.deps.oxy.verifyLinkedAccount(
+      oxyUserId,
+      input.linkedAccountId,
+      input.platform,
+    );
     const options: JobOptions = { ...DEFAULT_JOB_OPTIONS, ...(input.options ?? {}) };
     let job: MigrationJob;
     try {
@@ -211,21 +219,41 @@ export class JobService {
   async ackPlan(oxyUserId: string, jobId: string, ack: PlanAckRequest): Promise<MigrationJob> {
     await this.owned(oxyUserId, jobId);
     return this.deps.db.transaction(async (tx) => {
-      const [job] = await tx.select().from(migrationJobs).where(eq(migrationJobs.id, jobId)).for('update');
+      const [job] = await tx
+        .select()
+        .from(migrationJobs)
+        .where(eq(migrationJobs.id, jobId))
+        .for('update');
       const followBatches = job.plan.graph?.followBatches ?? [];
       const blockBatches = job.plan.blocks?.blockBatches ?? [];
 
-      const merged = (recorded: number[] | undefined, incoming: number[] | undefined, size: number, what: string) => {
+      const merged = (
+        recorded: number[] | undefined,
+        incoming: number[] | undefined,
+        size: number,
+        what: string,
+      ) => {
         const all = new Set([...(recorded ?? []), ...(incoming ?? [])]);
         for (const index of all) {
-          if (!Number.isInteger(index) || index < 0 || index >= size) throw new JobStateError(`${what} batch index out of range`);
+          if (!Number.isInteger(index) || index < 0 || index >= size)
+            throw new JobStateError(`${what} batch index out of range`);
         }
         return [...all].sort((a, b) => a - b);
       };
       const planAck: PlanAck = {
         profileApplied: ack.profileApplied || job.planAck?.profileApplied || false,
-        followBatchesApplied: merged(job.planAck?.followBatchesApplied, ack.followBatchesApplied, followBatches.length, 'follow'),
-        blockBatchesApplied: merged(job.planAck?.blockBatchesApplied, ack.blockBatchesApplied, blockBatches.length, 'block'),
+        followBatchesApplied: merged(
+          job.planAck?.followBatchesApplied,
+          ack.followBatchesApplied,
+          followBatches.length,
+          'follow',
+        ),
+        blockBatchesApplied: merged(
+          job.planAck?.blockBatchesApplied,
+          ack.blockBatchesApplied,
+          blockBatches.length,
+          'block',
+        ),
       };
 
       const facts: PlanUndoFacts = { ...(job.undoFacts ?? {}) };
@@ -233,19 +261,37 @@ export class JobService {
         if (!job.plan.profile) throw new JobStateError('the plan has no profile');
         facts.profileBefore = ack.profileBefore;
       }
-      const firstWins = (recorded: Record<string, string[]> | undefined, incoming: Record<string, string[]> | undefined, batches: string[][], what: string) => {
+      const firstWins = (
+        recorded: Record<string, string[]> | undefined,
+        incoming: Record<string, string[]> | undefined,
+        batches: string[][],
+        what: string,
+      ) => {
         const out = { ...(recorded ?? {}) };
         for (const [key, ids] of Object.entries(incoming ?? {})) {
           const batch = /^\d+$/.test(key) ? batches[Number(key)] : undefined;
           if (!batch) throw new JobStateError(`${what} batch index out of range`);
           const members = new Set(batch);
-          if (!ids.every((id) => members.has(id))) throw new JobStateError(`${what} fact names an account outside its batch`);
+          if (!ids.every((id) => members.has(id)))
+            throw new JobStateError(`${what} fact names an account outside its batch`);
           if (!(key in out)) out[key] = [...new Set(ids)];
         }
         return out;
       };
-      if (ack.alreadyFollowing) facts.alreadyFollowing = firstWins(facts.alreadyFollowing, ack.alreadyFollowing, followBatches, 'follow');
-      if (ack.alreadyBlocked) facts.alreadyBlocked = firstWins(facts.alreadyBlocked, ack.alreadyBlocked, blockBatches, 'block');
+      if (ack.alreadyFollowing)
+        facts.alreadyFollowing = firstWins(
+          facts.alreadyFollowing,
+          ack.alreadyFollowing,
+          followBatches,
+          'follow',
+        );
+      if (ack.alreadyBlocked)
+        facts.alreadyBlocked = firstWins(
+          facts.alreadyBlocked,
+          ack.alreadyBlocked,
+          blockBatches,
+          'block',
+        );
 
       const rows = await tx
         .update(migrationJobs)
@@ -260,8 +306,15 @@ export class JobService {
     const job = await this.owned(oxyUserId, jobId);
     const rows = await this.deps.db
       .update(migrationJobs)
-      .set({ status: 'cancelled', finishedAt: new Date(), pausedUntil: null, updatedAt: new Date() })
-      .where(and(eq(migrationJobs.id, job.id), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])))
+      .set({
+        status: 'cancelled',
+        finishedAt: new Date(),
+        pausedUntil: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(migrationJobs.id, job.id), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])),
+      )
       .returning();
     if (!rows[0]) throw new JobStateError(`job is ${job.status}, not active`);
     this.deps.progress.emit(oxyUserId, rows[0]);
@@ -278,13 +331,30 @@ export class JobService {
   async undo(oxyUserId: string, jobId: string): Promise<UndoResult> {
     let job = await this.owned(oxyUserId, jobId);
     if (job.status === 'undone' && job.destinationUndone) {
-      return { job, deleted: 0, failed: 0, plan: job.plan, ack: job.planAck ?? null, undoFacts: job.undoFacts ?? null };
+      return {
+        job,
+        deleted: 0,
+        failed: 0,
+        plan: job.plan,
+        ack: job.planAck ?? null,
+        undoFacts: job.undoFacts ?? null,
+      };
     }
     if ((ACTIVE_JOB_STATUSES as readonly string[]).includes(job.status)) {
       await this.deps.db
         .update(migrationJobs)
-        .set({ status: 'cancelled', finishedAt: new Date(), pausedUntil: null, updatedAt: new Date() })
-        .where(and(eq(migrationJobs.id, job.id), inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES])));
+        .set({
+          status: 'cancelled',
+          finishedAt: new Date(),
+          pausedUntil: null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(migrationJobs.id, job.id),
+            inArray(migrationJobs.status, [...ACTIVE_JOB_STATUSES]),
+          ),
+        );
     }
     // Mention deletes through its normal path (federated Deletes included) and
     // reports what it could NOT delete. With failures the job is `undone` but
@@ -295,7 +365,12 @@ export class JobService {
         await tx
           .update(migrationItems)
           .set({ status: 'undone', updatedAt: new Date() })
-          .where(and(eq(migrationItems.jobId, job.id), inArray(migrationItems.status, ['pending', 'sent', 'existing', 'deferred'])));
+          .where(
+            and(
+              eq(migrationItems.jobId, job.id),
+              inArray(migrationItems.status, ['pending', 'sent', 'existing', 'deferred']),
+            ),
+          );
       }
       const rows = await tx
         .update(migrationJobs)
@@ -310,6 +385,13 @@ export class JobService {
       job = rows[0];
     });
     this.deps.progress.emit(oxyUserId, job);
-    return { job, deleted, failed, plan: job.plan, ack: job.planAck ?? null, undoFacts: job.undoFacts ?? null };
+    return {
+      job,
+      deleted,
+      failed,
+      plan: job.plan,
+      ack: job.planAck ?? null,
+      undoFacts: job.undoFacts ?? null,
+    };
   }
 }

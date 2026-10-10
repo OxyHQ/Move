@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOxy } from '@oxy.so/services';
-import { ACTIVE_JOB_STATUSES, MIGRATION_PROGRESS_EVENT, type MigrationJobView } from '@move/shared-types';
+import {
+  ACTIVE_JOB_STATUSES,
+  MIGRATION_PROGRESS_EVENT,
+  type MigrationJobView,
+} from '@move/shared-types';
 import { API_URL } from './config';
 import { queryKeys, useMoveApi } from './moveApiContext';
 
@@ -29,7 +33,11 @@ export function useJob(jobId: string) {
     queryKey: queryKeys.job(jobId),
     queryFn: () => api.get(jobId),
     refetchInterval: (q) =>
-      isActive(q.state.data) ? (socketConnected ? POLL_WITH_SOCKET_MS : POLL_WITHOUT_SOCKET_MS) : false,
+      isActive(q.state.data)
+        ? socketConnected
+          ? POLL_WITH_SOCKET_MS
+          : POLL_WITHOUT_SOCKET_MS
+        : false,
   });
 
   const active = isActive(query.data);

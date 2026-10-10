@@ -13,14 +13,24 @@ import { Loading } from '@oxy.so/bloom/loading';
 import { SettingsListGroup, SettingsListItem } from '@oxy.so/bloom/settings-list';
 import { Switch } from '@oxy.so/bloom/switch';
 import { Muted, Text } from '@oxy.so/bloom/typography';
-import { DEFAULT_JOB_OPTIONS, isMigrationPlatform, type MigrationPlatform, type MigrationPreview } from '@move/shared-types';
+import {
+  DEFAULT_JOB_OPTIONS,
+  isMigrationPlatform,
+  type MigrationPlatform,
+  type MigrationPreview,
+} from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
 import { QueryError } from '@/components/QueryError';
 import { formatDate, formatNumber } from '@/lib/format';
 import { errorCode } from '@/lib/moveApi';
 import { queryKeys, useMoveApi } from '@/lib/moveApiContext';
 
-const KNOWN_ERRORS = ['linked_account_not_owned', 'source_requires_authorized_fetch', 'source_unavailable', 'active_job_exists'];
+const KNOWN_ERRORS = [
+  'linked_account_not_owned',
+  'source_requires_authorized_fetch',
+  'source_unavailable',
+  'active_job_exists',
+];
 
 function errorMessageKey(error: unknown): string {
   const code = errorCode(error);
@@ -35,14 +45,24 @@ export default function ConfirmScreen() {
   if (!isMigrationPlatform(platform) || !linkedAccountId) {
     return (
       <PageScreen title={t('confirm.title')} back>
-        <EmptyState icon={RiErrorWarningLine} title={t('connect.unknownTitle')} description={t('connect.unknownBody')} />
+        <EmptyState
+          icon={RiErrorWarningLine}
+          title={t('connect.unknownTitle')}
+          description={t('connect.unknownBody')}
+        />
       </PageScreen>
     );
   }
   return <ConfirmMove platform={platform} linkedAccountId={linkedAccountId} />;
 }
 
-function ConfirmMove({ platform, linkedAccountId }: { platform: MigrationPlatform; linkedAccountId: string }) {
+function ConfirmMove({
+  platform,
+  linkedAccountId,
+}: {
+  platform: MigrationPlatform;
+  linkedAccountId: string;
+}) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const api = useMoveApi();
@@ -79,9 +99,14 @@ function ConfirmMove({ platform, linkedAccountId }: { platform: MigrationPlatfor
 
   return (
     <PageScreen title={t('confirm.title')} back>
-      {preview.isPending ? <Loading accessibilityLabel={t('confirm.loading')} text={t('confirm.loading')} /> : null}
+      {preview.isPending ? (
+        <Loading accessibilityLabel={t('confirm.loading')} text={t('confirm.loading')} />
+      ) : null}
       {preview.isError ? (
-        <QueryError message={t(errorMessageKey(preview.error))} onRetry={() => void preview.refetch()} />
+        <QueryError
+          message={t(errorMessageKey(preview.error))}
+          onRetry={() => void preview.refetch()}
+        />
       ) : null}
       {preview.data ? (
         <>
@@ -114,11 +139,15 @@ function ConfirmMove({ platform, linkedAccountId }: { platform: MigrationPlatfor
             />
           </SettingsListGroup>
 
-          {startError ? (
-            <Admonition type="error">{startError}</Admonition>
-          ) : null}
+          {startError ? <Admonition type="error">{startError}</Admonition> : null}
 
-          <Button tone="action" size="lg" loading={starting} onPress={() => void start()} testID="move-submit">
+          <Button
+            tone="action"
+            size="lg"
+            loading={starting}
+            onPress={() => void start()}
+            testID="move-submit"
+          >
             {t('confirm.submit')}
           </Button>
           <Muted>{t('confirm.undoNote')}</Muted>
@@ -168,7 +197,9 @@ function PreviewSummary({ preview, locale }: { preview: MigrationPreview; locale
               ? t('confirm.posts', { count: posts, formatted: formatNumber(posts, locale) })
               : t('confirm.postsUnknown')
           }
-          description={oldest && newest ? t('confirm.dateRange', { oldest, newest }) : t('confirm.postsHint')}
+          description={
+            oldest && newest ? t('confirm.dateRange', { oldest, newest }) : t('confirm.postsHint')
+          }
           showChevron={false}
           value="✓"
         />
@@ -177,7 +208,10 @@ function PreviewSummary({ preview, locale }: { preview: MigrationPreview; locale
             preview.graphHidden
               ? t('confirm.followingHidden')
               : following !== undefined
-                ? t('confirm.following', { count: following, formatted: formatNumber(following, locale) })
+                ? t('confirm.following', {
+                    count: following,
+                    formatted: formatNumber(following, locale),
+                  })
                 : t('confirm.followingUnknown')
           }
           description={t('confirm.followingHint')}
