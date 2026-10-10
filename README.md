@@ -105,6 +105,11 @@ All parsed in `packages/backend/src/config.ts`; see `packages/backend/.env.examp
 | `MEDIA_UPLOADS_PER_MINUTE` | default 30 | Oxy's per-app upload budget |
 | `EXPO_PUBLIC_OXY_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | GitHub `vars` | Frontend build |
 
+SSM is the only copy of a production secret: set or rotate one with
+`aws ssm put-parameter --type SecureString --overwrite` (oxy-infra runbook 46),
+then force a new deployment. GitHub holds no runtime secret and the deploy
+writes none (`scripts/check-workflow-secrets.mjs`).
+
 ## Development
 
 ```bash

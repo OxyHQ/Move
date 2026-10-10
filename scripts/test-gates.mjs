@@ -27,7 +27,10 @@ expect('prose mention does not count', checkMigrationText('a.sql', '-- see oxy:d
 expect('bound parameter fails', checkMigrationText('a.sql', "-- oxy:deploy-phase=pre\nALTER TABLE x ADD CHECK (s in ($1));"), true);
 
 // Workflow secrets.
-expect('named secret passes', checkWorkflowText('w.yml', 'env:\n  A: ${{ secrets.A }}\n'), false);
+expect('named CI-only secret passes', checkWorkflowText('w.yml', 'env:\n  A: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n'), false);
+expect('runtime secret read fails', checkWorkflowText('w.yml', 'env:\n  DATABASE_URL: ${{ secrets.DATABASE_URL }}\n'), true);
+expect('ssm put-parameter fails', checkWorkflowText('w.yml', 'run: aws ssm put-parameter --name /oxy/move/X --overwrite\n'), true);
+expect('ssm write in a comment passes', checkWorkflowText('w.yml', '# set with `aws ssm put-parameter --overwrite`\nrun: true\n'), false);
 expect('toJSON(secrets) fails', checkWorkflowText('w.yml', 'env:\n  ALL: ${{ toJSON(secrets) }}\n'), true);
 expect('spaced tojson fails', checkWorkflowText('w.yml', 'x: ${{ tojson( secrets ) }}'), true);
 expect('bare secrets fails', checkWorkflowText('w.yml', 'x: ${{ secrets }}'), true);
