@@ -60,8 +60,9 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
         with:
           # Repository-exclusive: trusts only OxyHQ/Move main, may push only
-          # oxy/move, write only /oxy/move/DATABASE_URL, roll only the `move`
-          # service and pass only Move's roles. Never a role shared by generated
+          # oxy/move, roll only the `move` service and pass only Move's roles.
+          # (Its ssm:PutParameter grant on /oxy/move/DATABASE_URL is unused since
+          # the deploy stopped writing SSM.) Never a role shared by generated
           # repositories.
           role-to-assume: arn:aws:iam::237343248947:role/oxy-move-github-deploy
           aws-region: ${{ env.AWS_REGION }}
@@ -86,34 +87,13 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Sync GitHub secrets to SSM
-        # Each secret is named EXPLICITLY. Reading the whole secrets context in
-        # one expression is forbidden fleet-wide (scripts/check-workflow-secrets.mjs
-        # fails CI on it). This list IS the allowlist; adding a runtime secret
-        # means adding it here, to TASK_SECRET_OVERRIDES_JSON below, and to the
-        # deploy role's ssm:PutParameter resources in oxy-infra.
-        #
-        # REDIS_URL is NOT here: the task reads the shared /oxy/_shared/REDIS_URL.
-        # There is no OXY_SERVICE_API_* pair either: Move attests its task role.
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          set -euo pipefail
-          for key in DATABASE_URL; do
-            value="${!key-}"
-            # A placeholder is worse than an absent secret: it would overwrite a
-            # real SSM value and crash-loop the service.
-            if [[ -z "$value" || "$value" == "-" ]]; then
-              echo "::warning::Skipping empty or placeholder secret $key; SSM unchanged."
-              continue
-            fi
-            printf '%s' "$value" | aws ssm put-parameter \
-              --name "/oxy/$APP/$key" \
-              --type SecureString \
-              --value file:///dev/stdin \
-              --overwrite >/dev/null
-            echo "Synced /oxy/$APP/$key"
-          done
+      # Runtime secrets live ONLY in SSM /oxy/move/* (SecureString) and the
+      # shared /oxy/_shared/*; the task definition reads them at task start and
+      # this deploy writes none. Set or rotate one with
+      # `aws ssm put-parameter --overwrite` (oxy-infra runbook 46). Until
+      # 2026-10-10 a step here copied the DATABASE_URL repo secret into SSM.
+      # scripts/check-workflow-secrets.mjs fails CI if a workflow writes SSM or
+      # reads a repo secret beyond the CI-only allowlist.
 
       - name: Decide whether the ECS service exists yet
         id: service
