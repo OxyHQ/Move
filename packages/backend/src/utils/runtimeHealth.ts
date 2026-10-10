@@ -17,3 +17,21 @@ export function markRuntimeShuttingDown(): void {
 export function getRuntimePhase(): RuntimePhase {
   return phase;
 }
+
+/**
+ * The last verdict `/ready` returned, for consumers that need readiness
+ * synchronously (the platform-activity heartbeat). `/ready` itself reads
+ * Postgres and the migration ledger on every probe, which a sync callback
+ * cannot, so the ALB's own probes keep this current; until the first probe
+ * the answer is "not ready", never a guess.
+ */
+let lastReadinessVerdict = false;
+
+export function recordReadinessVerdict(ready: boolean): void {
+  lastReadinessVerdict = ready;
+}
+
+/** Ready for traffic: not draining AND the last `/ready` probe passed. */
+export function isRuntimeReady(): boolean {
+  return phase === 'ready' && lastReadinessVerdict;
+}
