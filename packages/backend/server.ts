@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import http from 'node:http';
 import express from 'express';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
