@@ -11,3 +11,7 @@
 # (the matching dist/ is excluded above), which fails the backend build with
 # TS6305. Measured building the image from a developer checkout.
 **/*.tsbuildinfo
+# Local env files hold real credentials and the build reads none of them;
+# `COPY packages/backend/` would otherwise put a developer's .env in a layer.
+**/.env
+**/.env.*

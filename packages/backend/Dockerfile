@@ -2,8 +2,12 @@
 # AWS Graviton). Only the backend + shared-types workspaces are installed; the
 # heavy Expo frontend tree is excluded via .dockerignore.
 
+# Base images are pinned by digest: the digest is what the build pulls, and the
+# tag is only for readability. A bump needs the new tag's multi-arch index
+# digest and a re-review (re-pin in .github/scripts/reviewed-images.json).
+
 # Stage 1: build (tsc → dist)
-FROM oven/bun:1.4.3-alpine AS builder
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS builder
 WORKDIR /app
 
 # Root files first. bunfig.toml pins the hoisted linker; the root tsconfig is
@@ -27,7 +31,7 @@ RUN cd packages/shared-types && bun run build
 RUN cd packages/backend && bun run build
 
 # Stage 2: runtime
-FROM oven/bun:1.4.3-alpine AS runtime
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS runtime
 WORKDIR /app
 
 RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup

@@ -3,13 +3,11 @@
   "recipes": [
     {
       "name": "move",
-      "services": ["move"],
       "ecrRepository": "oxy/move",
       "dockerfile": "packages/backend/Dockerfile",
-      "dockerfileSha256": "0dd64c236688e07404fd3a2a4e5d76a7a7ca37ffd1cbdf55a120c12c62c40004",
+      "context": ".",
       "target": null,
-      "tagSuffix": "",
-      "cacheScope": "move-backend"
+      "buildInputsSha256": "934d2f4ae2fc821c75457b5684759cbd46c7f7a5b49d3709e9b0c44dc4250ab0"
     }
   ]
 }
