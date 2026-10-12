@@ -33,7 +33,6 @@ env:
   APP: move
   CONTAINER_NAME: move
   CLUSTER: oxy-cluster
-  DOCKERFILE: packages/backend/Dockerfile
   DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
@@ -73,15 +72,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      # Production builds only what the owner reviewed. The Dockerfile, its
+      # context, target and both .dockerignore files are hashed and compared
+      # with the ONE pin in .github/scripts/reviewed-images.json; a mismatch
+      # stops here, before anything is built or pushed. The Dockerfile path,
+      # context and the label values below are this step's outputs, so the
+      # build cannot use a different file than the one checked, and no hash is
+      # spelled out in this workflow to drift from the pin. CI runs the same
+      # check on every pull request (`reviewed-image.py check`, Gates, typecheck, lint and build), so a
+      # change that would stop here fails before it can merge.
+      - name: Refuse unreviewed image build inputs
+        id: reviewed
+        run: python3 -B .github/scripts/reviewed-image.py guard --recipe move
+
       - name: Build and push immutable backend image
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: .
-          file: ${{ env.DOCKERFILE }}
+          context: ${{ steps.reviewed.outputs.context }}
+          file: ${{ steps.reviewed.outputs.dockerfile }}
           platforms: linux/arm64
           push: true
           tags: ${{ env.ECR_REGISTRY }}/oxy/${{ env.APP }}:${{ env.DEPLOY_SHA }}
+          labels: |-
+            org.opencontainers.image.revision=${{ env.DEPLOY_SHA }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            io.oxy.source.tree=${{ steps.reviewed.outputs.source_tree }}
+            io.oxy.build-inputs.sha256=${{ steps.reviewed.outputs.build_inputs_sha256 }}
           cache-from: type=gha,scope=move-backend
           cache-to: type=gha,mode=max,scope=move-backend
           provenance: true
