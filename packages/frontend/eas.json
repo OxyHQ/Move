@@ -20,7 +20,7 @@
       }
     },
     "production": {
-      "bun": "1.4.2",
+      "bun": "1.4.3",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENV": "production",
