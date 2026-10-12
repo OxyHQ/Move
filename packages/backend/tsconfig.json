@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "dist",
-    "baseUrl": ".",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "paths": {
       "@move/shared-types": ["../shared-types/src"],
       "@move/shared-types/*": ["../shared-types/src/*"]
