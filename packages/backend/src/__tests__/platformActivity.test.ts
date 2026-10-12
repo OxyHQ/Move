@@ -26,7 +26,7 @@ mock.module('@oxy.so/core/server', () => ({
 // Imported after the mock is registered, so the module binds to the mocks.
 let startPlatformActivity: typeof import('../runtime/platformActivity').startPlatformActivity;
 beforeAll(async () => {
-  ({ startPlatformActivity } = await import('../runtime/platformActivity'));
+  ({ startPlatformActivity } = await import('../runtime/platformActivity.js'));
 });
 
 beforeEach(() => {
