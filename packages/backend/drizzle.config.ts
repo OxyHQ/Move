@@ -5,6 +5,8 @@ import { defineConfig } from 'drizzle-kit';
  * drizzle-kit, for `bun run db:generate` only (migrations are applied by
  * `src/db/migrate.ts`). `casing` is the same `DATABASE_CASING` the runtime uses.
  * After each generate, add `-- oxy:deploy-phase=pre|post` to the new `.sql`.
+ * The script runs drizzle-kit as `bun --bun --env-file=.env`: Bun does not
+ * autoload `.env` for a package binary, and DATABASE_URL may live only there.
  */
 
 const url = process.env.DATABASE_URL;
