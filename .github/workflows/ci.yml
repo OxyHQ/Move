@@ -28,7 +28,7 @@ env:
   # Keep in lockstep with packages/backend/Dockerfile (`oven/bun:<ver>`): a
   # different bun between CI and the image is how `lockfile had changes, but
   # lockfile is frozen` appears only at image build time.
-  BUN_VERSION: '1.4.2'
+  BUN_VERSION: '1.4.3'
 
 jobs:
   # PR-only. Shared inputs (lockfile, root manifests, tsconfig, shared-types,

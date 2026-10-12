@@ -3,7 +3,7 @@
 # heavy Expo frontend tree is excluded via .dockerignore.
 
 # Stage 1: build (tsc → dist)
-FROM oven/bun:1.4.2-alpine AS builder
+FROM oven/bun:1.4.3-alpine AS builder
 WORKDIR /app
 
 # Root files first. bunfig.toml pins the hoisted linker; the root tsconfig is
@@ -27,7 +27,7 @@ RUN cd packages/shared-types && bun run build
 RUN cd packages/backend && bun run build
 
 # Stage 2: runtime
-FROM oven/bun:1.4.2-alpine AS runtime
+FROM oven/bun:1.4.3-alpine AS runtime
 WORKDIR /app
 
 RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
