@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -37,6 +38,13 @@ def fake(table):
 
 class Fixture(unittest.TestCase):
     def setUp(self):
+        # reviewed-image.py refuses a configuration for another repository when
+        # GITHUB_REPOSITORY is set, as it always is in Actions. The fixture is
+        # its own repository, so the variable is cleared for this process and
+        # every child it starts.
+        saved = os.environ.pop('GITHUB_REPOSITORY', None)
+        if saved is not None:
+            self.addCleanup(os.environ.__setitem__, 'GITHUB_REPOSITORY', saved)
         self.root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.root)
         (self.root / '.github/scripts').mkdir(parents=True)
