@@ -4,8 +4,8 @@ name: CI
 # is the ONE required check, failing unless every job actually passed — a job
 # that was skipped by a future `if:` edit reads as a failure, not a pass.
 #
-# The one sanctioned skip: on a PULL REQUEST, `tests` and `web` run only when
-# the `changes` job says the diff reaches them. Push to main and
+# The one sanctioned skip: on a PULL REQUEST, `tests`, `web` and `image` run
+# only when the `changes` job says the diff reaches them. Push to main and
 # workflow_dispatch always run everything, and `ci-complete` accepts a skip ONLY
 # when `changes` itself succeeded and said "not affected" — any other skip, and
 # a failed `changes`, is still a failure.
@@ -45,6 +45,7 @@ jobs:
     outputs:
       tests: ${{ steps.filter.outputs.tests }}
       web: ${{ steps.filter.outputs.web }}
+      image: ${{ steps.filter.outputs.image }}
     steps:
       - id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -64,6 +65,11 @@ jobs:
             web:
               - *shared
               - 'packages/frontend/**'
+            image:
+              - *shared
+              - '.dockerignore'
+              - 'packages/backend/**'
+              - 'packages/frontend/package.json'
 
   quality:
     name: Gates, typecheck, lint and build
@@ -95,6 +101,8 @@ jobs:
       # the gate can fail, not that it stopped looking.
       - name: Prove the reviewed-image gate can fail
         run: python3 -B -m unittest discover -s .github/scripts -p test_reviewed_image.py
+      - name: Prove the base-image digest bump can fail
+        run: python3 -B -m unittest discover -s .github/scripts -p test_bump_base_digests.py
       - name: Verify the production image's build inputs are reviewed
         run: python3 -B .github/scripts/reviewed-image.py check
 
@@ -179,9 +187,185 @@ jobs:
           grep -qx '  X-Content-Type-Options: nosniff' "$dist/_headers"
           grep -qx '  Referrer-Policy: strict-origin-when-cross-origin' "$dist/_headers"
 
+  # Builds the production image exactly as the deploy does (the guard hands out
+  # the Dockerfile and context; linux/arm64 on an arm runner; reads the deploy's
+  # layer cache but never writes it; never pushes), then proves it: what the
+  # runtime image contains and who can write it, the migrator and the server
+  # against a real Postgres and Redis, readiness, the Dockerfile HEALTHCHECK,
+  # and the post-deploy smoke script with its negative control.
+  image:
+    name: Production image builds and boots
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.image == 'true') }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: move
+          POSTGRES_PASSWORD: move
+          POSTGRES_DB: move_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U move -d move_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      IMAGE: move-image-smoke:ci
+      DATABASE_URL: postgres://move:move@127.0.0.1:5432/move_ci
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Refuse unreviewed image build inputs
+        id: reviewed
+        run: python3 -B .github/scripts/reviewed-image.py guard --recipe move
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build the production image (load only, never pushed)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ steps.reviewed.outputs.context }}
+          file: ${{ steps.reviewed.outputs.dockerfile }}
+          platforms: linux/arm64
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}
+          labels: |-
+            org.opencontainers.image.revision=${{ github.sha }}
+            io.oxy.source.tree=${{ steps.reviewed.outputs.source_tree }}
+            io.oxy.build-inputs.sha256=${{ steps.reviewed.outputs.build_inputs_sha256 }}
+          cache-from: type=gha,scope=move-backend
+          provenance: false
+          sbom: false
+
+      - name: The image carries the reviewed build-inputs label
+        env:
+          EXPECTED: ${{ steps.reviewed.outputs.build_inputs_sha256 }}
+        run: |
+          set -euo pipefail
+          actual="$(docker image inspect "$IMAGE" --format '{{ index .Config.Labels "io.oxy.build-inputs.sha256" }}')"
+          echo "label: $actual"
+          [ -n "$EXPECTED" ] && [ "$actual" = "$EXPECTED" ]
+
+      # Runs INSIDE the image as its own user. The walk must find the packages
+      # the server needs (the positive control) before an absence means anything.
+      - name: Runtime image holds only the backend's production closure, root-owned
+        run: |
+          set -euo pipefail
+          cat >"$RUNNER_TEMP/assert-image.mjs" <<'JS'
+          import { accessSync, constants, existsSync, lstatSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const failures = [];
+          if (process.getuid() !== 1001) failures.push(`runs as uid ${process.getuid()}, expected 1001 (appuser)`);
+          let files = 0;
+          let bytes = 0;
+          const notRoot = [];
+          const writable = [];
+          const visit = (path) => {
+            const stat = lstatSync(path);
+            if (stat.uid !== 0 || stat.gid !== 0) notRoot.push(`${path} (${stat.uid}:${stat.gid})`);
+            if (stat.isSymbolicLink()) return;
+            try { accessSync(path, constants.W_OK); writable.push(path); } catch {}
+            if (stat.isDirectory()) for (const name of readdirSync(path)) visit(join(path, name));
+            else { files += 1; bytes += stat.size; }
+          };
+          visit('/app');
+          if (notRoot.length) failures.push(`not owned by root:root: ${notRoot.slice(0, 10).join(', ')}`);
+          if (writable.length) failures.push(`writable by the app user: ${writable.slice(0, 10).join(', ')}`);
+          try { writeFileSync('/app/probe', 'x'); failures.push('the app user created /app/probe'); } catch {}
+          try { writeFileSync('/tmp/probe', 'x'); rmSync('/tmp/probe'); } catch (error) { failures.push(`/tmp is not writable: ${error}`); }
+
+          const packages = new Set();
+          const scan = (modules) => {
+            if (!existsSync(modules)) return;
+            for (const entry of readdirSync(modules)) {
+              if (entry.startsWith('.')) continue;
+              const dirs = entry.startsWith('@') ? readdirSync(join(modules, entry)).map((n) => join(entry, n)) : [entry];
+              for (const dir of dirs) {
+                const root = join(modules, dir);
+                if (lstatSync(root).isSymbolicLink()) { packages.add(dir); continue; }
+                const manifest = join(root, 'package.json');
+                if (existsSync(manifest)) packages.add(JSON.parse(readFileSync(manifest, 'utf8')).name ?? dir);
+                scan(join(root, 'node_modules'));
+              }
+            }
+          };
+          scan('/app/node_modules');
+          const required = ['express', 'socket.io', 'bullmq', 'ioredis', 'postgres', 'drizzle-orm', 'zod', '@oxy.so/core', '@oxy.so/db', '@move/backend', '@move/shared-types'];
+          for (const name of required) if (!packages.has(name)) failures.push(`missing runtime package ${name} (is the walk blind?)`);
+          const forbidden = (name) =>
+            ['expo', 'react', 'react-dom', 'react-native', 'typescript', 'drizzle-kit', 'pino-pretty', '@biomejs/biome', '@move/frontend', '@types/bun', '@types/express'].includes(name) ||
+            /^(expo-|@expo\/|react-native-|@react-native\/|@react-native-|@react-navigation\/|@oxy\.so\/(services|bloom|app-preset))/.test(name);
+          const leaked = [...packages].filter(forbidden).sort();
+          if (leaked.length) failures.push(`frontend or dev packages in the runtime image: ${leaked.join(', ')}`);
+          if (existsSync('/app/packages/frontend')) failures.push('/app/packages/frontend exists');
+
+          console.log(`runtime /app: ${packages.size} packages, ${files} files, ${(bytes / 1048576).toFixed(1)} MiB`);
+          if (failures.length) { for (const f of failures) console.error(`::error::${f}`); process.exit(1); }
+          console.log('uid 1001, every /app path root-owned and read-only to it, /tmp writable, no frontend or dev packages');
+          JS
+          docker run --rm -v "$RUNNER_TEMP/assert-image.mjs:/assert-image.mjs:ro" --entrypoint bun "$IMAGE" /assert-image.mjs
+          docker run --rm --entrypoint sh "$IMAGE" -c 'id; du -sh /app/node_modules'
+
+      - name: The production migrator applies every migration
+        run: |
+          docker run --rm --network host -e DATABASE_URL "$IMAGE" \
+            bun packages/backend/dist/src/db/migrate.js --target-database=move_ci --phase=all
+
+      - name: The server boots and reports ready
+        run: |
+          set -euo pipefail
+          docker run -d --name move --network host -e DATABASE_URL -e REDIS_URL -e PORT=3000 "$IMAGE"
+          ready='.status == "ready" and .dependencies.postgres == "ready" and .dependencies.migrations == "ready" and .dependencies.redis == "ready"'
+          for _ in $(seq 1 60); do
+            body="$(curl -sS --max-time 5 http://127.0.0.1:3000/ready 2>/dev/null || true)"
+            if jq -e "$ready" >/dev/null 2>&1 <<<"$body"; then echo "$body"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::/ready never reported ready with Postgres, migrations and Redis: $body"
+          exit 1
+
+      - name: The post-deploy smoke passes against the container
+        env:
+          API_ORIGIN: http://127.0.0.1:3000
+        run: bash .github/scripts/smoke-move.sh
+
+      - name: The Dockerfile HEALTHCHECK turns healthy
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 30); do
+            status="$(docker inspect move --format '{{ .State.Health.Status }}')"
+            [ "$status" = healthy ] && { echo "HEALTHCHECK: $status"; exit 0; }
+            sleep 5
+          done
+          echo "::error::HEALTHCHECK never turned healthy (last: $status)"
+          docker inspect move --format '{{ json .State.Health }}'
+          exit 1
+
+      - name: Server logs
+        if: always()
+        run: docker logs move 2>&1 | tail -n 200 || true
+
   ci-complete:
     name: CI complete
-    needs: [changes, quality, lockfile, tests, web]
+    needs: [changes, quality, lockfile, tests, web, image]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -200,12 +384,12 @@ jobs:
           elif [ "$changes" != skipped ]; then
             failures+=("changes ran outside a pull request: $changes")
           fi
-          for job in quality lockfile tests web; do
+          for job in quality lockfile tests web image; do
             result="$(result_of "$job")"
             affected=true
             if [ "$IS_PR" = true ] && [ "$changes" = success ]; then
               case "$job" in
-                tests|web) affected="$(jq -r --arg job "$job" '.changes.outputs[$job] // "true"' <<<"$RESULTS")" ;;
+                tests|web|image) affected="$(jq -r --arg job "$job" '.changes.outputs[$job] // "true"' <<<"$RESULTS")" ;;
               esac
             fi
             if [ "$result" = success ]; then continue; fi
