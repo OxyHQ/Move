@@ -292,7 +292,9 @@ const pinoLogger = pino({
       }),
 });
 
-type LoggerFunction = (message: string, ...args: unknown[]) => void;
+interface LoggerFunction {
+  (message: string, ...args: unknown[]): void;
+}
 
 interface Logger {
   info: LoggerFunction;
