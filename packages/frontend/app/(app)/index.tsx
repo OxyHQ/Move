@@ -1,13 +1,16 @@
+import { useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { AliaChatSheet, type AliaChatSheetRef } from '@alia.onl/sdk';
+import { VoiceSession } from '@alia.onl/sdk/voice';
 import { useOxy } from '@oxy.so/services';
 import { ButtonGroup, ButtonGroupItem } from '@oxy.so/bloom/button-group';
 import { Card } from '@oxy.so/bloom/card';
 import { Item } from '@oxy.so/bloom/item';
 import { Loading } from '@oxy.so/bloom/loading';
-import { RiHistoryLine, RiLogoutBoxRLine } from '@oxy.so/bloom/icons';
+import { RiHistoryLine, RiLogoutBoxRLine, RiSparklingLine } from '@oxy.so/bloom/icons';
 import { H1, Lead, Text } from '@oxy.so/bloom/typography';
 import { isMigrationPlatform } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
@@ -25,11 +28,34 @@ export default function HomeScreen() {
   const jobs = useQuery({ queryKey: queryKeys.jobs, queryFn: () => api.list() });
   const activeJobs = (jobs.data ?? []).filter(isActive);
 
+  const aliaChatRef = useRef<AliaChatSheetRef>(null);
+  const aliaWelcomeSuggestions = useMemo(
+    () => [
+      { id: 'start', text: t('home.aliaSuggestion.start') },
+      { id: 'safe', text: t('home.aliaSuggestion.safe') },
+      { id: 'undo', text: t('home.aliaSuggestion.undo') },
+    ],
+    [t],
+  );
+  // The screen already knows which moves are running, so Alia is told too.
+  const aliaClientContext = useMemo(() => {
+    const context = t('home.aliaClientContext');
+    if (activeJobs.length === 0) return context;
+    const platforms = activeJobs.map((job) => t(`platformNames.${job.platform}`)).join(', ');
+    return `${context} ${t('home.aliaClientContextActive', { platforms })}`;
+  }, [activeJobs, t]);
+
   return (
     <PageScreen
       title={t('app.name')}
       actions={
         <ButtonGroup accessibilityLabel={t('home.actions')}>
+          <ButtonGroupItem
+            iconOnly
+            leadingIcon={RiSparklingLine}
+            accessibilityLabel={t('home.askAlia')}
+            onPress={() => aliaChatRef.current?.present()}
+          />
           <ButtonGroupItem
             iconOnly
             leadingIcon={RiHistoryLine}
@@ -90,6 +116,15 @@ export default function HomeScreen() {
           }
         />
       ))}
+
+      {/* This screen is only reachable signed in (the root Stack swaps the
+          `(auth)` group otherwise), so the sheet is always allowed to mount. */}
+      <AliaChatSheet
+        ref={aliaChatRef}
+        voiceSession={VoiceSession}
+        clientContext={aliaClientContext}
+        welcomeSuggestions={aliaWelcomeSuggestions}
+      />
     </PageScreen>
   );
 }

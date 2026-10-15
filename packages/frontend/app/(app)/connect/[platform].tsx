@@ -183,8 +183,10 @@ function ConnectPlatform({ platform }: { platform: MigrationPlatform }) {
       <Lead>{t('connect.privacy', { name })}</Lead>
 
       <AlertDialog
-        visible={unlinking !== null}
-        onClose={() => setUnlinking(null)}
+        open={unlinking !== null}
+        onOpenChange={(next) => {
+          if (!next) setUnlinking(null);
+        }}
         title={t('connect.unlinkTitle', { handle: unlinking?.handle ?? '' })}
         description={t('connect.unlinkBody')}
         confirmLabel={t('connect.unlink')}
