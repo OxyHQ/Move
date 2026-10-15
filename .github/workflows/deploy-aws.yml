@@ -13,18 +13,13 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  # Main only, and only once CI has succeeded on a push for that commit (`gate`
+  # checks that once and refuses otherwise).
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
-
-concurrency:
-  group: deploy-move-backend
-  # Never cancel a rollout mid-flight: an `update-service` whose watcher was
-  # cancelled is an unmonitored deployment. Also the migrator takes no lock of its
-  # own; this group is the interlock.
-  cancel-in-progress: false
 
 env:
   AWS_REGION: us-west-2
@@ -36,23 +31,92 @@ env:
   DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
-  deploy:
+  # Decides, OUTSIDE the rollout lock, whether this run releases anything. CI
+  # runs on main are no longer serialised, so their `workflow_run` events arrive
+  # in finishing order, and GitHub cancels a PENDING run when another queues
+  # behind it in the same group: a late run for an older commit queued there
+  # could displace a pending release of a newer one and then refuse itself,
+  # leaving neither deployed. Only a run this job admits enters the lock.
+  #
+  # Admitted: main's head, or an older commit when no newer main commit has a
+  # CI run of its own that is queued, running or green (require-current-main.sh).
+  # A newer commit with no CI run (a GITHUB_TOKEN merge, `[skip ci]`) or a red
+  # one would otherwise strand the newest CI-tested commit.
+  gate:
     if: >-
       vars.OXY_1519_ROLLOUT_HOLD != 'true' && (
-      github.event_name == 'workflow_dispatch' || (
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (
+      github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.head_branch == 'main'))
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      release: ${{ steps.admit.outputs.release }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.DEPLOY_SHA }}
           fetch-depth: 2
 
+      # One-shot, not a poll: a dispatch redeploys a commit CI already judged.
+      # `workflow_run` needs no such check; the guards above read CI's
+      # conclusion for this exact SHA.
+      - name: Require a successful CI run on push for this commit (dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          passed="$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs" \
+            -f head_sha="$DEPLOY_SHA" -f event=push -f branch=main -f status=success -F per_page=1 \
+            --jq '.total_count')"
+          if [[ ! "$passed" =~ ^[0-9]+$ ]] || ((passed < 1)); then
+            echo "::error::CI has not succeeded on push to main for $DEPLOY_SHA; refusing to deploy it."
+            exit 1
+          fi
+          echo "CI succeeded on push for $DEPLOY_SHA."
+
+      - name: Admit only main's newest CI-tested commit
+        id: admit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/require-current-main.sh --gate
+
+  deploy:
+    needs: gate
+    if: needs.gate.outputs.release == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    permissions:
+      id-token: write
+      contents: read
+      # require-current-main.sh reads CI runs when main has moved on.
+      actions: read
+    # On the JOB, so only a run `gate` admitted ever enters it.
+    concurrency:
+      group: deploy-move-backend
+      # Never cancel a rollout mid-flight: an `update-service` whose watcher was
+      # cancelled is an unmonitored deployment. Also the migrator takes no lock of its
+      # own; this group is the interlock.
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          fetch-depth: 2
+
+      # Again inside the lock, and once more inside deploy-ecs-image.sh right
+      # before `update-service`: when a newer commit's CI has started since
+      # `gate` ran, that commit's release carries this one and this run stops.
       - name: Verify current main before building
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: bash .github/scripts/require-current-main.sh
 
       - name: Configure AWS credentials (OIDC, no stored keys)
@@ -127,11 +191,15 @@ jobs:
 
       - name: Re-verify current main before ECS rollout
         if: steps.service.outputs.status == 'ACTIVE'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: bash .github/scripts/require-current-main.sh
 
       - name: Register task definition, migrate (pre), roll out, migrate (post), smoke
         if: steps.service.outputs.status == 'ACTIVE'
         env:
+          # For the head re-check deploy-ecs-image.sh runs before update-service.
+          GH_TOKEN: ${{ github.token }}
           IMAGE_URI: ${{ env.ECR_REGISTRY }}/oxy/${{ env.APP }}@${{ steps.build.outputs.digest }}
           RUN_MIGRATIONS: 'true'
           # Destructive migrations only once the new image is live.
