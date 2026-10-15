@@ -20,8 +20,15 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request supersedes the run still testing the old head,
+# so that run is cancelled. Nothing else is ever cancelled or queued: a push to
+# main (or a dispatch) gets a group of its own through the run id. Until 2026-10
+# every main run shared `ci-CI-refs/heads/main`, and even with cancel-in-progress
+# off GitHub keeps one PENDING run per group, so a third merge cancelled the
+# second one's CI before it ran. The deploys no longer rely on main's CI
+# finishing in order: their `gate` job admits only the newest CI-tested commit.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.ref, github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -105,6 +112,11 @@ jobs:
         run: python3 -B -m unittest discover -s .github/scripts -p test_bump_base_digests.py
       - name: Verify the production image's build inputs are reviewed
         run: python3 -B .github/scripts/reviewed-image.py check
+      # Both deploys admit a release through require-current-main.sh. Its
+      # refusals keep an older rollout off a newer one and its admissions keep a
+      # CI-green commit from being stranded, so each is driven both ways.
+      - name: Prove the deploy head guard can fail
+        run: bash .github/scripts/test-require-current-main.sh
 
   lockfile:
     name: Lockfile is in sync with every manifest
