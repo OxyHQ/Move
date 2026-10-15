@@ -4,13 +4,14 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { AliaChatSheet, type AliaChatSheetRef } from '@alia.onl/sdk';
+import { AliaAvatarIcon } from '@alia.onl/sdk/avatar';
 import { VoiceSession } from '@alia.onl/sdk/voice';
 import { useOxy } from '@oxy.so/services';
 import { ButtonGroup, ButtonGroupItem } from '@oxy.so/bloom/button-group';
 import { Card } from '@oxy.so/bloom/card';
 import { Item } from '@oxy.so/bloom/item';
 import { Loading } from '@oxy.so/bloom/loading';
-import { RiHistoryLine, RiLogoutBoxRLine, RiSparklingLine } from '@oxy.so/bloom/icons';
+import { RiHistoryLine, RiLogoutBoxRLine } from '@oxy.so/bloom/icons';
 import { H1, Lead, Text } from '@oxy.so/bloom/typography';
 import { isMigrationPlatform } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
@@ -52,7 +53,7 @@ export default function HomeScreen() {
         <ButtonGroup accessibilityLabel={t('home.actions')}>
           <ButtonGroupItem
             iconOnly
-            leadingIcon={RiSparklingLine}
+            leadingIcon={AliaAvatarIcon}
             accessibilityLabel={t('home.askAlia')}
             onPress={() => aliaChatRef.current?.present()}
           />
