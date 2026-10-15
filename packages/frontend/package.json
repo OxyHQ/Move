@@ -15,7 +15,7 @@
     "test": "bun test __tests__"
   },
   "dependencies": {
-    "@alia.onl/sdk": "^15.4.0",
+    "@alia.onl/sdk": "^15.6.0",
     "@expo/vector-icons": "^15.1.1",
     "@move/shared-types": "workspace:*",
     "@oxy.so/app-preset": "^3.0.0",
