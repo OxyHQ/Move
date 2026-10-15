@@ -21,7 +21,15 @@
     "signOut": "Sign out",
     "inProgress": "In progress",
     "openProgress": "Open the {{platform}} move",
-    "loadingPlatforms": "Loading platforms"
+    "loadingPlatforms": "Loading platforms",
+    "askAlia": "Ask Alia",
+    "aliaClientContext": "The person is using Oxy Move, an app that brings their digital life to Oxy: they connect the account they are leaving (Mastodon, Bluesky and more), and Move copies their profile and the people they follow to Oxy and their posts to Mention. They are on the home screen, where they pick a platform to move from and see moves in progress.",
+    "aliaClientContextActive": "Moves in progress: {{platforms}}.",
+    "aliaSuggestion": {
+      "start": "How do I move my account to Oxy?",
+      "safe": "What does Move copy, and is it safe?",
+      "undo": "Can I undo a move after it finishes?"
+    }
   },
   "platformNames": {
     "mastodon": "Mastodon",

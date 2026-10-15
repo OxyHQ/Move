@@ -154,8 +154,8 @@ function HistoryEntry({ job }: { job: MigrationJobView }) {
         </View>
       </View>
       <AlertDialog
-        visible={confirming}
-        onClose={() => setConfirming(false)}
+        open={confirming}
+        onOpenChange={setConfirming}
         title={t('history.undoTitle', { platform: platformName })}
         description={t('history.undoBody')}
         confirmLabel={t('history.undo')}

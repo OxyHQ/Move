@@ -181,8 +181,8 @@ function JobProgress({ job }: { job: MigrationJobView }) {
       </View>
 
       <AlertDialog
-        visible={confirmCancel}
-        onClose={() => setConfirmCancel(false)}
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
         title={t('progress.cancelTitle')}
         description={t('progress.cancelBody')}
         confirmLabel={t('progress.cancel')}

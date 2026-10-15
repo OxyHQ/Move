@@ -12,7 +12,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { OxyProvider, useOxy } from '@oxy.so/services';
-import { BloomThemeProvider } from '@oxy.so/bloom/theme';
+import { BloomProvider } from '@oxy.so/bloom/provider';
+import { PortalOutlet, PortalProvider } from '@oxy.so/bloom/portal';
 import { ImageResolverProvider } from '@oxy.so/bloom/image-resolver';
 import { ConnectionStatusToasts } from '@oxy.so/bloom/connection-status';
 import { OXY_API_URL, OXY_CLIENT_ID } from '@/lib/config';
@@ -48,11 +49,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
-          {/* BloomThemeProvider is the outermost theming authority — it must wrap
+          {/* BloomProvider is the outermost theming authority — it must wrap
               every render branch, including any pre-auth backdrop. OxyProvider is
               the single session authority (web + native); it owns the QueryClient
               and never redirects to an external login. */}
-          <BloomThemeProvider persistKey={THEME_PERSIST_KEY} storage={themeStorage}>
+          <BloomProvider persistKey={THEME_PERSIST_KEY} storage={themeStorage}>
             <ConnectionStatusToasts />
             <OxyProvider
               baseURL={OXY_API_URL}
@@ -62,12 +63,15 @@ export default function RootLayout() {
             >
               <AppImageResolver>
                 <MoveApiProvider>
-                  <AuthRouter />
-                  <StatusBar style="auto" />
+                  <PortalProvider>
+                    <AuthRouter />
+                    <StatusBar style="auto" />
+                    <PortalOutlet />
+                  </PortalProvider>
                 </MoveApiProvider>
               </AppImageResolver>
             </OxyProvider>
-          </BloomThemeProvider>
+          </BloomProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

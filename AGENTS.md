@@ -9,7 +9,7 @@ Format and lint with Biome (`bun run lint`, root `biome.json`); `packages/fronte
 
 - ONE `OxyProvider` from `@oxy.so/services` (web + native) with the registered `clientId` (`EXPO_PUBLIC_OXY_CLIENT_ID`); sign-in is the in-app `OxyAccountDialog`, never a redirect to an IdP.
 - All Expo config comes from `@oxy.so/app-preset`; fix the preset, never copy config back into the app.
-- Theming is NativeWind via `BloomThemeProvider`; never hardcode brand colors.
+- Theming is NativeWind via `BloomProvider`; never hardcode brand colors.
 - Gate private API calls on `useAuth().canUsePrivateApi`; the root `Stack` alone swaps `(auth)`↔`(app)`.
 - Backend auth is `@oxy.so/core/server` only (`createOxyAuthMiddleware`, `createOxyCors`, `createOxyRateLimit`, `OxyServer#middleware.socket()`); no app-local auth, bearer parsing or CORS. Call your own API via `oxyServices.createLinkedClient({ baseURL })`.
 
