@@ -52,6 +52,8 @@ export interface SourceItem {
   article?: SourceArticle;
   /** URLs that carry meaning the text alone would lose (a foreign quote, a boost). */
   links?: string[];
+  /** Media the source dropped before yielding (unsupported kind, over the size cap). */
+  mediaSkipped?: number;
 }
 
 export interface SourceProfile {
@@ -116,12 +118,26 @@ export interface Source<TContentCursor = unknown, TGraphCursor = unknown> {
   ): AsyncIterable<Positioned<GraphAccount, TGraphCursor>>;
   /** Newest and (if cheaply known) oldest item timestamps, for the preview. */
   dateRange?(): Promise<{ newestAt?: string; oldestAt?: string }>;
+  /**
+   * The bytes behind a media `url` this source minted itself (an uploaded
+   * export's `telegram-export:` URL), instead of a public download. Null when
+   * the file can never be copied (missing, over `maxBytes`).
+   */
+  readMedia?(url: string, maxBytes: number): Promise<SourceMediaBytes | null>;
+}
+
+export interface SourceMediaBytes {
+  buffer: Buffer;
+  /** May be empty; the copier then trusts the item's `mimeType`. */
+  contentType: string;
 }
 
 export interface SkippedItem {
   kind: 'skipped';
   sourceId: string;
   reason: 'reply-to-other' | 'boost-disabled' | 'not-public' | 'unsupported' | 'empty';
+  /** Media dropped with it (a voice-only message is skipped `empty` with one). */
+  mediaSkipped?: number;
 }
 
 export function isSkipped(value: SourceItem | SkippedItem): value is SkippedItem {
