@@ -54,7 +54,13 @@ beforeAll(async () => {
     fetch(request) {
       const url = new URL(request.url);
       if (url.pathname === '/.well-known/jwks.json') return Response.json({ keys: [jwk] });
-      if (url.pathname === '/session/validate/session-fixture') {
+      // core >= 4.17 validates the presented bearer against its session
+      // (`validate-header`); the by-id path stays for callers without one.
+      const bearerValidation = url.pathname === '/session/validate-header/session-fixture';
+      if (bearerValidation && !request.headers.get('authorization')?.startsWith('Bearer ')) {
+        return Response.json({ error: 'NO_BEARER' }, { status: 401 });
+      }
+      if (bearerValidation || url.pathname === '/session/validate/session-fixture') {
         validationCalls++;
         return Response.json(
           revoked
