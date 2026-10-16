@@ -329,10 +329,10 @@ class JobRun {
   }
 
   /**
-   * Copy an item's media into Oxy, REUSING any asset a previous attempt already
-   * uploaded. Each upload is recorded on the item's `migration_items` row
-   * (`media_assets`, url → Oxy asset id) BEFORE the batch is sent, so a crash
-   * between upload and delivery never uploads the same file twice.
+   * Have Oxy import an item's media, REUSING any file a previous attempt already
+   * imported. Each import is recorded on the item's `migration_items` row
+   * (`media_assets`, url → Oxy file id) BEFORE the batch is sent, so a crash
+   * between import and delivery never imports the same file twice.
    */
   private async prepare(item: SourceItem, known: Record<string, string>): Promise<PreparedItem> {
     const assets: Record<string, string> = { ...known };
@@ -363,13 +363,13 @@ class JobRun {
           set: { mediaAssets: assets, updatedAt: this.now() },
         });
       // Also the heartbeat: a job copying a long run of media stays visibly
-      // alive to the stalled sweep, and a cancel is observed between uploads.
+      // alive to the stalled sweep, and a cancel is observed between imports.
       await this.save();
     }
     return { ...item, media };
   }
 
-  /** Copy media, deliver, record results and the checkpoint in one transaction. */
+  /** Import media, deliver, record results and the checkpoint in one transaction. */
   private async deliver(
     items: SourceItem[],
     contentCursor: unknown,

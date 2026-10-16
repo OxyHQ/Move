@@ -11,12 +11,13 @@ import {
   type JsonFetcher,
   type JsonResponse,
 } from '../sources/http';
+import { OxyApiError } from '@oxy.so/core';
 import {
   createMediaCopier,
   createMemoryUploadLimiter,
   MediaRateLimitedError,
+  type ImportedMedia,
 } from '../destinations/media';
-import { OxyUploadError } from '../utils/oxyHelpers';
 import { createInstanceFetchSigner } from '../destinations/oxy';
 
 function scripted(responses: Array<Partial<JsonResponse>>): JsonFetcher & { calls: number } {
@@ -95,38 +96,61 @@ describe('per-platform backoff', () => {
   });
 });
 
-describe('media copy behind the shared upload limiter', () => {
-  const download = async () => ({ buffer: Buffer.from('img'), contentType: 'image/png' });
+describe('media import behind the shared upload limiter', () => {
   const media = [{ url: 'https://cdn.example/a.png', mimeType: 'image/png' }];
+  const imported = (fileId: string): ImportedMedia => ({
+    fileId,
+    mime: 'image/png',
+    status: 'active',
+  });
+  /** The error the SDK rejects with, shaped as Oxy's error body makes it. */
+  const oxyError = (status: number, code: string, details?: Record<string, unknown>) =>
+    new OxyApiError(`HTTP ${status}`, { status, code, ...(details ? { details } : {}) });
 
-  test('the window caps uploads; an exhausted window pauses instead of failing', async () => {
+  test('the window caps imports; an exhausted window pauses instead of failing', async () => {
     let now = 60_000 * 10;
     const limiter = createMemoryUploadLimiter(2, () => now);
-    let uploads = 0;
+    let imports = 0;
     const copier = createMediaCopier({
       limiter,
-      download,
-      upload: async () => ({ fileId: `f${++uploads}` }),
+      importMedia: async () => imported(`f${++imports}`),
       sleep: noSleep,
     });
     await copier.copy('u1', media);
     await copier.copy('u1', media);
     const error = await copier.copy('u1', media).catch((caught) => caught);
     expect(error).toBeInstanceOf(MediaRateLimitedError);
-    expect(uploads).toBe(2);
+    expect(imports).toBe(2);
     now += 60_000;
     await copier.copy('u1', media);
-    expect(uploads).toBe(3);
+    expect(imports).toBe(3);
   });
 
-  test('Oxy 429 blocks the whole limiter until Retry-After and pauses', async () => {
+  test('Oxy is handed the source URL for the user, never bytes', async () => {
+    const calls: Array<[string, string]> = [];
+    const copier = createMediaCopier({
+      limiter: createMemoryUploadLimiter(30),
+      importMedia: async (owner, url) => {
+        calls.push([owner, url]);
+        return { fileId: 'f1', mime: 'image/webp', status: 'active' };
+      },
+      sleep: noSleep,
+    });
+    const result = await copier.copy('u1', [{ ...media[0], alt: 'a cat' }]);
+    expect(calls).toEqual([['u1', 'https://cdn.example/a.png']]);
+    // The type Oxy stored wins over the source's guess.
+    expect(result).toEqual([
+      { url: 'https://cdn.example/a.png', mimeType: 'image/webp', alt: 'a cat', assetId: 'f1' },
+    ]);
+  });
+
+  test("Oxy's 429 blocks the whole limiter for the time it names and pauses", async () => {
     const now = 0;
     const limiter = createMemoryUploadLimiter(30, () => now);
     const copier = createMediaCopier({
       limiter,
-      download,
-      upload: async () => {
-        throw new OxyUploadError('slow down', 429, '120');
+      importMedia: async () => {
+        throw oxyError(429, 'RATE_LIMITED', { retryAfterSeconds: 120 });
       },
       sleep: noSleep,
     });
@@ -136,16 +160,11 @@ describe('media copy behind the shared upload limiter', () => {
     expect(await limiter.acquire()).toEqual({ ok: false, retryAfterMs: 120_000 });
   });
 
-  test('what Mention cannot import is dropped before it is downloaded', async () => {
-    let downloads = 0;
-    let uploads = 0;
+  test('what Mention cannot import is dropped before Oxy is asked', async () => {
+    let imports = 0;
     const copier = createMediaCopier({
       limiter: createMemoryUploadLimiter(30),
-      download: async () => {
-        downloads++;
-        return { buffer: Buffer.from('x'), contentType: 'audio/mpeg' };
-      },
-      upload: async () => ({ fileId: `f${++uploads}` }),
+      importMedia: async () => imported(`f${++imports}`),
       sleep: noSleep,
     });
     const result = await copier.copy('u1', [
@@ -153,17 +172,60 @@ describe('media copy behind the shared upload limiter', () => {
       { url: 'https://cdn.example/a.pdf', mimeType: 'application/pdf' },
     ]);
     expect(result).toEqual([]);
-    expect(downloads).toBe(0);
-    expect(uploads).toBe(0);
+    expect(imports).toBe(0);
   });
 
-  test('a file that can never be copied (gone, too large) is dropped', async () => {
+  test.each([
+    ['not https', oxyError(400, 'INVALID_SOURCE_URL')],
+    ['a private address', oxyError(422, 'SOURCE_URL_REFUSED')],
+    ['over 40 MiB', oxyError(413, 'PAYLOAD_TOO_LARGE')],
+    ['not an image or video', oxyError(415, 'UNSUPPORTED_MEDIA_TYPE')],
+    ['gone at the source', oxyError(502, 'SOURCE_FETCH_FAILED', { sourceStatus: 404 })],
+    ['forbidden at the source', oxyError(502, 'SOURCE_FETCH_FAILED', { sourceStatus: 403 })],
+  ])(
+    'a file that can never be imported (%s) is dropped, and the rest go on',
+    async (_, failure) => {
+      let calls = 0;
+      const copier = createMediaCopier({
+        limiter: createMemoryUploadLimiter(30),
+        importMedia: async () => {
+          calls++;
+          if (calls === 1) throw failure;
+          return imported('f2');
+        },
+        sleep: noSleep,
+      });
+      const result = await copier.copy('u1', [
+        media[0],
+        { url: 'https://cdn.example/b.png', mimeType: 'image/png' },
+      ]);
+      expect(result.map((entry) => entry.assetId)).toEqual(['f2']);
+    },
+  );
+
+  test.each([
+    ['the source failing', oxyError(502, 'SOURCE_FETCH_FAILED', { sourceStatus: 503 })],
+    ['the source rate limiting', oxyError(502, 'SOURCE_FETCH_FAILED', { sourceStatus: 429 })],
+    ['the source unreachable', oxyError(502, 'SOURCE_FETCH_FAILED')],
+    ['the source timing out', oxyError(504, 'SOURCE_FETCH_TIMEOUT')],
+    ['an import race', oxyError(409, 'IMPORT_RACED')],
+    ['Oxy failing', oxyError(500, 'INTERNAL_ERROR')],
+    ['a missing scope', oxyError(403, 'FORBIDDEN')],
+  ])('%s is rethrown, so the run retries from its checkpoint', async (_, failure) => {
     const copier = createMediaCopier({
       limiter: createMemoryUploadLimiter(30),
-      download: async () => null,
-      upload: async () => {
-        throw new Error('never called');
+      importMedia: async () => {
+        throw failure;
       },
+      sleep: noSleep,
+    });
+    expect(await copier.copy('u1', media).catch((caught) => caught)).toBe(failure);
+  });
+
+  test('bytes the user keeps in their trash are neither revived nor handed to Mention', async () => {
+    const copier = createMediaCopier({
+      limiter: createMemoryUploadLimiter(30),
+      importMedia: async () => ({ fileId: 'f1', mime: 'image/png', status: 'trash' }),
       sleep: noSleep,
     });
     expect(await copier.copy('u1', media)).toEqual([]);

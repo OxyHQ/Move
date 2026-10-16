@@ -120,8 +120,10 @@ back unchanged. It is never reported as a bad archive, so the job can retry it.
   `implements Source`.
 - Send `sourceAccountId` and `sourceItemId` to Mention (Mention #1426) in
   `destinations/mention.ts` and `mentionContract.ts`.
-- Make the media copier use `source.readMedia` for `telegram-export:` URLs, and
-  add `mediaSkipped` to the job counters.
+- Make the media copier use `source.readMedia` for `telegram-export:` URLs —
+  those have no URL Oxy could import, so their bytes go through
+  `OxyServer.assets.uploadUserMedia` behind the same limiter
+  ([`oxy-files.md`](oxy-files.md)) — and add `mediaSkipped` to the job counters.
 - `runner.ts` `referenceUrl()` understands only http(s) and `at://` ids. A
   `<channelId>/<messageId>` quote that has to fall back to a link needs mapping
   to its `https://t.me/c/…` URL.

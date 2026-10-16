@@ -164,8 +164,9 @@ export const migrationItems = pgTable(
      */
     payload: jsonb(),
     /**
-     * Source media URL → Oxy asset id, written after EACH upload and before the
-     * item is sent, so a crash between upload and delivery never re-uploads.
+     * Source media URL → Oxy file id, written after EACH import and before the
+     * item is sent, so a crash between import and delivery never asks Oxy (or
+     * spends the media budget) again.
      */
     mediaAssets: jsonb().$type<Record<string, string>>(),
     createdAt: createdAt(),

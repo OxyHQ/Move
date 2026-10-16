@@ -1,23 +1,31 @@
 /**
- * Copying a source's media into the user's Oxy files, behind ONE limiter.
+ * Importing a source's media into the user's Oxy files, behind ONE limiter.
  *
- * Oxy allows about 30 `/assets/service/user-media` uploads per minute PER
- * APPLICATION, shared by every Move task and job, so the limiter is a Redis
- * fixed window keyed by minute. Without Redis (or while it is down) it falls
- * back to a per-process window — exact at one task, the production shape today.
+ * Move never downloads a media file: it hands the source URL to Oxy
+ * (`OxyServer.assets.importUserMedia`, `POST /assets/service/user-media/import`,
+ * ADR 0043 D7), which fetches it with its own SSRF-safe fetcher and stores it as
+ * a file OWNED BY the user. Oxy remembers each (user, URL) it imported, so a
+ * second migration of the same account answers the existing file without a
+ * download.
+ *
+ * Move registers no reference to the files (`docs/oxy-files.md`): Mention uses
+ * them in the posts it creates, and the user's profile uses the avatar.
+ *
+ * Oxy allows about 30 media imports and uploads per minute PER APPLICATION,
+ * shared by every Move task and job, so the limiter is a Redis fixed window
+ * keyed by minute. Without Redis (or while it is down) it falls back to a
+ * per-process window — exact at one task, the production shape today.
  *
  * Exhausting the budget never fails a job: a wait of up to 5 s is taken inline,
  * anything longer (and any 429 from Oxy) raises {@link MediaRateLimitedError},
- * which pauses the job. Oxy's 429 also blocks the whole fleet's window until its
- * `Retry-After`.
+ * which pauses the job. Oxy's 429 also blocks the whole fleet's window until
+ * the time it names.
  */
 
-import { config } from '../config';
-import { ResponseTooLargeError, publicGet } from '../utils/safeUpstreamFetch';
 import { getReadyRedis } from '../utils/redis';
 import { logger } from '../utils/logger';
-import { OxyUploadError, uploadServiceUserMedia } from '../utils/oxyHelpers';
-import { parseRetryAfterMs, realSleep, type Sleep } from '../sources/http';
+import { getServiceOxyClient } from '../utils/oxyHelpers';
+import { realSleep, type Sleep } from '../sources/http';
 import type { SourceMedia } from '../sources/types';
 
 export class MediaRateLimitedError extends Error {
@@ -40,8 +48,6 @@ export interface UploadLimiter {
 const WINDOW_MS = 60_000;
 /** Inline waits up to this long; longer pauses the job. */
 const MAX_INLINE_WAIT_MS = 5_000;
-const MEDIA_TIMEOUT_MS = 120_000;
-const MEDIA_HEADERS_TIMEOUT_MS = 15_000;
 const UPLOADABLE = /^(image|video)\//;
 
 /** Per-process window: the fallback, and the test double. */
@@ -113,47 +119,80 @@ export function createUploadLimiter(limit: number): UploadLimiter {
   };
 }
 
-interface DownloadedMedia {
-  buffer: Buffer;
-  contentType: string;
+/** The file Oxy holds for an imported URL. */
+export interface ImportedMedia {
+  fileId: string;
+  mime: string;
+  /** `trash` when the user already holds these bytes in their trash. */
+  status: string;
 }
 
-type MediaDownloader = (url: string, maxBytes: number) => Promise<DownloadedMedia | null>;
+/** Import `sourceUrl` into `ownerUserId`'s files; rejects with the SDK's error. */
+export type MediaImporter = (ownerUserId: string, sourceUrl: string) => Promise<ImportedMedia>;
 
-/** SSRF-safe, byte-capped download; null when the file can never be copied (gone, too large). */
-async function downloadMedia(url: string, maxBytes: number): Promise<DownloadedMedia | null> {
-  try {
-    const { status, headers, body } = await publicGet(url, {
-      accept: '*/*',
-      headers: { 'Accept-Encoding': 'identity' },
-      maxBytes,
-      timeoutMs: MEDIA_TIMEOUT_MS,
-      headersTimeoutMs: MEDIA_HEADERS_TIMEOUT_MS,
-    });
-    if (status === 404 || status === 410) return null;
-    if (!body) throw new Error(`media download answered ${status}`);
-    const contentType =
-      typeof headers['content-type'] === 'string'
-        ? headers['content-type'].split(';')[0].trim().toLowerCase()
-        : '';
-    return { buffer: body, contentType };
-  } catch (error) {
-    if (error instanceof ResponseTooLargeError) return null;
-    throw error;
-  }
+/** Oxy's import, with Move's service credential. Public, like every migrated post's media. */
+export const importWithOxy: MediaImporter = async (ownerUserId, sourceUrl) => {
+  const { file } = await getServiceOxyClient().assets.importUserMedia(ownerUserId, sourceUrl, {
+    visibility: 'public',
+  });
+  return { fileId: file.id, mime: file.mime, status: file.status };
+};
+
+/** What a rejected import says, read off the SDK's error (`OxyApiError` shape). */
+interface ImportFailure {
+  status: number;
+  code?: string;
+  sourceStatus?: number;
+  retryAfterMs?: number;
 }
 
-function fileNameOf(url: string): string {
-  const last = new URL(url).pathname.split('/').pop() || 'media';
-  try {
-    return decodeURIComponent(last);
-  } catch {
-    return last;
-  }
+function importFailure(error: unknown): ImportFailure | null {
+  if (typeof error !== 'object' || error === null) return null;
+  const { status, code, details } = error as {
+    status?: unknown;
+    code?: unknown;
+    details?: Record<string, unknown>;
+  };
+  if (typeof status !== 'number' || status === 0) return null;
+  const sourceStatus = details?.sourceStatus;
+  const retryAfterSeconds = details?.retryAfterSeconds;
+  return {
+    status,
+    ...(typeof code === 'string' ? { code } : {}),
+    ...(typeof sourceStatus === 'number' ? { sourceStatus } : {}),
+    ...(typeof retryAfterSeconds === 'number' && retryAfterSeconds > 0
+      ? { retryAfterMs: retryAfterSeconds * 1000 }
+      : {}),
+  };
+}
+
+/**
+ * True when the file can NEVER be imported, so the entry is dropped and the
+ * post goes without it:
+ * - 400 `INVALID_SOURCE_URL` (not https, credentials in it) and 422
+ *   `SOURCE_URL_REFUSED` (a private address, a redirect to http);
+ * - 413 (over Oxy's 40 MiB) and 415 (not an image or video Oxy stores);
+ * - 502 `SOURCE_FETCH_FAILED` where the source answered a 4xx other than 408
+ *   and 429: the file is gone or forbidden.
+ *
+ * Anything else — the source's 5xx or timeout (502/504), Oxy's own 5xx, a 409
+ * race — is transient and rethrown, so the run retries from its checkpoint.
+ */
+function isPermanent(failure: ImportFailure): boolean {
+  if ([400, 413, 415, 422].includes(failure.status)) return true;
+  const source = failure.sourceStatus;
+  return (
+    failure.status === 502 &&
+    source !== undefined &&
+    source >= 400 &&
+    source < 500 &&
+    source !== 408 &&
+    source !== 429
+  );
 }
 
 export interface MediaCopier {
-  /** Copy each entry; entries that can never be copied are dropped. */
+  /** Import each entry; entries that can never be imported are dropped. */
   copy(
     ownerUserId: string,
     media: SourceMedia[],
@@ -162,12 +201,10 @@ export interface MediaCopier {
 
 export function createMediaCopier(deps: {
   limiter: UploadLimiter;
-  download?: MediaDownloader;
-  upload?: typeof uploadServiceUserMedia;
+  importMedia?: MediaImporter;
   sleep?: Sleep;
 }): MediaCopier {
-  const download = deps.download ?? downloadMedia;
-  const upload = deps.upload ?? uploadServiceUserMedia;
+  const importMedia = deps.importMedia ?? importWithOxy;
   const sleep = deps.sleep ?? realSleep;
 
   const acquire = async (): Promise<void> => {
@@ -186,31 +223,35 @@ export function createMediaCopier(deps: {
       const copied: Array<SourceMedia & { assetId: string }> = [];
       for (const entry of media) {
         if (!UPLOADABLE.test(entry.mimeType)) continue;
-        // The budget first: a pause must not throw away a finished download.
         await acquire();
-        const file = await download(entry.url, config.media.maxBytes);
-        if (!file) continue;
-        const contentType = UPLOADABLE.test(file.contentType) ? file.contentType : entry.mimeType;
+        let file: ImportedMedia;
         try {
-          const result = await upload({
-            ownerUserId,
-            buffer: file.buffer,
-            contentType,
-            fileName: fileNameOf(entry.url),
-          });
-          copied.push({ ...entry, mimeType: contentType, assetId: result.fileId });
+          file = await importMedia(ownerUserId, entry.url);
         } catch (error) {
-          if (error instanceof OxyUploadError && error.status === 429) {
-            const retryAfterMs = parseRetryAfterMs(error.retryAfter) ?? WINDOW_MS;
+          const failure = importFailure(error);
+          if (failure?.status === 429) {
+            const retryAfterMs = failure.retryAfterMs ?? WINDOW_MS;
             await deps.limiter.block(retryAfterMs);
-            throw new MediaRateLimitedError('Oxy is rate limiting media uploads', retryAfterMs);
+            throw new MediaRateLimitedError('Oxy is rate limiting media imports', retryAfterMs);
           }
-          if (error instanceof OxyUploadError && (error.status === 413 || error.status === 415)) {
-            logger.info('[media] Oxy refused a media file permanently', { status: error.status });
+          if (failure && isPermanent(failure)) {
+            logger.info('[media] a media file can never be imported; the post goes without it', {
+              status: failure.status,
+              code: failure.code,
+              sourceStatus: failure.sourceStatus,
+            });
             continue;
           }
           throw error;
         }
+        // The user moved these very bytes to their trash: Move neither brings
+        // them back nor hands Mention a file Oxy does not serve.
+        if (file.status !== 'active') {
+          logger.info('[media] the user holds this file in their trash; the post goes without it');
+          continue;
+        }
+        const mimeType = UPLOADABLE.test(file.mime) ? file.mime : entry.mimeType;
+        copied.push({ ...entry, mimeType, assetId: file.fileId });
       }
       return copied;
     },
