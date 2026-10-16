@@ -21,7 +21,7 @@ it). Mastodon and Bluesky content is read from public endpoints.
 
 Oxy accepts profile, follow and block writes only from the **user's own
 session**, so the Move **client** applies them. The backend builds the *plan*
-(profile fields with media already copied into the user's Oxy files; follows —
+(profile fields with media already imported into the user's Oxy files; follows —
 and, for Bluesky, blocks — resolved to Oxy user ids in batches of 200) and the
 client acknowledges what it applied (`POST /jobs/:id/plan/ack`). BEFORE each
 write the client also acks the fact undo needs — the profile values it is about
@@ -44,7 +44,7 @@ packages/
     src/destinations/
       mention.ts        Mention ingest client; contract in mentionContract.ts (zod)
       oxy.ts            linked-account check, identity resolution, notification
-      media.ts          copy media into Oxy behind ONE fleet-wide upload limiter
+      media.ts          Oxy imports media by URL, behind ONE fleet-wide limiter
     src/pipeline/       runner (phases, checkpoints, deferral, pause), job service
     src/queue/          BullMQ queue `migration` (low concurrency) + the stalled-job sweep
     src/runtime/        composition, graceful shutdown, socket progress
@@ -58,12 +58,13 @@ packages/
    partial unique index). It is enqueued on `migration`.
 2. The worker re-verifies ownership, then runs **profile → graph → content**.
    A finished phase is never re-run; each phase checkpoints its source cursor.
-3. **Content** reads newest first, copies media into the user's Oxy files,
+3. **Content** reads newest first, has Oxy import media into the user's files
+   ([`docs/oxy-files.md`](docs/oxy-files.md)),
    and sends batches of ≤ 50 to Mention. A self-reply or self-quote whose parent
    is not delivered yet is stored `deferred` and re-sent at the end, oldest
    first. Replies to other people and boosts are skipped by default
    (`includeRepliesToOthers`, `includeBoosts`).
-4. A rate limit anywhere (source 429, Oxy's ~30 uploads/min/app media budget,
+4. A rate limit anywhere (source 429, Oxy's ~30 imports/min/app media budget,
    Mention 429) **pauses** the job and re-enqueues it for later — never fails it.
    Transient errors retry with backoff from the last checkpoint. A job that
    lost its worker or its message is re-enqueued by a sweep that BullMQ
@@ -98,11 +99,11 @@ All parsed in `packages/backend/src/config.ts`; see `packages/backend/.env.examp
 | Variable | Production source | |
 |---|---|---|
 | `DATABASE_URL` | SSM `/oxy/move/DATABASE_URL` | Required |
-| `REDIS_URL` | SSM `/oxy/_shared/REDIS_URL` | Queue, media-upload limiter (optional locally) |
+| `REDIS_URL` | SSM `/oxy/_shared/REDIS_URL` | Queue, media-import limiter (optional locally) |
 | `OXY_API_URL` | task env | default `https://api.oxy.so` |
 | `MENTION_API_URL` | task env | default `https://api.mention.earth` |
 | `OXY_SERVICE_API_KEY/SECRET` | — (never in production) | Local only; ECS attests `oxy-move-task` |
-| `MEDIA_UPLOADS_PER_MINUTE` | default 30 | Oxy's per-app upload budget |
+| `MEDIA_UPLOADS_PER_MINUTE` | default 30 | Oxy's per-app media import/upload budget |
 | `EXPO_PUBLIC_OXY_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | GitHub `vars` | Frontend build |
 
 SSM is the only copy of a production secret: set or rotate one with
@@ -155,7 +156,7 @@ in particular never on `federation:write`.
 |---|---|
 | `linked-accounts:read` | `GET /linked-accounts/by-user/:userId` — ownership check before creating and before running a job |
 | `federation:identities:resolve` | `POST /federation/identities/lookup` and `/resolve` — followed accounts → Oxy user ids |
-| `files:user-media:write` | `POST /assets/service/user-media` — media copied into the user's files |
+| `files:user-media:write` | `POST /assets/service/user-media/import` — Oxy imports a media URL into the user's files |
 | `federation:instance-fetch` | `POST /federation/instance-fetch/sign` — Oxy's instance actor signs a Mastodon GET that the server refused unsigned (authorized fetch); see [Reading Mastodon](#reading-mastodon) |
 | `notifications:write` | `POST /notifications` (`type: system`, `title` ≤ 120, `message` ≤ 500, top-level `url` to `https://move.oxy.so/jobs/:id`, `entityType: app` with `entityId` = the job id, so a second migration is not deduped into a 409) |
 
@@ -195,7 +196,7 @@ outbox and `following`. It holds no key and no token.
   imports (`public` | `followers_only`); Mention's own ActivityPub ingest makes
   the same choice. Followers-only posts are not in the public outbox and are
   never read.
-- **Audio attachments are dropped** before download (Mention imports images, GIFs and video).
+- **Audio attachments are dropped** before import (Mention imports images, GIFs and video).
 - **Profile banners are not moved**: an Oxy profile has an avatar and no banner.
 - **Replies whose target never arrives** (a reply to a post that was filtered,
   deleted at the source, or is not the user's) import as standalone posts with a
@@ -214,9 +215,10 @@ tests and checks every request against a copy of Mention's request schema.
   A `deferred` item is stored with its payload and resent once its target is
   delivered; at the end, targets Mention already holds from an EARLIER job are
   kept (checked with lookup), the rest are dropped for a link.
-- Media are `{ assetId, alt }` — Oxy asset ids Move uploaded as the user's
-  media. Each upload is recorded on `migration_items.media_assets` before the
-  batch is sent, so a retry after a crash reuses it instead of re-uploading.
+- Media are `{ assetId, alt }` — Oxy file ids Oxy imported as the user's
+  media. Each import is recorded on `migration_items.media_assets` before the
+  batch is sent, so a retry after a crash reuses it instead of importing again.
+  Mention, not Move, references the files it uses (`docs/oxy-files.md`).
 - `DELETE /imports/v1/batches/:jobId` → `{ deleted, failed }`. `failed > 0` is
   shown on the job (`undo`) and leaves it retryable.
 - `GET /imports/v1/lookup?platform=&sourceIds=…` (≤ 200) → `{ imported, federated }`;

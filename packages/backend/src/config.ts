@@ -54,9 +54,9 @@ const environmentSchema = z.object({
   /** Queue, fleet-wide media limiter. Unset locally: jobs then run in-process. */
   REDIS_URL: optionalString,
 
-  /** Oxy's per-app budget for `/assets/service/user-media` (~30/min/app). */
+  /** Oxy's per-app budget for media imports and uploads (~30/min/app). */
   MEDIA_UPLOADS_PER_MINUTE: positiveInt(30),
-  /** Largest remote media file Move will copy into Oxy, in bytes. */
+  /** Largest media file Move uploads itself (an export's bytes); Oxy caps an import at 40 MiB. */
   MEDIA_MAX_BYTES: positiveInt(100 * 1024 * 1024),
   /** Concurrency of the `migration` worker per process. */
   MIGRATION_WORKER_CONCURRENCY: positiveInt(2),

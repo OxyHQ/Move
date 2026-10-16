@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MIGRATION_PLATFORMS } from '@move/shared-types';
 import type { ServiceLinkedAccount, ServiceLinkedAccountListResponse } from '@oxy.so/contracts';
+import { OxyApiError } from '@oxy.so/core';
 import { migrationItems, migrationJobs, type MigrationJob } from '../db/schema';
 import { MastodonSource } from '../sources/mastodon';
 import { BlueskySource } from '../sources/bluesky';
@@ -22,7 +23,6 @@ import {
   type DeliveryResult,
   type PreparedItem,
 } from '../destinations/types';
-import { OxyUploadError } from '../utils/oxyHelpers';
 import { MentionDestination } from '../destinations/mention';
 import { runMigrationJob, type PipelineDeps, type ProgressSink } from '../pipeline/runner';
 import { JobConflictError, JobService } from '../pipeline/jobService';
@@ -228,12 +228,15 @@ function build(maxBatchSize = 50): void {
     destination: mention,
     media: createMediaCopier({
       limiter: createMemoryUploadLimiter(100, () => clock),
-      download: async () => ({ buffer: Buffer.from('jpeg-bytes'), contentType: 'image/jpeg' }),
-      upload: async () => {
+      importMedia: async () => {
         uploads++;
         if (uploadFailures.includes(uploads))
-          throw new OxyUploadError('Too many uploads', 429, '90');
-        return { fileId: `file-${uploads}` };
+          throw new OxyApiError('Too many media cache uploads', {
+            status: 429,
+            code: 'RATE_LIMITED',
+            details: { retryAfterSeconds: 90 },
+          });
+        return { fileId: `file-${uploads}`, mime: 'image/jpeg', status: 'active' };
       },
       sleep: async () => undefined,
     }),
