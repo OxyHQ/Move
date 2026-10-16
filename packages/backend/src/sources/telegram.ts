@@ -15,7 +15,9 @@
  * Ids: `sourceId` is `<channelId>/<messageId>` and `sourceUrl` is
  * `https://t.me/c/<channelId>/<messageId>`, the channel id without Telegram's
  * `-100` prefix. Mention's operator one-shot import keys items the same way, so
- * a Move import of a channel it already imported dedupes against it.
+ * a Move import of a channel it already imported dedupes against it. The
+ * structured provenance is `sourceAccountId` = `<channelId>` and
+ * `sourceItemId` = `<messageId>` (an album's head).
  */
 
 import { config } from '../config';
@@ -388,6 +390,8 @@ export class TelegramSource implements TelegramSourceContract {
       kind: 'post',
       sourceId,
       sourceUrl: this.permalinkOf(head.id),
+      sourceAccountId: this.channelId,
+      sourceItemId: String(head.id),
       createdAt: new Date(createdAt).toISOString(),
       text,
       visibility: this.visibility,

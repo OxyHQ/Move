@@ -35,6 +35,14 @@ export interface SourceItem {
   sourceId: string;
   /** Human-facing URL on the source platform. */
   sourceUrl: string;
+  /**
+   * Structured provenance, optional: the account or container the item lives in
+   * on the source platform, and the item's id within it. Mastodon would be the
+   * actor URI and the status id, Bluesky the DID and the record key, Telegram
+   * the channel id and the (album head's) message id.
+   */
+  sourceAccountId?: string;
+  sourceItemId?: string;
   /** ISO 8601 original creation time. */
   createdAt: string;
   text: string;

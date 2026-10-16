@@ -112,6 +112,8 @@ describe('Telegram export source', () => {
           kind: 'post',
           sourceId: `${CHANNEL_ID}/5`,
           sourceUrl: `https://t.me/c/${CHANNEL_ID}/5`,
+          sourceAccountId: CHANNEL_ID,
+          sourceItemId: '5',
           createdAt: '2024-01-01T01:00:00.000Z',
           text: 'Hello',
           visibility: 'public',
@@ -153,6 +155,8 @@ describe('Telegram export source', () => {
     expect(values.map((v) => v.cursor.lastMessageId)).toEqual([19, 21, 30]);
     const [first, second, third] = items(values);
     expect(first.sourceId).toBe(`${CHANNEL_ID}/10`);
+    expect(first.sourceAccountId).toBe(CHANNEL_ID);
+    expect(first.sourceItemId).toBe('10');
     expect(first.text).toBe('Caption on the second');
     expect(first.media).toHaveLength(10);
     expect(first.media[0]).toEqual({

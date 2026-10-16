@@ -62,7 +62,8 @@ back unchanged. It is never reported as a bad archive, so the job can retry it.
 - **Ids.** `sourceId` = `<channelId>/<messageId>` and `sourceUrl` =
   `https://t.me/c/<channelId>/<messageId>`. The channel id has any `-100` prefix
   removed. Mention's operator one-shot import keys items the same way, so a Move
-  import dedupes against it. `profile()` is `{ actor: 'tg:<channelId>', handle:
+  import dedupes against it. The structured provenance is `sourceAccountId` =
+  `<channelId>` and `sourceItemId` = `<messageId>`, both from the album head. `profile()` is `{ actor: 'tg:<channelId>', handle:
   name, displayName: name }`, and `graph()` yields nothing.
 - **Order.** Oldest first, as exported.
 - **Dates.** `createdAt` comes from `date_unixtime` × 1000. The `date` field is
@@ -117,6 +118,8 @@ back unchanged. It is never reported as a bad archive, so the job can retry it.
 - Add `telegram` to `MIGRATION_PLATFORMS`, the DB CHECKs, the source factory and
   the frontend. Switch `TelegramSource` from `TelegramSourceContract` to
   `implements Source`.
+- Send `sourceAccountId` and `sourceItemId` to Mention (Mention #1426) in
+  `destinations/mention.ts` and `mentionContract.ts`.
 - Make the media copier use `source.readMedia` for `telegram-export:` URLs, and
   add `mediaSkipped` to the job counters.
 - `runner.ts` `referenceUrl()` understands only http(s) and `at://` ids. A
