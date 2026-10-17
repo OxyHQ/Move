@@ -30,15 +30,17 @@
     "@biomejs/biome": "2.5.15"
   },
   "overrides": {
-    "@oxy.so/contracts": "4.22.0",
-    "@oxy.so/core": "4.18.0",
+    "@oxy.so/contracts": "4.24.0",
+    "@oxy.so/core": "5.2.0",
+    "@oxy.so/protocol": "1.4.0",
     "@oxy.so/bloom": "10.16.0",
-    "@oxy.so/services": "11.9.0",
+    "@oxy.so/services": "11.14.0",
     "react-native-css": "3.1.0-rc.0"
   },
   "resolutions": {
-    "@oxy.so/contracts": "4.22.0",
-    "@oxy.so/core": "4.18.0",
+    "@oxy.so/contracts": "4.24.0",
+    "@oxy.so/core": "5.2.0",
+    "@oxy.so/protocol": "1.4.0",
     "@oxy.so/bloom": "10.16.0",
     "react-native-css": "3.1.0-rc.0"
   }
