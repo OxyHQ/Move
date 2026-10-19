@@ -105,8 +105,12 @@ function AuthRouter() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(app)" redirect={needsAuth} />
-      <Stack.Screen name="(auth)" redirect={!needsAuth} />
+      <Stack.Protected guard={!needsAuth}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={needsAuth}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
       {/* Outside both groups: the linked-account return must survive a cold
           boot that has not resolved the session yet, so it handles auth itself. */}
       <Stack.Screen name="linked" />

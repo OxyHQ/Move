@@ -30,7 +30,9 @@ module.exports = {
       output: 'single',
     },
     plugins: [
-      'expo-router',
+      // SDK 58 code-splits routes on web by default; keep the single eager
+      // bundle this app shipped on SDK 57.
+      ['expo-router', { asyncRoutes: { web: false } }],
       [
         'expo-splash-screen',
         {

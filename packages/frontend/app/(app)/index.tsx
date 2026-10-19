@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { AliaChatSheet, type AliaChatSheetRef } from '@alia.onl/sdk';
 import { AliaAvatarIcon } from '@alia.onl/sdk/avatar';
-import { VoiceSession } from '@alia.onl/sdk/voice';
 import { useOxy } from '@oxy.so/services';
 import { ButtonGroup, ButtonGroupItem } from '@oxy.so/bloom/button-group';
 import { Card } from '@oxy.so/bloom/card';
@@ -122,7 +121,6 @@ export default function HomeScreen() {
           `(auth)` group otherwise), so the sheet is always allowed to mount. */}
       <AliaChatSheet
         ref={aliaChatRef}
-        voiceSession={VoiceSession}
         clientContext={aliaClientContext}
         welcomeSuggestions={aliaWelcomeSuggestions}
       />
