@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { OxySignInButton } from '@oxy.so/services';
+import { OxySignInButton } from '@oxy.so/services/ui/client';
 import { Loading } from '@oxy.so/bloom/loading';
 import { H1, Lead } from '@oxy.so/bloom/typography';
 import { PageScreen } from '@/components/PageScreen';

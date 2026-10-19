@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useOxy } from '@oxy.so/services';
+import { useOxy } from '@oxy.so/services/ui/client';
 import { AlertDialog } from '@oxy.so/bloom/alert-dialog';
 import { Avatar } from '@oxy.so/bloom/avatar';
 import { Button } from '@oxy.so/bloom/button';

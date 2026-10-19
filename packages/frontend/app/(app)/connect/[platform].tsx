@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LinkedAccount } from '@oxy.so/contracts';
-import { useOxy } from '@oxy.so/services';
+import { useOxy } from '@oxy.so/services/ui/client';
 import { Admonition } from '@oxy.so/bloom/admonition';
 import { AlertDialog } from '@oxy.so/bloom/alert-dialog';
 import { Button } from '@oxy.so/bloom/button';

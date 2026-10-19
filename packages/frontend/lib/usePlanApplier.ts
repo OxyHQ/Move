@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useOxy } from '@oxy.so/services';
+import { useOxy } from '@oxy.so/services/ui/client';
 import type { MigrationJobView } from '@move/shared-types';
 import { queryKeys, useMoveApi } from './moveApiContext';
 import { applyPlan, type PlanDeps, type PlanProgress } from './planApplier';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOxy } from '@oxy.so/services';
+import { useOxy } from '@oxy.so/services/ui/client';
 import {
   ACTIVE_JOB_STATUSES,
   MIGRATION_PROGRESS_EVENT,

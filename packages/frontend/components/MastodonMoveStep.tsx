@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
-import { useOxy } from '@oxy.so/services';
+import { useOxy } from '@oxy.so/services/ui/client';
 import { Button } from '@oxy.so/bloom/button';
 import { Card, CardBody, CardDescription, CardHeader, CardTitle } from '@oxy.so/bloom/card';
 import { RiExternalLinkLine, RiFileCopyLine } from '@oxy.so/bloom/icons';
