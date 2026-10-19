@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { OxySignInButton, useOxy } from '@oxy.so/services';
+import { OxySignInButton, useOxy } from '@oxy.so/services/ui/client';
 import { EmptyState } from '@oxy.so/bloom/empty-state';
 import { RiCheckboxCircleLine, RiErrorWarningLine } from '@oxy.so/bloom/icons';
 import { Loading } from '@oxy.so/bloom/loading';
