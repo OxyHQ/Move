@@ -46,6 +46,7 @@ let grantCalls = 0;
 let host: http.Server;
 let sockets: Server;
 let authority: ReturnType<typeof Bun.serve>;
+let oxy: OxyServer;
 
 beforeAll(async () => {
   authority = Bun.serve({
@@ -91,7 +92,7 @@ beforeAll(async () => {
       return Response.json({ error: 'NO_FIXTURE_AUTHORITY' }, { status: 403 });
     },
   });
-  const oxy = new OxyServer({
+  oxy = new OxyServer({
     baseURL: `http://127.0.0.1:${authority.port}`,
     serviceAuth: { apiKey: 'fixture-only', apiSecret: 'fixture-only' },
   });
@@ -152,12 +153,23 @@ describe('Move installed receiver versus strict-format claims', () => {
       (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${other}` } })).status,
     ).toBe(401);
     await expect(socketIdentity(other)).rejects.toThrow('Session user mismatch');
+    // core reuses a successful validation of the same bearer for 30 s, so a
+    // withdrawal is refused once Oxy's invalidation reaches this process.
+    const reused = validationCalls;
     revoked = true;
+    expect(
+      (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${human}` } })).status,
+    ).toBe(200);
+    expect(validationCalls).toBe(reused);
+    oxy.invalidateSessionValidations({ sessionId: 'session-fixture' });
     expect(
       (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${human}` } })).status,
     ).toBe(401);
     await expect(socketIdentity(human)).rejects.toThrow('Session validation failed');
-    expect(validationCalls).toBe(6);
+    // One per bearer while valid (HTTP and socket share the cache), then one
+    // per refusal: a refusal is never cached.
+    expect(reused).toBe(2);
+    expect(validationCalls).toBe(4);
   });
   test('signed internal service token plus user header cannot enter the human API without delegated authority', async () => {
     const response = await fetch(`${base}/private`, {

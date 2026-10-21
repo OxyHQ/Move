@@ -6,6 +6,7 @@ import {
   createOxyAuthMiddleware,
   createOxyCors,
   createOxyRateLimit,
+  oxyTrustProxy,
 } from '@oxy.so/core/server';
 import { config } from './src/config';
 import { closePostgres, connectPostgres } from './src/db/postgres';
@@ -35,7 +36,13 @@ const activity = startPlatformActivity(isRuntimeReady);
 
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', 1);
+// `req.ip` (the rate limiter's key for an anonymous caller) is the real client
+// whether or not Cloudflare proxies the hostname in front of the ALB:
+// `oxyTrustProxy` trusts the socket peer only when private (the ALB) and the
+// next hop only when it is a Cloudflare edge address, so a forged
+// X-Forwarded-For is never believed. `1` answered Cloudflare's edge for a
+// proxied hostname, putting every caller behind one edge in one bucket.
+app.set('trust proxy', oxyTrustProxy);
 // Before every route, the probes included, so the observed traffic is all of it.
 if (activity) app.use(activity.observeHttp);
 app.use(express.json({ limit: '256kb' }));
