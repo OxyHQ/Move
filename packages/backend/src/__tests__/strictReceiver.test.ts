@@ -117,6 +117,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${address.port}`;
 });
 afterAll(async () => {
+  oxy?.dispose();
   await sockets?.close();
   authority?.stop(true);
 });
@@ -153,23 +154,24 @@ describe('Move installed receiver versus strict-format claims', () => {
       (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${other}` } })).status,
     ).toBe(401);
     await expect(socketIdentity(other)).rejects.toThrow('Session user mismatch');
-    // core reuses a successful validation of the same bearer for 30 s, so a
-    // withdrawal is refused once Oxy's invalidation reaches this process.
-    const reused = validationCalls;
-    revoked = true;
+    // core >= 6.9 caches a validation only while its revocation feed from Oxy
+    // (`/service-events`) is live. This authority serves no feed, so every
+    // request asks Oxy, and a revoked session is refused on the very next one.
+    const before = validationCalls;
     expect(
       (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${human}` } })).status,
     ).toBe(200);
-    expect(validationCalls).toBe(reused);
-    oxy.invalidateSessionValidations({ sessionId: 'session-fixture' });
+    expect(validationCalls).toBe(before + 1);
+    revoked = true;
     expect(
       (await fetch(`${base}/private`, { headers: { Authorization: `Bearer ${human}` } })).status,
     ).toBe(401);
+    expect(validationCalls).toBe(before + 2);
     await expect(socketIdentity(human)).rejects.toThrow('Session validation failed');
-    // One per bearer while valid (HTTP and socket share the cache), then one
-    // per refusal: a refusal is never cached.
-    expect(reused).toBe(2);
-    expect(validationCalls).toBe(4);
+    expect(validationCalls).toBe(before + 3);
+    // Nothing was reused earlier either: the human bearer over HTTP and over
+    // the socket, then the mismatched bearer over both, each asked Oxy.
+    expect(before).toBe(4);
   });
   test('signed internal service token plus user header cannot enter the human API without delegated authority', async () => {
     const response = await fetch(`${base}/private`, {
