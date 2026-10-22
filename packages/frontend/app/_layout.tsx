@@ -11,7 +11,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { OxyProvider, useOxy } from '@oxy.so/services/ui/client';
+import { OxyProvider, useAccountColor, useOxy } from '@oxy.so/services/ui/client';
 import { BloomProvider } from '@oxy.so/bloom/provider';
 import { PortalOutlet, PortalProvider } from '@oxy.so/bloom/portal';
 import { ImageResolverProvider } from '@oxy.so/bloom/image-resolver';
@@ -64,6 +64,7 @@ export default function RootLayout() {
               <AppImageResolver>
                 <MoveApiProvider>
                   <PortalProvider>
+                    <AccountColor />
                     <AuthRouter />
                     <StatusBar style="auto" />
                     <PortalOutlet />
@@ -92,6 +93,15 @@ function AppImageResolver({ children }: { children: ReactNode }) {
       {children}
     </ImageResolverProvider>
   );
+}
+
+/**
+ * Wears the signed-in account's colour (`users.color`) on the Bloom theme. Must
+ * sit below both OxyProvider and BloomProvider; signed-out keeps Bloom's default.
+ */
+function AccountColor() {
+  useAccountColor();
+  return null;
 }
 
 /**
