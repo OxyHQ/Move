@@ -28,6 +28,7 @@ export class JobCancelledError extends Error {
 }
 
 export type JobFailureCode =
+  | 'authority-unavailable'
   | 'linked-account-not-owned'
   | 'linked-account-changed'
   | 'source-requires-authorized-fetch'
@@ -60,6 +61,7 @@ export function classify(error: unknown): Disposition {
   // Oxy's own 429 on the service calls (identities, linked accounts) arrives as
   // the SDK's plain ApiError object with `status`.
   const status = (error as { status?: unknown } | null)?.status;
+  if (status === 401 || status === 403) return { kind: 'fail', code: 'authority-unavailable' };
   if (status === 429) return { kind: 'pause', retryAfterMs: 60_000 };
   if (error instanceof ForeignLinkedAccountError)
     return { kind: 'fail', code: 'linked-account-not-owned' };

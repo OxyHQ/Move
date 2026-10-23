@@ -84,6 +84,10 @@ export const migrationJobs = pgTable(
     id: generatedId(),
     /** Oxy account id — Oxy owns identity, so no foreign key. */
     oxyUserId: text().notNull(),
+    /** Durable original requester authority; never a user bearer. Null on historical jobs. */
+    oxyTaskId: text(),
+    /** Fresh undo authority remains available to close a concurrent in-flight delivery. */
+    undoTaskId: text(),
     platform: text().notNull().$type<(typeof MIGRATION_PLATFORMS)[number]>(),
     /** Oxy `user_linked_accounts` id the user proved ownership of. */
     linkedAccountId: text().notNull(),

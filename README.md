@@ -28,7 +28,7 @@ write the client also acks the fact undo needs — the profile values it is abou
 to overwrite, which targets it already follows or blocks — and Move keeps the
 first value of each fact (`migration_jobs.undo_facts`). So a migration resumes,
 and undoes, from any device. Content is written by the **backend** to Mention
-with Move's Oxy service token plus `X-Oxy-User-Id`.
+with Move's attested workload and the job's original requester proof.
 
 ## Architecture
 
@@ -42,7 +42,7 @@ packages/
       bluesky.ts        public AppView XRPC; media = original blobs from the PDS
       http.ts           SSRF-safe JSON GET + per-platform backoff
     src/destinations/
-      mention.ts        Mention ingest client; contract in mentionContract.ts (zod)
+      mention.ts        product SDK transport; shared Mention contract
       oxy.ts            linked-account check, identity resolution, notification
       media.ts          Oxy imports media by URL, behind ONE fleet-wide limiter
     src/pipeline/       runner (phases, checkpoints, deferral, pause), job service
@@ -102,7 +102,6 @@ All parsed in `packages/backend/src/config.ts`; see `packages/backend/.env.examp
 | `REDIS_URL` | SSM `/oxy/_shared/REDIS_URL` | Queue, media-import limiter (optional locally) |
 | `OXY_API_URL` | task env | default `https://api.oxy.so` |
 | `MENTION_API_URL` | task env | default `https://api.mention.earth` |
-| `OXY_SERVICE_API_KEY/SECRET` | — (never in production) | Local only; ECS attests `oxy-move-task` |
 | `MEDIA_UPLOADS_PER_MINUTE` | default 30 | Oxy's per-app media import/upload budget |
 | `EXPO_PUBLIC_OXY_CLIENT_ID`, `EXPO_PUBLIC_API_URL` | GitHub `vars` | Frontend build |
 
@@ -146,22 +145,18 @@ then add `-- oxy:deploy-phase=pre|post` as the first line of the new `.sql`
 - **Native** — EAS (`packages/frontend/eas.json`), bundle id / package `so.oxy.move`
   (`so.oxy.move.dev` with `APP_VARIANT=development`), scheme `oxymove`.
 
-## Oxy grants
+## Own service authority
 
-Move's Oxy application (seeded in Oxy's `SEED_APPS`, first-party, tier
-`internal`) must hold these privileged scopes. Move relies on nothing broader —
-in particular never on `federation:write`.
+Move uses the shared AWS workload provider and Oxy core transport. Configure the
+registered role and environment; local development may use a temporary assumed
+role or SSO provider. No Oxy API key pair, scope list or app consent is needed.
 
-| Scope | Used by |
-|---|---|
-| `linked-accounts:read` | `GET /linked-accounts/by-user/:userId` — ownership check before creating and before running a job |
-| `federation:identities:resolve` | `POST /federation/identities/lookup` and `/resolve` — followed accounts → Oxy user ids |
-| `files:user-media:write` | `POST /assets/service/user-media/import` — Oxy imports a media URL into the user's files |
-| `federation:instance-fetch` | `POST /federation/instance-fetch/sign` — Oxy's instance actor signs a Mastodon GET that the server refused unsigned (authorized fetch); see [Reading Mastodon](#reading-mastodon) |
-| `notifications:write` | `POST /notifications` (`type: system`, `title` ≤ 120, `message` ≤ 500, top-level `url` to `https://move.oxy.so/jobs/:id`, `entityType: app` with `entityId` = the job id, so a second migration is not deduped into a 409) |
-
-Mention admits the same application by id (`MOVE_APPLICATION_ID`) for its
-import API; no Oxy scope is involved there.
+Each migration persists a durable Oxy task created from the real requesting
+session. Private linked-account reads, media imports and Mention calls use that
+same task and account. Cancel revokes it; undo creates a fresh short instruction
+from the current session, retaining the original batch. History, cursors and
+partial results remain intact if authority is revoked. Details and deployment
+order: [first-party platform migration](docs/first-party-platform.md).
 
 ## Reading Mastodon
 

@@ -27,8 +27,8 @@ Format and lint with Biome (`bun run lint`, root `biome.json`); `packages/fronte
 - Move stores ONLY migration state (`migration_jobs`, `migration_items`). Identity, linked accounts, profile, follows, blocks and files are Oxy's; posts are Mention's.
 - Never hold a third-party token. Oxy's OAuth proves ownership and discards it; sources read PUBLIC data only.
 - Profile, follows and blocks are written by the CLIENT with the user's session (Oxy refuses service tokens there). The backend only builds the plan.
-- Verify the linked account through Oxy (`GET /linked-accounts/by-user/:id`) before creating AND before running a job.
-- The Mention ingest contract lives only in `packages/backend/src/destinations/mentionContract.ts` (zod). Change it there.
+- Verify linked accounts before create/run with the original session/task proof; persist task IDs only, revoke on cancel, use fresh session authority for undo — `docs/first-party-platform.md`.
+- Import Mention schemas/limits from `@oxy.so/mention-contracts` and transport from its `/server` SDK; no copied contract.
 - A rate limit (source 429, Oxy media budget, Mention 429) PAUSES a job and re-enqueues it; it never fails it. Oxy media imports go through the one shared limiter in `destinations/media.ts`.
 - Media is imported BY URL in Oxy (`assets.importUserMedia`), never downloaded by Move; Move registers no file reference — Mention and the profile use the files (`docs/oxy-files.md`).
 - Remote reads go through `publicGet` in `utils/safeUpstreamFetch.ts` (SSRF-safe, IP-pinned, byte-capped); never `fetch()` a URL a remote chose.

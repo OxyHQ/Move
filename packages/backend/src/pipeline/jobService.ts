@@ -1,9 +1,10 @@
+import type { TaskAuthority, TaskSession } from '../utils/taskAuthority';
 /**
  * What the API does with jobs. Every method takes the AUTHENTICATED Oxy user id
  * (never one from the request body) and only ever touches that user's rows.
  */
 
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { isUniqueViolation } from '@oxy.so/db';
 import {
   ACTIVE_JOB_STATUSES,
@@ -88,6 +89,7 @@ export class JobStateError extends Error {
 
 export interface JobServiceDeps {
   db: Database;
+  tasks: TaskAuthority;
   oxy: OxyGateway;
   destination: ContentDestination;
   sourceFactory: SourceFactory;
@@ -120,8 +122,12 @@ export class JobService {
     oxyUserId: string,
     platform: MigrationPlatform,
     linkedAccountId: string,
+    session: TaskSession,
   ): Promise<MigrationPreview> {
-    const account = await this.deps.oxy.verifyLinkedAccount(oxyUserId, linkedAccountId, platform);
+    const account = await this.deps.oxy.verifyLinkedAccount(oxyUserId, linkedAccountId, platform, {
+      requesterToken: session.requesterToken,
+      accountId: oxyUserId,
+    });
     const source = await this.deps.sourceFactory(account);
     const profile = await source.profile();
     const range = source.dateRange ? await source.dateRange().catch(() => ({})) : {};
@@ -147,6 +153,7 @@ export class JobService {
   async create(
     oxyUserId: string,
     input: { platform: MigrationPlatform; linkedAccountId: string; options?: Partial<JobOptions> },
+    session: TaskSession,
   ): Promise<MigrationJob> {
     // Ownership is verified BEFORE anything is written: a job never exists for
     // an account the user has not proven is theirs.
@@ -154,26 +161,40 @@ export class JobService {
       oxyUserId,
       input.linkedAccountId,
       input.platform,
+      { requesterToken: session.requesterToken, accountId: oxyUserId },
     );
     const options: JobOptions = { ...DEFAULT_JOB_OPTIONS, ...(input.options ?? {}) };
+    if (session.effectiveAccountId !== oxyUserId)
+      throw new JobStateError('task account differs from job account');
     let job: MigrationJob;
+    let taskId: string | undefined;
     try {
-      const rows = await this.deps.db
-        .insert(migrationJobs)
-        .values({
-          oxyUserId,
-          platform: input.platform,
-          linkedAccountId: input.linkedAccountId,
-          sourceActor: account.actor,
-          sourceHandle: account.handle,
-          status: 'queued',
-          phases: INITIAL_PHASES,
-          counters: EMPTY_COUNTERS,
-          options,
-        })
-        .returning();
-      job = rows[0];
+      job = await this.deps.db.transaction(async (tx) => {
+        const rows = await tx
+          .insert(migrationJobs)
+          .values({
+            oxyUserId,
+            platform: input.platform,
+            linkedAccountId: input.linkedAccountId,
+            sourceActor: account.actor,
+            sourceHandle: account.handle,
+            status: 'queued',
+            phases: INITIAL_PHASES,
+            counters: EMPTY_COUNTERS,
+            options,
+          })
+          .returning();
+        taskId = await this.deps.tasks.create(session, rows[0].id);
+        const [bound] = await tx
+          .update(migrationJobs)
+          .set({ oxyTaskId: taskId })
+          .where(eq(migrationJobs.id, rows[0].id))
+          .returning();
+        return bound;
+      });
     } catch (error) {
+      if (taskId) await this.deps.tasks.revoke(taskId);
+
       if (isUniqueViolation(error)) throw new JobConflictError();
       throw error;
     }
@@ -304,6 +325,7 @@ export class JobService {
 
   async cancel(oxyUserId: string, jobId: string): Promise<MigrationJob> {
     const job = await this.owned(oxyUserId, jobId);
+    if (job.oxyTaskId) await this.deps.tasks.revoke(job.oxyTaskId);
     const rows = await this.deps.db
       .update(migrationJobs)
       .set({
@@ -328,7 +350,7 @@ export class JobService {
    * are the CLIENT's to revert — it holds the only session Oxy accepts for them —
    * so the plan is returned for it to reverse.
    */
-  async undo(oxyUserId: string, jobId: string): Promise<UndoResult> {
+  async undo(oxyUserId: string, jobId: string, session: TaskSession): Promise<UndoResult> {
     let job = await this.owned(oxyUserId, jobId);
     if (job.status === 'undone' && job.destinationUndone) {
       return {
@@ -340,6 +362,34 @@ export class JobService {
         undoFacts: job.undoFacts ?? null,
       };
     }
+    if (session.effectiveAccountId !== oxyUserId)
+      throw new JobStateError('undo account differs from job account');
+    // Stop the original writer first, then bind a fresh, short undo instruction.
+    if (job.oxyTaskId) await this.deps.tasks.revoke(job.oxyTaskId);
+    const undoTaskId = await this.deps.tasks.create(session, `undo:${job.id}`, 'request');
+    // Compare-and-set prevents an older undo request from replacing newer authority.
+    const priorUndoTaskId = job.undoTaskId;
+    let boundUndo: MigrationJob | undefined;
+    try {
+      [boundUndo] = await this.deps.db
+        .update(migrationJobs)
+        .set({ undoTaskId })
+        .where(
+          and(
+            eq(migrationJobs.id, job.id),
+            priorUndoTaskId
+              ? eq(migrationJobs.undoTaskId, priorUndoTaskId)
+              : isNull(migrationJobs.undoTaskId),
+          ),
+        )
+        .returning();
+      if (!boundUndo) throw new JobStateError('undo changed concurrently');
+    } catch (error) {
+      await this.deps.tasks.revoke(undoTaskId);
+      throw error;
+    }
+    if (priorUndoTaskId) await this.deps.tasks.revoke(priorUndoTaskId);
+    job = boundUndo;
     if ((ACTIVE_JOB_STATUSES as readonly string[]).includes(job.status)) {
       await this.deps.db
         .update(migrationJobs)
@@ -359,7 +409,11 @@ export class JobService {
     // Mention deletes through its normal path (federated Deletes included) and
     // reports what it could NOT delete. With failures the job is `undone` but
     // not `destinationUndone`, so calling undo again retries only what is left.
-    const { deleted, failed } = await this.deps.destination.undo({ oxyUserId, batchId: job.id });
+    const { deleted, failed } = await this.deps.destination.undo({
+      oxyUserId,
+      batchId: job.id,
+      requester: { accountId: oxyUserId, taskId: undoTaskId },
+    });
     await this.deps.db.transaction(async (tx) => {
       if (failed === 0) {
         await tx

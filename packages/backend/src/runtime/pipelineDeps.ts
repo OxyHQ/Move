@@ -1,3 +1,4 @@
+import { taskAuthority } from '../utils/taskAuthority';
 /**
  * Production composition of the pipeline's dependencies — the one place the
  * real Oxy client, Mention client, media limiter and source factory are wired.
@@ -21,6 +22,7 @@ export function createPipelineDeps(): PipelineDeps {
   const oxyClient = getServiceOxyClient();
   return {
     db: getDb(),
+    tasks: taskAuthority(oxyClient),
     oxy: new OxyGateway(oxyClient),
     destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy: oxyClient }),
     media: createMediaCopier({ limiter: createUploadLimiter(config.media.uploadsPerMinute) }),

@@ -1,3 +1,4 @@
+import type { TaskAuthority } from '../utils/taskAuthority';
 /**
  * One run of one migration job: profile -> graph -> content, resumable at every
  * checkpoint.
@@ -50,6 +51,7 @@ export interface ProgressSink {
 
 export interface PipelineDeps {
   db: Database;
+  tasks: TaskAuthority;
   oxy: OxyGateway;
   destination: ContentDestination;
   media: MediaCopier;
@@ -90,6 +92,12 @@ class JobRun {
   ) {
     this.job = job;
     this.now = deps.now ?? (() => new Date());
+  }
+
+  private get taskId(): string {
+    if (!this.job.oxyTaskId)
+      throw Object.assign(new Error('original task authority is required'), { status: 403 });
+    return this.job.oxyTaskId;
   }
 
   private get counters(): JobCounters {
@@ -140,6 +148,7 @@ class JobRun {
       this.job.oxyUserId,
       this.job.linkedAccountId,
       this.job.platform,
+      { taskId: this.taskId, accountId: this.job.oxyUserId },
     );
     if (account.actor !== this.job.sourceActor) {
       throw Object.assign(new Error('linked account changed since the job was created'), {
@@ -183,9 +192,11 @@ class JobRun {
     const profile = await source.profile();
     // Oxy profiles have an avatar and no banner, so only the avatar is copied.
     const [avatar] = profile.avatarUrl
-      ? await this.deps.media.copy(this.job.oxyUserId, [
-          { url: profile.avatarUrl, mimeType: 'image/jpeg' },
-        ])
+      ? await this.deps.media.copy(
+          this.job.oxyUserId,
+          [{ url: profile.avatarUrl, mimeType: 'image/jpeg' }],
+          this.taskId,
+        )
       : [];
     if (avatar) this.counters.mediaUploaded++;
     const plan: MigrationPlan = {
@@ -343,7 +354,7 @@ class JobRun {
         media.push({ ...entry, assetId: reused });
         continue;
       }
-      const [copied] = await this.deps.media.copy(this.job.oxyUserId, [entry]);
+      const [copied] = await this.deps.media.copy(this.job.oxyUserId, [entry], this.taskId);
       if (!copied) continue;
       this.counters.mediaUploaded++;
       assets[entry.url] = copied.assetId;
@@ -398,6 +409,7 @@ class JobRun {
       prepared.push(await this.prepare(item, knownAssets.get(item.sourceId) ?? {}));
     const results = await this.deps.destination.deliver({
       oxyUserId: this.job.oxyUserId,
+      requester: { accountId: this.job.oxyUserId, taskId: this.taskId },
       platform: this.job.platform,
       batchId: this.job.id,
       items: prepared,
@@ -578,6 +590,7 @@ class JobRun {
     const referenced = [...new Set(orphans.flatMap(references))];
     const known = await this.deps.destination.lookupImported({
       oxyUserId: this.job.oxyUserId,
+      requester: { accountId: this.job.oxyUserId, taskId: this.taskId },
       platform: this.job.platform,
       sourceIds: referenced,
     });
@@ -664,9 +677,13 @@ export async function runMigrationJob(jobId: string, deps: PipelineDeps): Promis
         // created that batch AFTER the undo's delete. Deleting the batch again is
         // idempotent and closes the window.
         const latest = await loadJob(deps.db, jobId);
-        if (latest?.status === 'undone') {
+        if (latest?.status === 'undone' && latest.undoTaskId) {
           await deps.destination
-            .undo({ oxyUserId: latest.oxyUserId, batchId: latest.id })
+            .undo({
+              oxyUserId: latest.oxyUserId,
+              batchId: latest.id,
+              requester: { accountId: latest.oxyUserId, taskId: latest.undoTaskId },
+            })
             .catch((undoError) => {
               logger.warn('[pipeline] post-undo batch delete failed', undoError);
             });

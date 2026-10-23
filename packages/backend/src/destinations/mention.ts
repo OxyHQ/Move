@@ -1,15 +1,10 @@
-/**
- * Mention as a content destination: the HTTP client for its ingest API.
- *
- * The wire contract lives in `mentionContract.ts`; this file is transport only —
- * the service token, `X-Oxy-User-Id`, status handling. Move writes content as a
- * first-party `internal`-tier Oxy app acting for the user (plan: "Autorización
- * hacia Mention"), so the ONLY identity on the request is Move's service token
- * plus the user id header; Mention checks the token belongs to Oxy Move.
- */
-
-import type { OxyServer } from '@oxy.so/core/server';
-import { parseRetryAfterMs } from '../sources/http';
+/** Own import transport and account authority belong to Mention's SDK and Oxy core. */
+import {
+  mentionForOxyService,
+  MentionServiceError,
+  type MentionServiceIdentity,
+  type MentionRequester,
+} from '@oxy.so/mention-sdk/server';
 import {
   MENTION_BATCH_MAX_ITEMS,
   MENTION_LOOKUP_MAX_IDS,
@@ -22,7 +17,6 @@ import {
   mentionBatchRequestSchema,
   mentionBatchResponseSchema,
   mentionLookupResponseSchema,
-  mentionUndoResponseSchema,
   splitBySize,
   type MentionImportItem,
 } from './mentionContract';
@@ -38,8 +32,7 @@ import {
 export interface MentionDestinationDeps {
   baseUrl: string;
   /** The Oxy client whose service token authenticates Move. */
-  oxy: Pick<OxyServer, 'serviceToken'>;
-  fetch?: typeof fetch;
+  oxy: MentionServiceIdentity;
 }
 
 /** When a source flagged a post sensitive without writing a warning. */
@@ -59,7 +52,9 @@ function isHttpUrl(value: string): boolean {
  * - text to Mention's limit, which counts the links it appends;
  * - an article becomes `{ title, body }` with its body out of `text`.
  */
-export function toMentionItem(item: PreparedItem): MentionImportItem {
+export function toMentionItem(
+  item: PreparedItem,
+): MentionImportItem & Required<Pick<MentionImportItem, 'media' | 'text'>> {
   const warning = item.contentWarning ?? (item.sensitive ? DEFAULT_SENSITIVE_WARNING : undefined);
   const contentWarning = warning?.trim().slice(0, MENTION_MAX_CONTENT_WARNING) || undefined;
   const links = (item.links ?? []).filter(isHttpUrl).slice(0, MENTION_MAX_LINKS);
@@ -87,52 +82,38 @@ export function toMentionItem(item: PreparedItem): MentionImportItem {
 export class MentionDestination implements ContentDestination {
   readonly name = 'mention' as const;
   readonly maxBatchSize = MENTION_BATCH_MAX_ITEMS;
-  private readonly fetchImpl: typeof fetch;
+  constructor(private readonly deps: MentionDestinationDeps) {}
 
-  constructor(private readonly deps: MentionDestinationDeps) {
-    this.fetchImpl = deps.fetch ?? fetch;
-  }
-
-  private async request(
-    method: string,
-    path: string,
-    oxyUserId: string,
-    body?: unknown,
-  ): Promise<unknown> {
-    const token = await this.deps.oxy.serviceToken();
-    const response = await this.fetchImpl(`${this.deps.baseUrl}${path}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Oxy-User-Id': oxyUserId,
-        Accept: 'application/json',
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
-    const text = await response.text();
-    if (response.status === 429) {
-      throw new DestinationRateLimitedError(
-        'Mention is rate limiting imports',
-        parseRetryAfterMs(response.headers.get('retry-after') ?? undefined) ?? 60_000,
-      );
+  private async withClient<T>(
+    accountId: string,
+    requester: MentionRequester,
+    run: (client: ReturnType<typeof mentionForOxyService>) => Promise<T>,
+  ): Promise<T> {
+    if (requester.accountId !== accountId)
+      throw new DestinationRejectedError('Mention requester differs from migration account', 403);
+    const client = mentionForOxyService(this.deps.oxy, { baseURL: this.deps.baseUrl, requester });
+    try {
+      return await run(client);
+    } catch (error) {
+      if (error instanceof MentionServiceError) {
+        if (error.status === 429)
+          throw new DestinationRateLimitedError(
+            'Mention is rate limiting imports',
+            error.retryAfterMs ?? 60_000,
+          );
+        if (error.status === 0 || error.status >= 500) throw error;
+        throw new DestinationRejectedError('Mention refused the import', error.status);
+      }
+      throw error;
+    } finally {
+      client.dispose();
     }
-    if (response.status >= 500) {
-      // Transient: the job attempt fails and BullMQ retries it from the cursor.
-      throw new Error(`Mention ${method} ${path} answered ${response.status}`);
-    }
-    if (!response.ok) {
-      throw new DestinationRejectedError(
-        `Mention ${method} ${path} answered ${response.status}: ${text.slice(0, 300)}`,
-        response.status,
-      );
-    }
-    return text.length > 0 ? JSON.parse(text) : {};
   }
 
   /** Deliver in order, split into requests of ≤ 50 items and ≤ ~0.9 MB each. */
   async deliver(params: {
     oxyUserId: string;
+    requester: MentionRequester;
     platform: 'mastodon' | 'bluesky';
     batchId: string;
     items: PreparedItem[];
@@ -144,7 +125,9 @@ export class MentionDestination implements ContentDestination {
         batchId: params.batchId,
         items: chunk,
       });
-      const raw = await this.request('POST', '/imports/v1/posts:batch', params.oxyUserId, payload);
+      const raw = await this.withClient(params.oxyUserId, params.requester, (client) =>
+        client.importBatch(payload),
+      );
       const parsed = mentionBatchResponseSchema.safeParse(raw);
       if (!parsed.success) {
         throw new DestinationRejectedError(
@@ -176,32 +159,31 @@ export class MentionDestination implements ContentDestination {
     return out;
   }
 
-  async undo(params: { oxyUserId: string; batchId: string }): Promise<UndoResult> {
-    const raw = await this.request(
-      'DELETE',
-      `/imports/v1/batches/${encodeURIComponent(params.batchId)}`,
-      params.oxyUserId,
+  async undo(params: {
+    oxyUserId: string;
+    batchId: string;
+    requester: MentionRequester;
+  }): Promise<UndoResult> {
+    return this.withClient(params.oxyUserId, params.requester, (client) =>
+      client.undoImportBatch(params.batchId),
     );
-    return mentionUndoResponseSchema.parse(raw);
   }
 
   /** The source ids of this user + platform Mention already imported (any batch). */
   async lookupImported(params: {
     oxyUserId: string;
+    requester: MentionRequester;
     platform: 'mastodon' | 'bluesky';
     sourceIds: string[];
   }): Promise<Set<string>> {
     const found = new Set<string>();
     const unique = [...new Set(params.sourceIds)];
     for (let start = 0; start < unique.length; start += MENTION_LOOKUP_MAX_IDS) {
-      const query = new URLSearchParams({ platform: params.platform });
-      // Repeated parameters (Mention accepts repeated or comma-joined; its `queryList` splits on commas either way).
-      for (const sourceId of unique.slice(start, start + MENTION_LOOKUP_MAX_IDS))
-        query.append('sourceIds', sourceId);
-      const raw = await this.request(
-        'GET',
-        `/imports/v1/lookup?${query.toString()}`,
-        params.oxyUserId,
+      const raw = await this.withClient(params.oxyUserId, params.requester, (client) =>
+        client.lookupImports({
+          platform: params.platform,
+          sourceIds: unique.slice(start, start + MENTION_LOOKUP_MAX_IDS),
+        }),
       );
       for (const sourceId of Object.keys(mentionLookupResponseSchema.parse(raw).imported))
         found.add(sourceId);
