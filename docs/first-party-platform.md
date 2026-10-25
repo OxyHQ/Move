@@ -55,3 +55,13 @@ types, frontend source/test types and the backend build. The tests retain real
 PostgreSQL and shared SDK HTTP composition for original authority and delivery
 recovery. CI and deployment remain pending; recheck active legacy jobs before
 cutover and retain history regardless of the result.
+
+
+## Alia client transport
+
+The frontend source uses the published `@alia.onl/sdk` 22.0.0 with the existing
+Core 7.3 / services 13 stack. Alia owns conversation, history, streaming and audio
+transport through the shared Oxy session; the app keeps its existing provider,
+agent selection and UI. No app-local bearer refresh or internal permission prompt
+is introduced. Package installation was checked against the published artifact;
+source adoption and deployment are separate rollout steps.
