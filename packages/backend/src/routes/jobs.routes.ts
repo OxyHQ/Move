@@ -1,3 +1,4 @@
+import type { TaskSession } from '../utils/taskAuthority';
 /**
  * Move's API. Every route is behind the Oxy session (`createOxyAuthMiddleware`);
  * the user id comes from the verified session, never the body.
@@ -123,6 +124,19 @@ function userId(req: Request): string {
   return getRequiredOxyUserId(req as OxyAuthenticatedRequest);
 }
 
+function taskSession(req: Request): TaskSession {
+  const authenticated = req as OxyAuthenticatedRequest;
+  const actor = authenticated.oxyActor;
+  if (!authenticated.accessToken || !actor || actor.effectiveAccountId !== userId(req)) {
+    throw new JobStateError('A current Oxy session is required to start this operation');
+  }
+  return {
+    requesterToken: authenticated.accessToken,
+    actorAccountId: actor.actorAccountId,
+    effectiveAccountId: actor.effectiveAccountId,
+  };
+}
+
 export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router {
   const router = Router();
 
@@ -138,11 +152,16 @@ export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router
     handle(async (req, res) => {
       const body = createJobSchema.parse(req.body);
       if (body.dryRun) {
-        const preview = await jobs.preview(userId(req), body.platform, body.linkedAccountId);
+        const preview = await jobs.preview(
+          userId(req),
+          body.platform,
+          body.linkedAccountId,
+          taskSession(req),
+        );
         res.json({ preview });
         return;
       }
-      const job = await jobs.create(userId(req), body);
+      const job = await jobs.create(userId(req), body, taskSession(req));
       res.status(201).json({ job: toJobView(job) });
     }),
   );
@@ -194,7 +213,11 @@ export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router
   router.delete(
     '/jobs/:id',
     handle(async (req, res) => {
-      const result = await jobs.undo(userId(req), jobIdSchema.parse(req.params.id));
+      const result = await jobs.undo(
+        userId(req),
+        jobIdSchema.parse(req.params.id),
+        taskSession(req),
+      );
       // The client reverses what only its session can (profile, follows, blocks),
       // from the facts recorded before it applied them — on any device.
       res.json({

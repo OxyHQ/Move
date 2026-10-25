@@ -116,13 +116,13 @@ describe('media import behind the shared upload limiter', () => {
       importMedia: async () => imported(`f${++imports}`),
       sleep: noSleep,
     });
-    await copier.copy('u1', media);
-    await copier.copy('u1', media);
-    const error = await copier.copy('u1', media).catch((caught) => caught);
+    await copier.copy('u1', media, 'task-fixture');
+    await copier.copy('u1', media, 'task-fixture');
+    const error = await copier.copy('u1', media, 'task-fixture').catch((caught) => caught);
     expect(error).toBeInstanceOf(MediaRateLimitedError);
     expect(imports).toBe(2);
     now += 60_000;
-    await copier.copy('u1', media);
+    await copier.copy('u1', media, 'task-fixture');
     expect(imports).toBe(3);
   });
 
@@ -136,7 +136,7 @@ describe('media import behind the shared upload limiter', () => {
       },
       sleep: noSleep,
     });
-    const result = await copier.copy('u1', [{ ...media[0], alt: 'a cat' }]);
+    const result = await copier.copy('u1', [{ ...media[0], alt: 'a cat' }], 'task-fixture');
     expect(calls).toEqual([['u1', 'https://cdn.example/a.png']]);
     // The type Oxy stored wins over the source's guess.
     expect(result).toEqual([
@@ -154,7 +154,7 @@ describe('media import behind the shared upload limiter', () => {
       },
       sleep: noSleep,
     });
-    const error = await copier.copy('u1', media).catch((caught) => caught);
+    const error = await copier.copy('u1', media, 'task-fixture').catch((caught) => caught);
     expect(error).toBeInstanceOf(MediaRateLimitedError);
     expect((error as MediaRateLimitedError).retryAfterMs).toBe(120_000);
     expect(await limiter.acquire()).toEqual({ ok: false, retryAfterMs: 120_000 });
@@ -167,10 +167,14 @@ describe('media import behind the shared upload limiter', () => {
       importMedia: async () => imported(`f${++imports}`),
       sleep: noSleep,
     });
-    const result = await copier.copy('u1', [
-      { url: 'https://cdn.example/a.mp3', mimeType: 'audio/mpeg' },
-      { url: 'https://cdn.example/a.pdf', mimeType: 'application/pdf' },
-    ]);
+    const result = await copier.copy(
+      'u1',
+      [
+        { url: 'https://cdn.example/a.mp3', mimeType: 'audio/mpeg' },
+        { url: 'https://cdn.example/a.pdf', mimeType: 'application/pdf' },
+      ],
+      'task-fixture',
+    );
     expect(result).toEqual([]);
     expect(imports).toBe(0);
   });
@@ -195,10 +199,11 @@ describe('media import behind the shared upload limiter', () => {
         },
         sleep: noSleep,
       });
-      const result = await copier.copy('u1', [
-        media[0],
-        { url: 'https://cdn.example/b.png', mimeType: 'image/png' },
-      ]);
+      const result = await copier.copy(
+        'u1',
+        [media[0], { url: 'https://cdn.example/b.png', mimeType: 'image/png' }],
+        'task-fixture',
+      );
       expect(result.map((entry) => entry.assetId)).toEqual(['f2']);
     },
   );
@@ -219,7 +224,7 @@ describe('media import behind the shared upload limiter', () => {
       },
       sleep: noSleep,
     });
-    expect(await copier.copy('u1', media).catch((caught) => caught)).toBe(failure);
+    expect(await copier.copy('u1', media, 'task-fixture').catch((caught) => caught)).toBe(failure);
   });
 
   test('bytes the user keeps in their trash are neither revived nor handed to Mention', async () => {
@@ -228,7 +233,7 @@ describe('media import behind the shared upload limiter', () => {
       importMedia: async () => ({ fileId: 'f1', mime: 'image/png', status: 'trash' }),
       sleep: noSleep,
     });
-    expect(await copier.copy('u1', media)).toEqual([]);
+    expect(await copier.copy('u1', media, 'task-fixture')).toEqual([]);
   });
 });
 

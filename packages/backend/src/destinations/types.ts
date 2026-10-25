@@ -1,3 +1,4 @@
+import type { MentionRequester } from '@oxy.so/mention-sdk/server';
 /**
  * The destination contract: where CONTENT goes.
  *
@@ -41,15 +42,21 @@ export interface ContentDestination {
   /** Idempotent: re-sending an item returns `existing` with the same id. */
   deliver(params: {
     oxyUserId: string;
+    requester: MentionRequester;
     platform: MigrationPlatform;
     batchId: string;
     items: PreparedItem[];
   }): Promise<DeliveryResult[]>;
   /** Remove everything a batch created, through the destination's normal delete. */
-  undo(params: { oxyUserId: string; batchId: string }): Promise<UndoResult>;
+  undo(params: {
+    oxyUserId: string;
+    batchId: string;
+    requester: MentionRequester;
+  }): Promise<UndoResult>;
   /** Which of these source ids the destination already holds for the user (any batch). */
   lookupImported(params: {
     oxyUserId: string;
+    requester: MentionRequester;
     platform: MigrationPlatform;
     sourceIds: string[];
   }): Promise<Set<string>>;

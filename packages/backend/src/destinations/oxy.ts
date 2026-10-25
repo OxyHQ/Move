@@ -5,17 +5,9 @@
  * It never WRITES the profile, follows or blocks: Oxy accepts those only from
  * the user's own session, so the Move CLIENT applies them from the plan.
  *
- * Contracts, and the privileged scope each needs on Move's Oxy application:
- * - `linkedAccounts.forUser` (`GET /linked-accounts/by-user/:userId`) — `linked-accounts:read`.
- * - `POST /federation/identities/lookup` (batch ≤ 100, no remote discovery) and
- *   `POST /federation/identities/resolve` (one actor) — `federation:identities:resolve`.
- * - `POST /notifications` (`CreateOxyNotificationRequest`, `type: 'system'`) —
- *   `notifications:write`. Not the SDK's `createNotification`: that sends the
- *   USER session, and this is a service call.
- * - (`utils/oxyHelpers.ts`) `POST /assets/service/user-media` — `files:user-media:write`.
- * - `POST /federation/instance-fetch/sign` ({@link createInstanceFetchSigner}) —
- *   `federation:instance-fetch`: Oxy's instance actor signs one ActivityPub GET
- *   so an authorized-fetch Mastodon instance serves Move its public content.
+ * Own workload identity has no OAuth scopes. Private linked-account reads also
+ * prove the job's original requester, while public federation and system
+ * notification operations retain their existing domain rules.
  */
 
 import { z } from 'zod';
@@ -24,7 +16,7 @@ import {
   type CreateOxyNotificationRequest,
   type LinkedAccountNetwork,
 } from '@oxy.so/contracts';
-import type { OxyServer } from '@oxy.so/core/server';
+import type { OxyServer, RequesterProof } from '@oxy.so/core/server';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
@@ -36,7 +28,9 @@ import {
 
 /** The part of Move's service `OxyServer` client the gateway uses. */
 export type OxyServiceClient = {
-  linkedAccounts: Pick<OxyServer['linkedAccounts'], 'forUser'>;
+  linkedAccounts: {
+    withRequester(proof: RequesterProof): Pick<OxyServer['linkedAccounts'], 'forUser'>;
+  };
   serviceRequest: OxyServer['serviceRequest'];
 };
 
@@ -80,8 +74,11 @@ export class OxyGateway {
     oxyUserId: string,
     linkedAccountId: string,
     platform: MigrationPlatform,
+    requester: RequesterProof,
   ): Promise<SourceAccount> {
-    const { linkedAccounts } = await this.oxy.linkedAccounts.forUser(oxyUserId);
+    const { linkedAccounts } = await this.oxy.linkedAccounts
+      .withRequester(requester)
+      .forUser(oxyUserId);
     const account = linkedAccounts.find((entry) => entry.id === linkedAccountId);
     if (!account || account.network !== PLATFORM_NETWORK[platform])
       throw new ForeignLinkedAccountError();
@@ -197,7 +194,7 @@ export function createInstanceFetchSigner(oxy: Pick<OxyServer, 'serviceRequest'>
           SIGNING_BUDGET_PAUSE_MS,
         );
       }
-      // Oxy will not sign this (no scope, a URL it refuses): the read stays
+      // Oxy will not sign this (inactive identity or a URL it refuses): the read stays
       // unsigned-refused, so the actor still falls back to the REST lookup and a
       // collection fails as authorized-fetch rather than retrying forever.
       if (status === 400 || status === 401 || status === 403) {

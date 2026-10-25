@@ -1,13 +1,4 @@
-/**
- * The ONE place Oxy Move reads its environment, parsed once with zod.
- *
- * Production values come from the ECS task definition (oxy-infra
- * `terraform-uswest2/app-move.tf`). There is no `OXY_SERVICE_API_KEY` pair in
- * production: Move attests its task role (`oxy-move-task`, oxy ADR 0026) and
- * `@oxy.so/core` mints the service token from that. The pair is honoured when
- * present, for local development. `DATABASE_URL` is read by `db/postgres.ts`
- * at connect time so the tests can point it at their own database.
- */
+/** Runtime configuration; own service identity comes from the AWS role provider. */
 
 import { z } from 'zod';
 
@@ -48,8 +39,6 @@ const environmentSchema = z.object({
 
   OXY_API_URL: url('https://api.oxy.so'),
   MENTION_API_URL: url('https://api.mention.earth'),
-  OXY_SERVICE_API_KEY: optionalString,
-  OXY_SERVICE_API_SECRET: optionalString,
 
   /** Queue, fleet-wide media limiter. Unset locally: jobs then run in-process. */
   REDIS_URL: optionalString,
@@ -80,10 +69,6 @@ export const config = {
   logLevel: environment.LOG_LEVEL ?? (environment.NODE_ENV === 'production' ? 'info' : 'debug'),
   oxyApiUrl: environment.OXY_API_URL,
   mentionApiUrl: environment.MENTION_API_URL,
-  oxyServiceCredentials: {
-    apiKey: environment.OXY_SERVICE_API_KEY,
-    apiSecret: environment.OXY_SERVICE_API_SECRET,
-  },
   redisUrl: environment.REDIS_URL,
   media: {
     uploadsPerMinute: environment.MEDIA_UPLOADS_PER_MINUTE,

@@ -1,20 +1,6 @@
-/**
- * Move's side of the Mention ingest contract, checked against Mention itself:
- *
- * 1. Responses copied LITERALLY from Mention's route tests
- *    (`packages/backend/src/__tests__/routes/imports.test.ts`) parse with Move's
- *    response schemas.
- * 2. Every request Move builds parses with a COPY of Mention's request schema
- *    (`packages/backend/src/routes/imports.ts`, `itemSchema` / `batchSchema`),
- *    written out independently of `mentionContract.ts` so a drift in either
- *    shows here.
- * 3. The client splits by item count AND by body size (Mention: ≤ 50, 1 MB).
- *
- * Source: Mention `e0ee03747 docs(imports): the content-import contract for Oxy Move`.
- */
-
+/** Move mappings and batching against Mention's published contract. */
 import { describe, expect, test } from 'bun:test';
-import { z } from 'zod';
+import { mentionImportBatchSchema as mentionBatchSchema } from '@oxy.so/mention-contracts';
 import {
   mentionBatchResponseSchema,
   mentionLookupResponseSchema,
@@ -22,56 +8,6 @@ import {
 } from '../destinations/mentionContract';
 import { MentionDestination, toMentionItem } from '../destinations/mention';
 import type { PreparedItem } from '../destinations/types';
-
-// ---- Mention's request schema, transcribed from routes/imports.ts ----------
-// (config.posts.maxTextLength = 25_000, maxAltTextLength = 2_000,
-//  MAX_IMPORT_MEDIA_PER_ITEM = MAX_IMPORT_LINKS_PER_ITEM = 10, MAX_IMPORT_BATCH_ITEMS = 50)
-const opaqueId = () => z.string().trim().min(1).max(512);
-const httpUrl = () =>
-  z
-    .string()
-    .trim()
-    .max(2048)
-    .refine((value) => {
-      try {
-        const url = new URL(value);
-        return url.protocol === 'https:' || url.protocol === 'http:';
-      } catch {
-        return false;
-      }
-    });
-const MENTION_IMPORT_PLATFORMS = [
-  'mastodon',
-  'bluesky',
-  'threads',
-  'instagram',
-  'x',
-  'facebook',
-  'medium',
-  'substack',
-] as const;
-const mentionItemSchema = z.object({
-  sourceId: opaqueId(),
-  sourceUrl: httpUrl(),
-  createdAt: z.iso.datetime({ offset: true }),
-  text: z.string().max(25_000).default(''),
-  contentWarning: z.string().trim().max(500).optional(),
-  language: z.string().trim().min(2).max(35).optional(),
-  visibility: z.enum(['public', 'followers_only']),
-  replyToSourceId: opaqueId().optional(),
-  quoteSourceId: opaqueId().optional(),
-  media: z
-    .array(z.object({ assetId: opaqueId(), alt: z.string().max(4_000).optional() }))
-    .max(10)
-    .default([]),
-  article: z.object({ title: z.string().optional(), body: z.string().optional() }).optional(),
-  links: z.array(httpUrl()).max(10).optional(),
-});
-const mentionBatchSchema = z.object({
-  platform: z.enum(MENTION_IMPORT_PLATFORMS),
-  batchId: opaqueId(),
-  items: z.array(mentionItemSchema).min(1).max(50),
-});
 
 function item(overrides: Partial<PreparedItem> = {}): PreparedItem {
   return {
@@ -126,7 +62,7 @@ describe("Mention responses, copied literally from Mention's tests", () => {
         },
       },
     };
-    expect(mentionLookupResponseSchema.parse(literal)).toEqual({ imported: literal.imported });
+    expect(mentionLookupResponseSchema.parse(literal)).toEqual(literal);
     expect(() => mentionLookupResponseSchema.parse({ federated: {} })).toThrow();
   });
 });
@@ -213,13 +149,12 @@ describe('the Mention client', () => {
     const fakeFetch = (async (url: string, init?: RequestInit) => {
       const raw = typeof init?.body === 'string' ? init.body : undefined;
       const body = raw ? JSON.parse(raw) : undefined;
-      requests.push({ url, bytes: raw ? Buffer.byteLength(raw) : 0, body });
-      return new Response(JSON.stringify(respond(body, url)), { status: 200 });
+      requests.push({ url: String(url), bytes: raw ? Buffer.byteLength(raw) : 0, body });
+      return new Response(JSON.stringify(respond(body, String(url))), { status: 200 });
     }) as unknown as typeof fetch;
     const destination = new MentionDestination({
       baseUrl: 'https://api.mention.test',
-      oxy: { serviceToken: async () => 'tok' },
-      fetch: fakeFetch,
+      oxy: { createServiceClient: () => ({ fetch: fakeFetch, dispose() {} }) },
     });
     return { destination, requests };
   }
@@ -238,6 +173,7 @@ describe('the Mention client', () => {
     );
     const results = await destination.deliver({
       oxyUserId: 'u',
+      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items,
@@ -254,6 +190,7 @@ describe('the Mention client', () => {
     const { destination, requests } = client(created);
     await destination.deliver({
       oxyUserId: 'u',
+      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items: Array.from({ length: 50 }, (_, i) => item({ sourceId: `s${i}` })),
@@ -269,6 +206,7 @@ describe('the Mention client', () => {
     }));
     const results = await destination.deliver({
       oxyUserId: 'u',
+      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items: [item({ sourceId: 'a' }), item({ sourceId: 'b' })],
@@ -283,6 +221,7 @@ describe('the Mention client', () => {
     const { destination, requests } = client(() => ({ imported: { a: 'p1' }, federated: {} }));
     const found = await destination.lookupImported({
       oxyUserId: 'u',
+      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'bluesky',
       sourceIds: ['a', 'b', 'a'],
     });
