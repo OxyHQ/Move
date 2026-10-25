@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOxy } from '@oxy.so/services/ui/client';
-import {
-  ACTIVE_JOB_STATUSES,
-  MIGRATION_PROGRESS_EVENT,
-  type MigrationJobView,
-} from '@move/shared-types';
+import { ACTIVE_JOB_STATUSES, type MigrationJobView } from '@move/shared-types';
 import { API_URL } from './config';
+import { connectJobProgress } from './jobProgressSocket';
 import { queryKeys, useMoveApi } from './moveApiContext';
 
 /** Polling while the socket is down; a slow safety net while it is up. */
@@ -26,8 +22,9 @@ export function isActive(job: Pick<MigrationJobView, 'status'> | undefined): boo
 export function useJob(jobId: string) {
   const api = useMoveApi();
   const queryClient = useQueryClient();
-  const { oxyServices } = useOxy();
+  const { oxyServices, canUsePrivateApi } = useOxy();
   const [socketConnected, setSocketConnected] = useState(false);
+  const [contextRevision, setContextRevision] = useState(0);
 
   const query = useQuery({
     queryKey: queryKeys.job(jobId),
@@ -43,26 +40,13 @@ export function useJob(jobId: string) {
   const active = isActive(query.data);
 
   useEffect(() => {
-    if (!active) return undefined;
-    const socket = io(API_URL, {
-      auth: (cb) => cb({ token: oxyServices.session.accessToken }),
-      transports: ['websocket', 'polling'],
+    if (!active || !canUsePrivateApi) return undefined;
+    return connectJobProgress(oxyServices, API_URL, {
+      onConnected: setSocketConnected,
+      onProgress: (view) => queryClient.setQueryData(queryKeys.job(view.id), view),
+      onContextEnd: () => setContextRevision(contextRevision + 1),
     });
-    socket.on('connect', () => setSocketConnected(true));
-    socket.on('disconnect', () => setSocketConnected(false));
-    socket.on(MIGRATION_PROGRESS_EVENT, (view: MigrationJobView) => {
-      queryClient.setQueryData(queryKeys.job(view.id), view);
-    });
-    // A rotated token re-runs the handshake with the fresh one.
-    const unsubscribe = oxyServices.session.onChange((token) => {
-      if (token && !socket.connected) socket.connect();
-    });
-    return () => {
-      unsubscribe();
-      socket.disconnect();
-      setSocketConnected(false);
-    };
-  }, [active, oxyServices, queryClient]);
+  }, [active, canUsePrivateApi, oxyServices, queryClient, contextRevision]);
 
   return query;
 }

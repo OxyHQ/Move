@@ -65,3 +65,17 @@ transport through the shared Oxy session; the app keeps its existing provider,
 agent selection and UI. No app-local bearer refresh or internal permission prompt
 is introduced. Package installation was checked against the published artifact;
 source adoption and deployment are separate rollout steps.
+
+## Browser job progress
+
+Job progress sockets resolve each handshake through the provider's linked Oxy
+client and its target-bound `getAccessToken`. They keep no bearer cache or local
+refresh loop. An Oxy account/session-context change immediately aborts pending
+handshakes, disconnects the existing socket and removes its listeners before a
+new subscription starts. Old progress events cannot update the next viewer's
+cache. A same-session token refresh retains the connection.
+
+The frontend Socket.IO integration test uses real HTTP/WebSocket connections to
+check expired-token refresh, a connected account switch, sign-out, disposal and
+switch/disposal during a blocked refresh. These changes do not affect migration
+job authority, durable task IDs or external account linking.
