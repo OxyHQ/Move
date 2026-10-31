@@ -51,6 +51,14 @@ packages/
     src/connectors/     pure ActivityPub/atproto pieces copied from Mention
 ```
 
+### Screen composition
+
+`BloomProvider` supplies the Expo Router scroll adapter. The shared `PageScreen`
+keeps one `ScreenScrollView`, binds its ref through Bloom's `useScrollRestoration`,
+and follows the leaf route's focus. This preserves the existing header and content
+insets while remembering each route's scroll offset. `OxyProvider` owns the gesture,
+safe-area and keyboard roots; the app's portal outlet remains inside those roots.
+
 ### A job
 
 1. `POST /jobs` verifies the linked account with Oxy (`GET /linked-accounts/by-user/:userId`)
