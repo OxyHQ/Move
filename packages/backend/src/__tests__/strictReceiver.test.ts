@@ -37,7 +37,7 @@ const serviceClaims = {
   ownerAccountId: 'owner-fixture',
   environment: 'production',
   tier: 'internal',
-  scopes: ['linked-accounts:read'],
+  authority: 'first_party',
 };
 let revoked = false;
 let base: string;
@@ -52,7 +52,7 @@ beforeAll(async () => {
   authority = Bun.serve({
     hostname: '127.0.0.1',
     port: 0,
-    fetch(request) {
+    async fetch(request) {
       const url = new URL(request.url);
       if (url.pathname === '/.well-known/jwks.json') return Response.json({ keys: [jwk] });
       // core >= 4.17 validates the presented bearer against its session
@@ -78,6 +78,21 @@ beforeAll(async () => {
           }),
           expiresIn: 300,
           appName: 'Verifier fixture',
+        });
+      }
+      if (url.pathname === '/auth/resources/introspect') {
+        // Live authority of a first-party workload token, as Oxy answers it.
+        const { token: presented } = (await request.json()) as { token: string };
+        const claims = JSON.parse(Buffer.from(presented.split('.')[1], 'base64url').toString());
+        return Response.json({
+          active: true,
+          authority: 'first_party',
+          accountId: claims.ownerAccountId,
+          applicationId: claims.appId,
+          credentialId: claims.credentialId,
+          environment: claims.environment,
+          audience: claims.aud,
+          expiresAt: new Date(claims.exp * 1000).toISOString(),
         });
       }
       if (url.pathname === '/internal/service-acting-as/verify') {

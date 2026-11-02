@@ -26,6 +26,7 @@ export function PageScreen({ title, back = false, actions, children }: PageScree
 
   return (
     <Screen
+      scroll="content"
       header={
         <PageHeader title={title} onBack={onBack} backLabel={t('common.back')} actions={actions} />
       }
