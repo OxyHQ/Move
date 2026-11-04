@@ -13,7 +13,3 @@ export function formatDateTime(iso: string | null | undefined, locale: string): 
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
-
-export function formatNumber(value: number, locale: string): string {
-  return new Intl.NumberFormat(locale).format(value);
-}

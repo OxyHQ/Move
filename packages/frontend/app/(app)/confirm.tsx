@@ -10,6 +10,7 @@ import { Card } from '@oxy.so/bloom/card';
 import { EmptyState } from '@oxy.so/bloom/empty-state';
 import { RiErrorWarningLine } from '@oxy.so/bloom/icons';
 import { Loading } from '@oxy.so/bloom/loading';
+import { formatNumber } from '@oxy.so/bloom/locale';
 import { SettingsListGroup, SettingsListItem } from '@oxy.so/bloom/settings-list';
 import { Switch } from '@oxy.so/bloom/switch';
 import { Muted, Text } from '@oxy.so/bloom/typography';
@@ -21,7 +22,7 @@ import {
 } from '@move/shared-types';
 import { PageScreen } from '@/components/PageScreen';
 import { QueryError } from '@/components/QueryError';
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { errorCode } from '@/lib/moveApi';
 import { queryKeys, useMoveApi } from '@/lib/moveApiContext';
 
