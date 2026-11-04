@@ -12,21 +12,20 @@ import { MentionDestination } from '../destinations/mention';
 import { OxyGateway, createInstanceFetchSigner } from '../destinations/oxy';
 import { enqueueMigrationRun } from '../queue/queues';
 import { createSourceFactory } from '../sources';
-import { getServiceOxyClient } from '../utils/oxyHelpers';
+import { oxy } from '../oxy';
 import { logger } from '../utils/logger';
 import { runMigrationJob, type PipelineDeps } from '../pipeline/runner';
 import { JobService } from '../pipeline/jobService';
 import { socketProgressSink } from './socketServer';
 
 export function createPipelineDeps(): PipelineDeps {
-  const oxyClient = getServiceOxyClient();
   return {
     db: getDb(),
-    tasks: taskAuthority(oxyClient),
-    oxy: new OxyGateway(oxyClient),
-    destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy: oxyClient }),
+    tasks: taskAuthority(oxy),
+    oxy: new OxyGateway(oxy),
+    destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy }),
     media: createMediaCopier({ limiter: createUploadLimiter(config.media.uploadsPerMinute) }),
-    sourceFactory: createSourceFactory(createInstanceFetchSigner(oxyClient)),
+    sourceFactory: createSourceFactory(createInstanceFetchSigner(oxy)),
     progress: socketProgressSink,
   };
 }

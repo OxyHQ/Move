@@ -31,6 +31,8 @@ export type OxyServiceClient = {
   linkedAccounts: {
     withRequester(proof: RequesterProof): Pick<OxyServer['linkedAccounts'], 'forUser'>;
   };
+  notifications: Pick<OxyServer['notifications'], 'create'>;
+  /** Federation identity lookups: the SDK has no typed `federation` namespace yet. */
   serviceRequest: OxyServer['serviceRequest'];
 };
 
@@ -158,7 +160,7 @@ export class OxyGateway {
       url: `https://move.oxy.so/jobs/${encodeURIComponent(params.jobId)}`,
       data: { app: 'move', jobId: params.jobId, platform: params.platform },
     };
-    await this.oxy.serviceRequest('POST', '/notifications', notification);
+    await this.oxy.notifications.create(notification);
   }
 }
 
