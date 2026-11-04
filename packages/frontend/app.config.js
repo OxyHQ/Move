@@ -54,18 +54,13 @@ module.exports = {
       ],
       // Shared Oxy native config: iOS keychain group, expo-build-properties
       // defaults, and the Oxy signature permissions (withOxySharedPermissions)
-      // that let this app ask Commons for the identity. Own Android UID.
+      // that let this app ask Commons for the identity. Own Android UID. Release
+      // signing (OXY_UPLOAD_* Gradle properties) is applied by the services
+      // plugin the preset includes.
       // `gifEnabled`/`webpEnabled: false` (Expo SDK 58+) leave Fresco's GIF and WebP
       // decoders out of the Android build: nothing here draws a GIF or animated WebP
       // through react-native's own Image (Bloom and @oxy.so/services use expo-image).
       ['@oxy.so/app-preset', { android: { gifEnabled: false, webpEnabled: false } }],
-      // Release-signs with the ONE Oxy ecosystem key (OXY_UPLOAD_* Gradle
-      // properties) and swaps in the optimising ProGuard file. The preset above
-      // does not apply it, and without it a local release build is debug-signed,
-      // which Commons' signature-level permissions refuse. Falls back to debug
-      // signing when the properties are absent, so verify the shipped
-      // certificate (`apksigner verify --print-certs`).
-      '@oxy.so/app-preset/plugin/withOxyAndroidRelease',
     ],
     extra: {
       router: {},
