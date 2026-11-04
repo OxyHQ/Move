@@ -24,7 +24,7 @@
 
 import { getReadyRedis } from '../utils/redis';
 import { logger } from '../utils/logger';
-import { getServiceOxyClient } from '../utils/oxyHelpers';
+import { oxy } from '../oxy';
 import { realSleep, type Sleep } from '../sources/http';
 import type { SourceMedia } from '../sources/types';
 
@@ -136,8 +136,8 @@ export type MediaImporter = (
 
 /** Oxy's import, with Move's service credential. Public, like every migrated post's media. */
 export const importWithOxy: MediaImporter = async (ownerUserId, sourceUrl, taskId) => {
-  const { file } = await getServiceOxyClient()
-    .assets.withRequester({ taskId, accountId: ownerUserId })
+  const { file } = await oxy.assets
+    .withRequester({ taskId, accountId: ownerUserId })
     .importUserMedia(ownerUserId, sourceUrl, {
       visibility: 'public',
     });

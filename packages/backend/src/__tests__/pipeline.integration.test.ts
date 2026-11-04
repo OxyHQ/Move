@@ -13,8 +13,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:tes
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MIGRATION_PLATFORMS } from '@move/shared-types';
-import type { ServiceLinkedAccount, ServiceLinkedAccountListResponse } from '@oxy.so/contracts';
-import { OxyApiError } from '@oxy.so/core';
+import type {
+  CreateOxyNotificationRequest,
+  ServiceLinkedAccount,
+  ServiceLinkedAccountListResponse,
+} from '@oxy.so/contracts';
+import { OxyApiError, type Notification } from '@oxy.so/core';
 import { migrationItems, migrationJobs, type MigrationJob } from '../db/schema';
 import { MastodonSource } from '../sources/mastodon';
 import { BlueskySource } from '../sources/bluesky';
@@ -174,7 +178,7 @@ function assertTask(taskId: string, accountId: string) {
 
 class FakeOxy {
   linkedAccounts: Array<ServiceLinkedAccount & { ownerId: string }> = [];
-  notifications: Array<Record<string, unknown>> = [];
+  notifications: CreateOxyNotificationRequest[] = [];
   readonly client = {
     linkedAccounts: {
       withRequester: (proof: RequesterProof) => ({
@@ -190,6 +194,19 @@ class FakeOxy {
           };
         },
       }),
+    },
+    notifications: {
+      create: async (notification: CreateOxyNotificationRequest): Promise<Notification> => {
+        this.notifications.push(notification);
+        const now = new Date().toISOString();
+        return {
+          ...notification,
+          _id: `notification-${this.notifications.length}`,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+        };
+      },
     },
     serviceRequest: async <R>(method: string, path: string, body?: unknown): Promise<R> =>
       (await this.serviceRequest(method, path, body)) as R,
@@ -213,10 +230,6 @@ class FakeOxy {
           id: actorUri.startsWith('did:') ? `oxy-${actorUri}` : `oxy-resolved-${actorUri.length}`,
         },
       };
-    }
-    if (method === 'POST' && path === '/notifications') {
-      this.notifications.push(body as Record<string, unknown>);
-      return {};
     }
     throw new Error(`unexpected Oxy call ${method} ${path}`);
   }

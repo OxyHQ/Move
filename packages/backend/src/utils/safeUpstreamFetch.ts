@@ -1,21 +1,19 @@
-// Provenance: `buildRequestOptions`, `fetchOnce` and the per-hop validation are
-// copied from OxyHQ/Mention packages/backend/src/utils/safeUpstreamFetch.ts and
-// connectors/shared/httpBody.ts @ f5ad90c9bbf6cc9f7f9b93e1378c4b011031812b
-// (origin/main). Trimmed to the one bounded GET Move needs; the media-proxy
-// extras and POST are Mention's. CHANGED: `signHeaders` re-signs each hop, for
-// the reads Oxy's instance actor signs (`sources/http.ts`).
+// The redirect loop is Move's own: `signHeaders` re-signs each hop, for the
+// reads Oxy's instance actor signs (`sources/http.ts`). Validation, IP pinning
+// and the bounded body read are the SDK's `safeFetch` and `readResponseBody`.
 
-import http, { type IncomingHttpHeaders, type IncomingMessage } from 'node:http';
-import https from 'node:https';
-import type { LookupAddress, LookupAllOptions, LookupOneOptions } from 'node:dns';
-import type { LookupFunction } from 'node:net';
-import { assertSafePublicUrl, SsrfRejection, UpstreamError } from '@oxy.so/core/server';
+import type { IncomingHttpHeaders } from 'node:http';
+import { readResponseBody, safeFetch, UpstreamError } from '@oxy.so/core/server';
 
 /**
  * The ONE way Move reads a URL a remote chose. Every hop — the first and each
- * redirect — is validated by `assertSafePublicUrl` (DNS + private/reserved-range
- * denylist) and the TCP connection is PINNED to the validated IP, closing the
- * DNS-rebind window. The body is read under a hard byte cap.
+ * redirect — is its own `safeFetch` (`redirect: 'manual'`): the URL is checked
+ * by `assertSafePublicUrl` (DNS + private/reserved-range denylist) and the TCP
+ * connection is PINNED to the validated IP, closing the DNS-rebind window. The
+ * body is read under a hard byte cap and the request's one deadline.
+ *
+ * The SDK follows redirects itself only with the SAME headers on every hop, and
+ * an HTTP signature is bound to one URL, so a signed read follows them here.
  */
 
 const USER_AGENT = 'OxyMove/1.0 (+https://move.oxy.so)';
@@ -42,7 +40,8 @@ export interface PublicGetOptions {
   /**
    * Headers to add to ONE hop, computed for that hop's URL — an HTTP signature
    * is bound to the `(request-target)` and `host` of exactly one URL, so every
-   * redirect needs a fresh one. Called after the hop passed the SSRF guard.
+   * redirect needs a fresh one. A hop that then fails the SSRF guard is never
+   * sent, so a signature for it goes nowhere.
    */
   signHeaders?: (url: string) => Promise<Record<string, string>>;
 }
@@ -54,71 +53,6 @@ export interface PublicGetResult {
   body?: Buffer;
 }
 
-function buildRequestOptions(
-  target: URL,
-  pinnedIp: string,
-  pinnedFamily: 4 | 6,
-  headers: Record<string, string>,
-  signal: AbortSignal,
-): https.RequestOptions {
-  return {
-    protocol: target.protocol,
-    hostname: target.hostname,
-    port: target.port || (target.protocol === 'https:' ? 443 : 80),
-    path: `${target.pathname}${target.search}`,
-    method: 'GET',
-    headers,
-    signal,
-    // Pin the connection to the validated IP — DNS is NOT re-resolved here.
-    // Bun may call a custom lookup with `{ all: true }` and sort the result, so
-    // that form MUST get an array back.
-    lookup: ((
-      _hostname: string,
-      options: number | LookupOneOptions | LookupAllOptions,
-      callback: (
-        err: NodeJS.ErrnoException | null,
-        address: string | LookupAddress[],
-        family?: number,
-      ) => void,
-    ): void => {
-      if (typeof options === 'object' && options !== null && options.all === true) {
-        callback(null, [{ address: pinnedIp, family: pinnedFamily }]);
-      } else {
-        callback(null, pinnedIp, pinnedFamily);
-      }
-    }) as unknown as LookupFunction,
-  };
-}
-
-function fetchOnce(
-  options: https.RequestOptions,
-  isHttps: boolean,
-  headersTimeoutMs: number,
-): Promise<IncomingMessage> {
-  return new Promise<IncomingMessage>((resolve, reject) => {
-    const req = (isHttps ? https : http).request(options, resolve);
-    req.setTimeout(headersTimeoutMs, () => req.destroy(new Error('upstream headers timeout')));
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-async function readBounded(response: IncomingMessage, maxBytes: number): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  let total = 0;
-  try {
-    for await (const chunk of response) {
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      total += buffer.byteLength;
-      if (total > maxBytes) throw new ResponseTooLargeError();
-      chunks.push(buffer);
-    }
-  } finally {
-    if (!response.destroyed) response.destroy();
-  }
-  return Buffer.concat(chunks, total);
-}
-
 /**
  * GET `url`, following up to three redirects (each re-validated), and read a
  * 2xx body under `maxBytes`. Non-2xx answers are RETURNED with their headers so
@@ -126,25 +60,28 @@ async function readBounded(response: IncomingMessage, maxBytes: number): Promise
  *
  * @throws {SsrfRejection} a hop targets a blocked address.
  * @throws {ResponseTooLargeError} the body exceeds `maxBytes`.
+ * @throws {UpstreamError} too many redirects, a timeout, or a failed transport.
  */
 export async function publicGet(url: string, options: PublicGetOptions): Promise<PublicGetResult> {
+  const deadline = Date.now() + options.timeoutMs;
   const signal = AbortSignal.timeout(options.timeoutMs);
   const headers = { 'User-Agent': USER_AGENT, Accept: options.accept, ...options.headers };
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const guard = await assertSafePublicUrl(current);
-    if (!guard.ok) throw new SsrfRejection(guard.reason);
-    const target = new URL(current);
     const hopHeaders = options.signHeaders
       ? { ...headers, ...(await options.signHeaders(current)) }
       : headers;
-    const response = await fetchOnce(
-      buildRequestOptions(target, guard.ip, guard.family, hopHeaders, signal),
-      target.protocol === 'https:',
-      options.headersTimeoutMs ?? options.timeoutMs,
-    );
-    const status = response.statusCode ?? 0;
-    const location = response.headers.location;
+    const {
+      response,
+      status,
+      headers: responseHeaders,
+    } = await safeFetch(current, {
+      headers: hopHeaders,
+      redirect: 'manual',
+      headersTimeoutMs: options.headersTimeoutMs ?? options.timeoutMs,
+      signal,
+    });
+    const location = responseHeaders.location;
     if (REDIRECT_STATUS_CODES.has(status) && typeof location === 'string') {
       // Never drain a redirect body: it could be unbounded.
       response.destroy();
@@ -153,17 +90,26 @@ export async function publicGet(url: string, options: PublicGetOptions): Promise
     }
     if (status < 200 || status >= 300) {
       response.destroy();
-      return { status, headers: response.headers };
+      return { status, headers: responseHeaders };
     }
-    if (Number(response.headers['content-length']) > options.maxBytes) {
+    if (Number(responseHeaders['content-length']) > options.maxBytes) {
       response.destroy();
       throw new ResponseTooLargeError();
     }
-    return {
-      status,
-      headers: response.headers,
-      body: await readBounded(response, options.maxBytes),
-    };
+    const read = await readResponseBody(response, {
+      maxBytes: options.maxBytes,
+      timeoutMs: Math.max(1, deadline - Date.now()),
+    });
+    switch (read.kind) {
+      case 'ok':
+        return { status, headers: responseHeaders, body: read.body };
+      case 'too_large':
+        throw new ResponseTooLargeError();
+      case 'timeout':
+        throw new UpstreamError('upstream body timeout');
+      case 'error':
+        throw read.error;
+    }
   }
   throw new UpstreamError('too many redirects');
 }

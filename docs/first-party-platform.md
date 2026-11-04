@@ -3,7 +3,8 @@
 Source-only work, 2026-10-23. No deployment or production database mutation is
 claimed. The own service carries identity, not OAuth scopes or a customer key.
 
-`getServiceOxyClient` uses the shared AWS role provider, including temporary
+Move's one `OxyServer` (`packages/backend/src/oxy.ts`) verifies sessions and is
+its service identity; it uses the shared AWS role provider, including temporary
 local SSO roles. Mention's SDK owns its canonical audience, authenticated
 transport and schemas. Move retains batch byte limits, ordering, source SSRF
 protection, fleet media budget, pause-on-429, checkpoints and idempotent undo.

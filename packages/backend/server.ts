@@ -2,13 +2,14 @@ import http from 'node:http';
 import express from 'express';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
 import {
-  OxyServer,
   createOxyAuthMiddleware,
   createOxyCors,
   createOxyRateLimit,
+  createOxySocketCors,
   oxyTrustProxy,
 } from '@oxy.so/core/server';
 import { config } from './src/config';
+import { oxy } from './src/oxy';
 import { closePostgres, connectPostgres } from './src/db/postgres';
 import healthRoutes from './src/routes/health.routes';
 import { createJobsRouter } from './src/routes/jobs.routes';
@@ -20,13 +21,12 @@ import { scheduleStalledSweep } from './src/queue/queues';
 import { startWorkers } from './src/queue/workers';
 import { isRuntimeReady, markRuntimeReady } from './src/utils/runtimeHealth';
 import { logger } from './src/utils/logger';
+import { createRateLimitStore } from './src/utils/redis';
 
 // The Oxy apex family (*.oxy.so, including move.oxy.so) is allowed by
-// createOxyCors; only the Expo dev server's origins are listed.
+// createOxyCors and createOxySocketCors alike; only the Expo dev server's
+// origins are listed. ONE list, so HTTP and the socket admit the same browsers.
 const APP_ORIGINS = ['http://localhost:8081', 'http://localhost:19006'];
-
-// Verifies users' sessions; Move's own service identity is `getServiceOxyClient()`.
-const oxy = new OxyServer({ baseURL: config.oxyApiUrl });
 
 // Oxy ecosystem telemetry (traffic + infrastructure heartbeat for the oxy.so
 // dashboard). Started here, in the process entry, so a test that builds routes
@@ -51,9 +51,9 @@ app.use(createOxyCors({ appOrigins: APP_ORIGINS }));
 app.use(healthRoutes);
 
 const server = http.createServer(app);
-const io = new SocketIOServer(server, {
-  cors: { origin: APP_ORIGINS, methods: ['GET', 'POST'], credentials: true },
-});
+// `cors` answers long-polling; `allowRequest` refuses another browser origin's
+// WebSocket handshake, which browsers apply no CORS to.
+const io = new SocketIOServer(server, createOxySocketCors({ appOrigins: APP_ORIGINS }));
 
 // Only authenticated sockets connect, and the room is the AUTHENTICATED user's
 // id, never a client-supplied one: `migration:progress` goes to `user:<id>`.
@@ -72,7 +72,8 @@ async function boot(): Promise<void> {
   await connectPostgres();
   const pipeline = createPipelineDeps();
 
-  app.use(createOxyRateLimit(oxy));
+  // One budget per caller across every task: the store is Redis when configured.
+  app.use(createOxyRateLimit(oxy, { store: createRateLimitStore() }));
   app.use(createJobsRouter(createJobService(pipeline), createOxyAuthMiddleware(oxy)));
 
   setRuntimeSocketServer(io);
