@@ -12,6 +12,7 @@
     "build:shared-types": "bun run --cwd packages/shared-types build",
     "build:frontend": "bun run --cwd packages/frontend export:web",
     "lint": "biome check . && bun run --cwd packages/frontend lint",
+    "i18n:check": "oxy-doctor-i18n --ci",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "validate:agents-md": "bun ./scripts/check-agents-md-size.mjs && bun ./scripts/test-check-agents-md-size.mjs",
@@ -27,7 +28,8 @@
     "test": "bun run build:shared-types && bun run --cwd packages/frontend test && bun run --cwd packages/backend test"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15"
+    "@biomejs/biome": "2.5.15",
+    "@oxy.so/doctor": "1.6.0"
   },
   "overrides": {
     "@oxy.so/contracts": "6.5.0",
