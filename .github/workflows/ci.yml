@@ -95,6 +95,8 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
       - name: Repository gates (AGENTS.md budget, migration phase markers, workflow secrets)
         run: bun run validate:agents-md && bun run validate:gates
+      - name: Translation keys (ADR 0055)
+        run: bun run i18n:check
       - name: Typecheck backend and frontend
         run: bun run typecheck
       - name: Biome (format and lint, whole repository)
