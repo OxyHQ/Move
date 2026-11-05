@@ -6,7 +6,7 @@
       "name": "move",
       "devDependencies": {
         "@biomejs/biome": "2.5.15",
-        "@oxy.so/doctor": "1.6.0",
+        "@oxy.so/doctor": "1.7.0",
       },
     },
     "packages/backend": {
@@ -573,7 +573,7 @@
 
     "@oxy.so/db": ["@oxy.so/db@1.4.0", "", { "peerDependencies": { "drizzle-orm": "^0.45.2", "postgres": "^3.4.9" }, "bin": { "oxy-db-check-migration-locks": "dist/cjs/bin/check-migration-locks.js" } }, "sha512-qumZQoZ4khGXOl+LYC5uZquw5N3DdjBZoV3+WbwJ/zlLXCJ180Qhg72nRSalvIUQHoFIosuIr5DFHT0ia3Garg=="],
 
-    "@oxy.so/doctor": ["@oxy.so/doctor@1.6.0", "", { "bin": { "oxy-doctor": "src/cli.mjs", "oxy-doctor-i18n": "src/i18n-cli.mjs", "oxy-emulator-preflight": "src/emulator-preflight.mjs", "oxy-doctor-expo-android": "src/expo-android.mjs" } }, "sha512-Cgp+s7y3v9JlHAm25lsu1QJ4A12wGJu2ZpamcQZ6uMW8lS+9kweYhVUEa9ENDJV82ZgWm92v6SY20MDpt0BEFQ=="],
+    "@oxy.so/doctor": ["@oxy.so/doctor@1.7.0", "", { "dependencies": { "semver": "^7.7.4" }, "bin": { "oxy-doctor": "src/cli.mjs", "oxy-doctor-i18n": "src/i18n-cli.mjs", "oxy-emulator-preflight": "src/emulator-preflight.mjs", "oxy-doctor-expo-android": "src/expo-android.mjs" } }, "sha512-g/xbx4YK59fOWqsJw2CyZSMR/NQyzi8vASxHTUNnIx5TVA762R+33PKqazeUeRB+DudcnLEKnIFDcs4EsImwhg=="],
 
     "@oxy.so/federation": ["@oxy.so/federation@2.12.0", "", { "dependencies": { "@oxy.so/contracts": "^1.0.0 || ^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || 4.11.0-oxy-one.0", "@oxy.so/core": "^6.14.0 || ^7.0.0" }, "peerDependencies": { "express": "^4.18.0 || ^5.0.0" }, "optionalPeers": ["express"] }, "sha512-6IZX1vP2gasymsR/zIdtqXFkPI1Kr01wZQ5fxIEOPJBa6Q7M+NGjCZKt6AtGQaG4V0ddU85H5KzgpkkfhZQiAg=="],
 
