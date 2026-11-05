@@ -1,0 +1,22 @@
+# The signed Android release of Oxy Move, built on Oxy's build machine by
+# oxy's reusable workflow. A run builds only when the app's `version` has no
+# GitHub release `android-v<version>` yet; otherwise the change ships as an OTA
+# update (`publish-update.yml`). oxy
+# docs/engineering/build-and-deploy.md#native-android-releases.
+name: Android release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    uses: OxyHQ/oxy/.github/workflows/android-release.yml@main
+    with:
+      app-dir: packages/frontend

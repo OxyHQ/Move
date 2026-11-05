@@ -33,7 +33,7 @@
   },
   "overrides": {
     "@oxy.so/contracts": "6.9.0",
-    "@oxy.so/core": "7.22.0",
+    "@oxy.so/core": "7.23.0",
     "@oxy.so/protocol": "1.6.1",
     "@oxy.so/bloom": "17.8.2",
     "@oxy.so/services": "14.3.8",
@@ -42,7 +42,7 @@
   },
   "resolutions": {
     "@oxy.so/contracts": "6.9.0",
-    "@oxy.so/core": "7.22.0",
+    "@oxy.so/core": "7.23.0",
     "@oxy.so/protocol": "1.6.1",
     "@oxy.so/bloom": "17.8.2",
     "react-native-css": "3.1.0-rc.0",

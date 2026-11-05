@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 12.0.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -21,10 +21,10 @@
     },
     "production": {
       "bun": "1.4.3",
-      "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.move.oxy.so"
+        "EXPO_PUBLIC_API_URL": "https://api.move.oxy.so",
+        "EXPO_PUBLIC_OXY_CLIENT_ID": "oxy_dk_e153bca818b231446c63539a59cbafc0076948c10453e77a"
       },
       "android": {
         "buildType": "app-bundle"
