@@ -142,8 +142,15 @@ then add `-- oxy:deploy-phase=pre|post` as the first line of the new `.sql`
 - **Web** — `.github/workflows/deploy-frontends.yml`: `expo export`, then
   `bunx wrangler@4 deploy` to an assets-only Worker on `move.oxy.so`
   (`workers_dev = false`; `public/_headers` sets `nosniff` + `Referrer-Policy`).
-- **Native** — EAS (`packages/frontend/eas.json`), bundle id / package `so.oxy.move`
-  (`so.oxy.move.dev` with `APP_VARIANT=development`), scheme `oxymove`.
+- **Native** — bundle id / package `so.oxy.move` (`so.oxy.move.dev` with
+  `APP_VARIANT=development`), scheme `oxymove`. `.github/workflows/android-release.yml`
+  calls oxy's reusable release on Oxy's build machine: a signed AAB + APK as the
+  GitHub release `android-v<version>`, built only when that `version` has none
+  (the build number is derived from it). `.github/workflows/publish-update.yml`
+  publishes the OTA update (`oxy-ship`, GitHub trusted publishing, no secret;
+  do not rename the file) to channel `production`. A native change is a
+  `version` bump; JS-only changes ship as OTA. Both read the build env from
+  `packages/frontend/eas.json`'s `production` profile.
 
 ## Own service authority
 

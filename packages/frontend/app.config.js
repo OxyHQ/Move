@@ -5,6 +5,11 @@ const IS_DEV = process.env.APP_VARIANT === 'development';
 const APP_ID = IS_DEV ? 'so.oxy.move.dev' : 'so.oxy.move';
 const APP_NAME = IS_DEV ? 'Oxy Move (Dev)' : 'Oxy Move';
 
+// Oxy Move's public client id (ApplicationCredential publicKey, not a secret):
+// the app the OTA manifest URL names. The JS reads the same id from
+// EXPO_PUBLIC_OXY_CLIENT_ID, which eas.json's production env sets to this value.
+const OXY_CLIENT_ID = 'oxy_dk_e153bca818b231446c63539a59cbafc0076948c10453e77a';
+
 module.exports = {
   expo: {
     name: APP_NAME,
@@ -61,6 +66,9 @@ module.exports = {
       // decoders out of the Android build: nothing here draws a GIF or animated WebP
       // through react-native's own Image (Bloom and @oxy.so/services use expo-image).
       ['@oxy.so/app-preset', { android: { gifEnabled: false, webpEnabled: false } }],
+      // Oxy Updates (OTA): JS-only changes reach installed binaries of the same
+      // `version` (runtime policy appVersion); publish-update.yml publishes them.
+      ['@oxy.so/app-preset/plugin/withOxyUpdates', { clientId: OXY_CLIENT_ID }],
     ],
     extra: {
       router: {},
