@@ -15,7 +15,7 @@ module.exports = {
     name: APP_NAME,
     slug: 'move',
     scheme: 'oxymove',
-    version: '0.1.0',
+    version: '0.2.0',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
