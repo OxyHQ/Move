@@ -90,9 +90,12 @@ jobs:
           OXY_API_URL: https://api.oxy.so
           SHIP_MESSAGE: ${{ github.event.head_commit.message || format('Manual publish of {0}', github.sha) }}
           NODE_OPTIONS: '--max-old-space-size=4096'
+        # The update's message is the commit's subject line: Oxy Updates caps a
+        # message at 500 characters, and a squash commit's body runs past it.
         run: |
+          message="${SHIP_MESSAGE%%$'\n'*}"
           bunx --no-install oxy-ship publish \
             --channel production \
             --platform all \
             --git-commit "$GITHUB_SHA" \
-            --message "$SHIP_MESSAGE"
+            --message "${message:0:500}"
