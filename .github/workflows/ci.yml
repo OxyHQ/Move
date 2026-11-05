@@ -93,6 +93,10 @@ jobs:
           node-version: 24
       - name: Install exact dependency graph
         run: bun install --frozen-lockfile --ignore-scripts
+      # Fails on an undeclared required native peer of @oxy.so/services and on a
+      # package bun.lock or node_modules holds twice where one copy would do.
+      - name: Oxy dependency health (oxy-doctor)
+        run: bun run doctor:oxy
       - name: Repository gates (AGENTS.md budget, migration phase markers, workflow secrets)
         run: bun run validate:agents-md && bun run validate:gates
       - name: Translation keys (ADR 0055)
