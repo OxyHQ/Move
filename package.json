@@ -37,7 +37,7 @@
     "@oxy.so/core": "7.23.0",
     "@oxy.so/protocol": "1.6.1",
     "@oxy.so/bloom": "17.9.0",
-    "@oxy.so/services": "14.3.8",
+    "@oxy.so/services": "14.4.0",
     "react-native-css": "3.1.0-rc.0",
     "lightningcss": "1.30.1"
   },
