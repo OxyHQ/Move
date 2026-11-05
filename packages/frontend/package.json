@@ -20,7 +20,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@move/shared-types": "workspace:*",
     "@oxy.so/app-preset": "6.0.0",
-    "@oxy.so/bloom": "17.8.2",
+    "@oxy.so/bloom": "17.9.0",
     "@oxy.so/contracts": "6.9.0",
     "@oxy.so/core": "7.23.0",
     "@oxy.so/services": "14.3.8",
