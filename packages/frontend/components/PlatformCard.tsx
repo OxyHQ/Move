@@ -4,7 +4,7 @@ import { Badge } from '@oxy.so/bloom/badge';
 import { Button } from '@oxy.so/bloom/button';
 import { Card } from '@oxy.so/bloom/card';
 import { IconCircle } from '@oxy.so/bloom/icon-circle';
-import type { Props as IconProps } from '@oxy.so/bloom/icons';
+import type { BloomIconComponent } from '@oxy.so/bloom';
 import { RiBlueskyFill } from '@oxy.so/bloom/icons/RiBlueskyFill';
 import { RiInstagramFill } from '@oxy.so/bloom/icons/RiInstagramFill';
 import { RiMastodonFill } from '@oxy.so/bloom/icons/RiMastodonFill';
@@ -13,11 +13,10 @@ import { RiThreadsFill } from '@oxy.so/bloom/icons/RiThreadsFill';
 import { RiTwitterXFill } from '@oxy.so/bloom/icons/RiTwitterXFill';
 import { SiSubstack } from '@oxy.so/bloom/icons/SiSubstack';
 import { Muted, Text } from '@oxy.so/bloom/typography';
-import type { ComponentType } from 'react';
 import type { PlatformInfo } from '@move/shared-types';
 
 /** Each platform's mark, from Bloom's icon set. Exhaustive over the platform ids. */
-const PLATFORM_ICONS: Record<PlatformInfo['id'], ComponentType<IconProps>> = {
+const PLATFORM_ICONS: Record<PlatformInfo['id'], BloomIconComponent> = {
   mastodon: RiMastodonFill,
   bluesky: RiBlueskyFill,
   threads: RiThreadsFill,
