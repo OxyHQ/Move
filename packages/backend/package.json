@@ -16,7 +16,7 @@
   "dependencies": {
     "@aws-sdk/credential-provider-node": "3.972.84",
     "@move/shared-types": "workspace:*",
-    "@oxy.so/contracts": "6.24.0",
+    "@oxy.so/contracts": "6.25.0",
     "@oxy.so/core": "7.48.0",
     "@oxy.so/db": "^1.5.0",
     "@oxy.so/federation": "3.2.0",
