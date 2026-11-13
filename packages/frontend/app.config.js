@@ -45,7 +45,7 @@ module.exports = {
           dark: { backgroundColor: '#100d10' },
         },
       ],
-      // Dictation and voice calls with Alia (`@alia.onl/sdk`) recognise speech on
+      // Dictation and voice calls with Alia (`@gemies/sdk`) recognise speech on
       // the device; the plugin writes the two iOS purpose strings and the
       // Android RECORD_AUDIO permission.
       [
