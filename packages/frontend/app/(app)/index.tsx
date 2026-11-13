@@ -3,8 +3,8 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { AliaChatSheet, type AliaChatSheetRef } from '@alia.onl/sdk';
-import { AliaAvatarIcon } from '@alia.onl/sdk/avatar';
+import { GemieChatSheet, type GemieChatSheetRef } from '@gemies/sdk';
+import { GemieAvatarIcon } from '@gemies/sdk/avatar';
 import { useOxy } from '@oxy.so/services/ui/client';
 import { ButtonGroup, ButtonGroupItem } from '@oxy.so/bloom/button-group';
 import { Card } from '@oxy.so/bloom/card';
@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const jobs = useQuery({ queryKey: queryKeys.jobs, queryFn: () => api.list() });
   const activeJobs = (jobs.data ?? []).filter(isActive);
 
-  const aliaChatRef = useRef<AliaChatSheetRef>(null);
+  const aliaChatRef = useRef<GemieChatSheetRef>(null);
   const aliaWelcomeSuggestions = useMemo(
     () => [
       { id: 'start', text: t('home.aliaSuggestion.start') },
@@ -52,7 +52,7 @@ export default function HomeScreen() {
         <ButtonGroup accessibilityLabel={t('home.actions')}>
           <ButtonGroupItem
             iconOnly
-            leadingIcon={AliaAvatarIcon}
+            leadingIcon={GemieAvatarIcon}
             accessibilityLabel={t('home.askAlia')}
             onPress={() => aliaChatRef.current?.present()}
           />
@@ -119,7 +119,7 @@ export default function HomeScreen() {
 
       {/* This screen is only reachable signed in (the root Stack swaps the
           `(auth)` group otherwise), so the sheet is always allowed to mount. */}
-      <AliaChatSheet
+      <GemieChatSheet
         ref={aliaChatRef}
         clientContext={aliaClientContext}
         welcomeSuggestions={aliaWelcomeSuggestions}
