@@ -1,6 +1,5 @@
 import { OxyServer } from '@oxy.so/core/server';
-import type { RequesterProof } from '@oxy.so/core/server';
-import type { TaskSession } from '../utils/taskAuthority';
+import type { ActingFor } from '@oxy.so/core/server';
 /**
  * The pipeline end to end, against a REAL Postgres and the REAL Mastodon source
  * (replaying recorded responses), with Mention and Oxy replaced by in-memory
@@ -55,11 +54,6 @@ import {
 } from '../../../frontend/lib/planApplier';
 import { createTestDatabase, type TestDatabase } from './helpers/testDatabase';
 
-const sessionFor = (accountId: string): TaskSession => ({
-  requesterToken: `session-${accountId}`,
-  actorAccountId: accountId,
-  effectiveAccountId: accountId,
-});
 const STATUS = (id: string) => `${GARGRON}/statuses/${id}`;
 /** Every item the default options import from the recorded outbox. */
 const EXPECTED_IMPORTS = [
@@ -169,11 +163,12 @@ class FakeMention implements ContentDestination {
   }
 }
 
-const taskBindings = new Map<string, TaskSession>();
-const revokedTasks = new Set<string>();
-function assertTask(taskId: string, accountId: string) {
-  if (taskBindings.get(taskId)?.effectiveAccountId !== accountId || revokedTasks.has(taskId))
-    throw Object.assign(new Error('original authority revoked or wrong account'), { status: 403 });
+/** Accounts Oxy no longer lets Move act for (closed, supervised, Move undeclared). */
+const refusedAccounts = new Set<string>();
+/** Oxy checks Move's declared authority and the account live (oxy ADR 0066). */
+function assertActingFor(actingFor: ActingFor, accountId: string) {
+  if (actingFor.accountId !== accountId || refusedAccounts.has(accountId))
+    throw Object.assign(new Error('first_party_capability_not_declared'), { status: 403 });
 }
 
 class FakeOxy {
@@ -181,11 +176,9 @@ class FakeOxy {
   notifications: CreateOxyNotificationRequest[] = [];
   readonly client = {
     linkedAccounts: {
-      withRequester: (proof: RequesterProof) => ({
+      actingFor: (actingFor: ActingFor) => ({
         forUser: async (userId: string): Promise<ServiceLinkedAccountListResponse> => {
-          if ('taskId' in proof && proof.taskId) assertTask(proof.taskId, userId);
-          else if (!('requesterToken' in proof) || proof.requesterToken !== `session-${userId}`)
-            throw Object.assign(new Error('session account mismatch'), { status: 403 });
+          assertActingFor(actingFor, userId);
           return {
             userId,
             linkedAccounts: this.linkedAccounts
@@ -259,22 +252,12 @@ function build(maxBatchSize = 50): void {
   uploads = 0;
   deps = {
     db: database.db,
-    tasks: {
-      async create(session) {
-        const id = `task-${randomUUID()}`;
-        taskBindings.set(id, session);
-        return id;
-      },
-      async revoke(id) {
-        revokedTasks.add(id);
-      },
-    },
     oxy: new OxyGateway(oxy.client),
     destination: mention,
     media: createMediaCopier({
       limiter: createMemoryUploadLimiter(100, () => clock),
-      importMedia: async (accountId, _url, taskId) => {
-        assertTask(taskId, accountId);
+      importMedia: async (accountId) => {
+        assertActingFor({ accountId }, accountId);
         uploads++;
         if (uploadFailures.includes(uploads))
           throw new OxyApiError('Too many media cache uploads', {
@@ -297,7 +280,6 @@ function build(maxBatchSize = 50): void {
   enqueued = [];
   jobs = new JobService({
     db: deps.db,
-    tasks: deps.tasks,
     oxy: deps.oxy,
     destination: deps.destination,
     sourceFactory: deps.sourceFactory,
@@ -324,8 +306,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await database.db.delete(migrationJobs);
   oxy = new FakeOxy();
-  taskBindings.clear();
-  revokedTasks.clear();
+  refusedAccounts.clear();
   const linked = {
     proofMethod: 'oauth' as const,
     verifiedAt: '2026-09-25T00:00:00.000Z',
@@ -361,11 +342,7 @@ beforeEach(async () => {
 describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
   for (const deniedStatus of [401, 403]) {
     test(`Mention HTTP ${deniedStatus} preserves the stored intent and finishes without rescheduling`, async () => {
-      const created = await jobs.create(
-        USER,
-        { platform: 'mastodon', linkedAccountId: LINKED },
-        sessionFor(USER),
-      );
+      const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
       await database.db
         .update(migrationJobs)
         .set({
@@ -403,7 +380,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
           expect(new URL(request.url).pathname).toBe('/imports/v1/posts:batch');
           expect(request.headers.get('X-Oxy-User-Id')).toBe(USER);
           expect(request.headers.get('Authorization')).toBe(`Bearer ${workloadToken}`);
-          expect(request.headers.get('x-oxy-task-id')).toBe(created.oxyTaskId);
+          expect(request.headers.get('x-oxy-task-id')).toBeNull();
           before = await job(created.id);
           itemsBefore = await database.db
             .select()
@@ -489,11 +466,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     });
   }
   test('a full run imports every public own post, parents before children, and plans profile + graph', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(enqueued).toEqual([created.id]);
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
 
@@ -552,11 +525,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
   test('an Oxy 429 on media pauses the job (never fails it) and the next run resumes to done', async () => {
     uploadFailures = [2]; // the post image, after the avatar
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     const first = await runMigrationJob(created.id, deps);
     expect(first.status).toBe('paused');
     const paused = await job(created.id);
@@ -595,11 +564,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
       };
       return source;
     };
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     const done = await job(created.id);
     expect(done.phases.graph).toEqual({ status: 'skipped', reason: 'hidden' });
@@ -608,11 +573,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
   test('a Mention 429 also pauses', async () => {
     mention.failOnDelivery.set(1, 'rate-limit');
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect((await runMigrationJob(created.id, deps)).status).toBe('paused');
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     expect(mention.received).toHaveLength(EXPECTED_IMPORTS.length);
@@ -621,11 +582,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
   test('a transient failure resumes from the saved cursor, not from the start', async () => {
     build(2);
     mention.failOnDelivery.set(2, 'transient');
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     const first = await runMigrationJob(created.id, deps);
     expect(first.status).toBe('retry');
     const afterFirst = await job(created.id);
@@ -643,11 +600,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
 
   test('a lost response is resent idempotently: nothing is duplicated', async () => {
     mention.failOnDelivery.set(1, 'lose-response');
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect((await runMigrationJob(created.id, deps)).status).toBe('retry');
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     expect(mention.posts.size).toBe(EXPECTED_IMPORTS.length);
@@ -673,11 +626,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
     fetcher = createFixtureFetcher(routes);
     deps.sourceFactory = async (account) => new MastodonSource(account, fetcher);
 
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     const reply = [...mention.posts.values()].find(
       (post) => post.item.sourceId === STATUS('117294179974600212'),
@@ -713,11 +662,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
       item: {} as PreparedItem,
     });
 
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     const reply = [...mention.posts.values()].find(
       (post) => post.item.sourceId === STATUS('117294179974600212'),
@@ -742,11 +687,7 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
       }
       return original(params);
     };
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     expect(await runMigrationJob(created.id, deps)).toEqual({ status: 'done' });
     expect([...mention.received].sort()).toEqual([...EXPECTED_IMPORTS].sort());
     const done = await job(created.id);
@@ -755,32 +696,24 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
   });
 
   test('undo surfaces the posts Mention failed to delete, and a second undo retries them', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await runMigrationJob(created.id, deps);
     mention.undoFailures = 2;
-    const first = await jobs.undo(USER, created.id, sessionFor(USER));
+    const first = await jobs.undo(USER, created.id);
     expect(first).toMatchObject({ deleted: EXPECTED_IMPORTS.length - 2, failed: 2 });
     expect(first.job.status).toBe('undone');
     expect(first.job.undoResult).toEqual({ deleted: EXPECTED_IMPORTS.length - 2, failed: 2 });
-    const second = await jobs.undo(USER, created.id, sessionFor(USER));
+    const second = await jobs.undo(USER, created.id);
     expect(second).toMatchObject({ deleted: 2, failed: 0 });
     expect(second.job.undoResult).toEqual({ deleted: EXPECTED_IMPORTS.length, failed: 0 });
     expect(mention.posts.size).toBe(0);
   });
 
   test("undo deletes Mention's batch, marks items undone and returns the plan for the client", async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await runMigrationJob(created.id, deps);
     expect(mention.posts.size).toBe(EXPECTED_IMPORTS.length);
-    const result = await jobs.undo(USER, created.id, sessionFor(USER));
+    const result = await jobs.undo(USER, created.id);
     expect(result.deleted).toBe(EXPECTED_IMPORTS.length);
     expect(mention.posts.size).toBe(0);
     expect(result.job.status).toBe('undone');
@@ -791,29 +724,21 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
       .where(eq(migrationItems.jobId, created.id));
     expect(items.every((item) => item.status === 'undone')).toBe(true);
     // Idempotent: a second undo deletes nothing and does not throw.
-    expect((await jobs.undo(USER, created.id, sessionFor(USER))).deleted).toBe(0);
+    expect((await jobs.undo(USER, created.id)).deleted).toBe(0);
   });
 
   test("a linked account that is not the caller's is rejected before any job exists", async () => {
     await expect(
-      jobs.create(
-        'someone-else',
-        { platform: 'mastodon', linkedAccountId: LINKED },
-        sessionFor('someone-else'),
-      ),
+      jobs.create('someone-else', { platform: 'mastodon', linkedAccountId: LINKED }),
     ).rejects.toBeInstanceOf(ForeignLinkedAccountError);
     await expect(
-      jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED }, sessionFor(USER)),
+      jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED }),
     ).rejects.toBeInstanceOf(ForeignLinkedAccountError);
     expect(await database.db.select().from(migrationJobs)).toHaveLength(0);
   });
 
   test('a linked account revoked after creation fails the run with a stable code', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     oxy.linkedAccounts = [];
     expect((await runMigrationJob(created.id, deps)).status).toBe('failed');
     expect((await job(created.id)).error).toBe('linked-account-not-owned');
@@ -821,49 +746,31 @@ describe('migration pipeline (real Postgres, Mention and Oxy faked)', () => {
   });
 
   test('at most one active job per user and platform, enforced by the database', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await expect(
-      jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED }, sessionFor(USER)),
+      jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED }),
     ).rejects.toBeInstanceOf(JobConflictError);
     await runMigrationJob(created.id, deps);
     // Finished jobs are history; they do not hold the slot. A second finished
     // migration notifies under its OWN entity id (Oxy dedupes on entityId).
-    const second = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const second = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await runMigrationJob(second.id, deps);
     expect(oxy.notifications.map((note) => note.entityId)).toEqual([created.id, second.id]);
     expect(MIGRATION_PLATFORMS).toContain('mastodon');
   });
 
   test('a cancelled job is never run', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await jobs.cancel(USER, created.id);
     expect((await runMigrationJob(created.id, deps)).status).toBe('cancelled');
     expect(mention.received).toHaveLength(0);
   });
 
   test('another user cannot read, cancel or undo a job', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await expect(jobs.get('intruder', created.id)).rejects.toThrow('job not found');
     await expect(jobs.cancel('intruder', created.id)).rejects.toThrow('job not found');
-    await expect(jobs.undo('intruder', created.id, sessionFor('intruder'))).rejects.toThrow(
-      'job not found',
-    );
+    await expect(jobs.undo('intruder', created.id)).rejects.toThrow('job not found');
   });
 });
 
@@ -929,11 +836,7 @@ describe('the client plan: resumable and undoable from any device (real JobServi
   };
 
   test('a Bluesky run plans the profile, the follows and the PUBLIC blocks', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'bluesky', linkedAccountId: LINKED_BSKY },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED_BSKY });
     expect((await runMigrationJob(created.id, deps)).status).toBe('done');
     const done = await job(created.id);
     expect(done.plan.graph?.followBatches.flat()).toHaveLength(3);
@@ -948,11 +851,7 @@ describe('the client plan: resumable and undoable from any device (real JobServi
   });
 
   test('undo on a second device restores the profile and removes only what Move created', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'bluesky', linkedAccountId: LINKED_BSKY },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED_BSKY });
     await runMigrationJob(created.id, deps);
     const { plan } = await jobs.plan(USER, created.id);
     const follows = plan.graph!.followBatches.flat();
@@ -988,7 +887,7 @@ describe('the client plan: resumable and undoable from any device (real JobServi
     expect(account.blocked.size).toBe(5);
 
     // Device C, with nothing of its own, undoes from what Move returns.
-    const result = await jobs.undo(USER, created.id, sessionFor(USER));
+    const result = await jobs.undo(USER, created.id);
     const client = await undoPlan({ sdk: account.session() }, result);
 
     expect(client).toMatchObject({
@@ -1006,11 +905,7 @@ describe('the client plan: resumable and undoable from any device (real JobServi
   });
 
   test('the client sees no follow or block batch while the graph is still being built', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'bluesky', linkedAccountId: LINKED_BSKY },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED_BSKY });
     await runMigrationJob(created.id, deps);
     const done = await job(created.id);
     await database.db
@@ -1024,11 +919,7 @@ describe('the client plan: resumable and undoable from any device (real JobServi
   });
 
   test('the ack refuses facts that do not belong to the plan, and keeps the first of each', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'bluesky', linkedAccountId: LINKED_BSKY },
-      sessionFor(USER),
-    );
+    const created = await jobs.create(USER, { platform: 'bluesky', linkedAccountId: LINKED_BSKY });
     await runMigrationJob(created.id, deps);
     const { plan } = await jobs.plan(USER, created.id);
     const [first, second] = plan.graph!.followBatches[0];
@@ -1060,46 +951,27 @@ describe('the client plan: resumable and undoable from any device (real JobServi
   });
 });
 
-describe('durable original requester authority', () => {
-  test('persists only task IDs, keeps the managed-account operator, and revokes cancellation', async () => {
-    const session = { ...sessionFor(USER), actorAccountId: 'human-operator' };
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      session,
-    );
-    expect(created.oxyTaskId).toBeTruthy();
-    const taskId = created.oxyTaskId!;
-    expect(taskBindings.get(taskId)).toEqual(session);
-    expect(JSON.stringify(created)).not.toContain(session.requesterToken);
+describe("acting for the account on Move's declared authority (oxy ADR 0066)", () => {
+  test('stores no authority on the job, and a cancel stops the run', async () => {
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
+    expect(Object.keys(created).some((key) => /task/i.test(key))).toBe(false);
     await jobs.cancel(USER, created.id);
-    expect(revokedTasks.has(taskId)).toBe(true);
     expect((await runMigrationJob(created.id, deps)).status).toBe('cancelled');
     expect(mention.deliveries).toBe(0);
   });
-  test('refuses a revoked task without importing media or substituting the job owner', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
-    revokedTasks.add(created.oxyTaskId!);
+  test('fails without importing media when Oxy no longer admits the account', async () => {
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
+    refusedAccounts.add(USER);
     expect((await runMigrationJob(created.id, deps)).status).toBe('failed');
     expect((await job(created.id)).error).toContain('authority-unavailable');
     expect(uploads).toBe(0);
     expect(mention.deliveries).toBe(0);
   });
-  test('undo obtains fresh current-session authority and preserves the original batch', async () => {
-    const created = await jobs.create(
-      USER,
-      { platform: 'mastodon', linkedAccountId: LINKED },
-      sessionFor(USER),
-    );
+  test('undo deletes the original batch with no fresh authority to mint', async () => {
+    const created = await jobs.create(USER, { platform: 'mastodon', linkedAccountId: LINKED });
     await runMigrationJob(created.id, deps);
-    const result = await jobs.undo(USER, created.id, sessionFor(USER));
+    const result = await jobs.undo(USER, created.id);
     expect(result.job.id).toBe(created.id);
-    expect(result.job.undoTaskId).toBeTruthy();
-    expect(result.job.undoTaskId).not.toBe(created.oxyTaskId);
-    expect(revokedTasks.has(created.oxyTaskId!)).toBe(true);
+    expect(result.job.status).toBe('undone');
   });
 });

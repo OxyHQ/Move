@@ -33,8 +33,8 @@ rules that were moved out of it, with their reasons.
   PUBLIC data only.
 - Profile, follows and blocks are written by the CLIENT with the user's session (Oxy refuses
   service tokens there). The backend only builds the plan.
-- Verify linked accounts before create/run with the original session/task proof; persist
-  task IDs only, revoke on cancel, use fresh session authority for undo
+- Verify linked accounts before create/run acting for the job's account (`actingFor`,
+  oxy ADR 0066); store no authority on a job, never a session or task
   ([first-party-platform.md](first-party-platform.md)).
 - Import Mention schemas/limits from `@oxy.so/mention-contracts` and transport from its
   `/server` SDK; no copied contract.

@@ -128,16 +128,15 @@ export interface ImportedMedia {
 }
 
 /** Import `sourceUrl` into `ownerUserId`'s files; rejects with the SDK's error. */
-export type MediaImporter = (
-  ownerUserId: string,
-  sourceUrl: string,
-  taskId: string,
-) => Promise<ImportedMedia>;
+export type MediaImporter = (ownerUserId: string, sourceUrl: string) => Promise<ImportedMedia>;
 
-/** Oxy's import, with Move's service credential. Public, like every migrated post's media. */
-export const importWithOxy: MediaImporter = async (ownerUserId, sourceUrl, taskId) => {
+/**
+ * Oxy's import, acting for the account on Move's declared `oxy:files` (oxy ADR
+ * 0066). Public, like every migrated post's media.
+ */
+export const importWithOxy: MediaImporter = async (ownerUserId, sourceUrl) => {
   const { file } = await oxy.assets
-    .withRequester({ taskId, accountId: ownerUserId })
+    .actingFor({ accountId: ownerUserId })
     .importUserMedia(ownerUserId, sourceUrl, {
       visibility: 'public',
     });
@@ -202,7 +201,6 @@ export interface MediaCopier {
   copy(
     ownerUserId: string,
     media: SourceMedia[],
-    taskId: string,
   ): Promise<Array<SourceMedia & { assetId: string }>>;
 }
 
@@ -226,14 +224,14 @@ export function createMediaCopier(deps: {
   };
 
   return {
-    async copy(ownerUserId, media, taskId) {
+    async copy(ownerUserId, media) {
       const copied: Array<SourceMedia & { assetId: string }> = [];
       for (const entry of media) {
         if (!UPLOADABLE.test(entry.mimeType)) continue;
         await acquire();
         let file: ImportedMedia;
         try {
-          file = await importMedia(ownerUserId, entry.url, taskId);
+          file = await importMedia(ownerUserId, entry.url);
         } catch (error) {
           const failure = importFailure(error);
           if (failure?.status === 429) {

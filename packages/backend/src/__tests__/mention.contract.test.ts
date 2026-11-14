@@ -173,7 +173,6 @@ describe('the Mention client', () => {
     );
     const results = await destination.deliver({
       oxyUserId: 'u',
-      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items,
@@ -190,7 +189,6 @@ describe('the Mention client', () => {
     const { destination, requests } = client(created);
     await destination.deliver({
       oxyUserId: 'u',
-      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items: Array.from({ length: 50 }, (_, i) => item({ sourceId: `s${i}` })),
@@ -206,7 +204,6 @@ describe('the Mention client', () => {
     }));
     const results = await destination.deliver({
       oxyUserId: 'u',
-      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'mastodon',
       batchId: 'job',
       items: [item({ sourceId: 'a' }), item({ sourceId: 'b' })],
@@ -221,7 +218,6 @@ describe('the Mention client', () => {
     const { destination, requests } = client(() => ({ imported: { a: 'p1' }, federated: {} }));
     const found = await destination.lookupImported({
       oxyUserId: 'u',
-      requester: { accountId: 'u', taskId: 'original-task' },
       platform: 'bluesky',
       sourceIds: ['a', 'b', 'a'],
     });

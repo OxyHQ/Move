@@ -8,7 +8,7 @@ away", `docs/adr/0043-application-owned-files.md` in OxyHQ/oxy).
 
 `destinations/media.ts` hands each media URL to Oxy:
 `OxyServer.assets.importUserMedia(oxyUserId, url, { visibility: 'public' })`
-(`POST /assets/service/user-media/import`, ADR 0043 D7, the original task/account proof, which Move already holds). Oxy fetches the URL with its
+(`POST /assets/service/user-media/import`, ADR 0043 D7, through `assets.actingFor({ accountId })` on Move's declared `oxy:files`). Oxy fetches the URL with its
 own SSRF-safe fetcher (https only, public addresses only, bounded redirects,
 40 MiB, image or video) and stores the file **owned by the user**. Move never
 downloads a media file.

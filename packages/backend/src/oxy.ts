@@ -1,7 +1,7 @@
 /**
  * Move's ONE Oxy client. It verifies users' sessions (HTTP and Socket.IO),
  * keys the rate limiter, and is Move's own service identity for every call to
- * Oxy: linked accounts, federation, notifications, media imports, tasks.
+ * Oxy: linked accounts, federation, notifications, media imports.
  *
  * Move authenticates as its workload (ADR 0026/0049), never with an api key:
  * the shared AWS provider covers the ECS task role and a temporary local SSO

@@ -5,9 +5,9 @@
  * It never WRITES the profile, follows or blocks: Oxy accepts those only from
  * the user's own session, so the Move CLIENT applies them from the plan.
  *
- * Own workload identity has no OAuth scopes. Private linked-account reads also
- * prove the job's original requester, while public federation and system
- * notification operations retain their existing domain rules.
+ * Own workload identity has no OAuth scopes. Linked-account reads act for the
+ * job's account on Move's declared `oxy:linked-accounts` (oxy ADR 0066); public
+ * federation and system notification operations retain their domain rules.
  */
 
 import { z } from 'zod';
@@ -16,7 +16,7 @@ import {
   type CreateOxyNotificationRequest,
   type LinkedAccountNetwork,
 } from '@oxy.so/contracts';
-import type { OxyServer, RequesterProof } from '@oxy.so/core/server';
+import type { ActingFor, OxyServer } from '@oxy.so/core/server';
 import { FOLLOW_BATCH_SIZE, type MigrationPlatform } from '@move/shared-types';
 import { logger } from '../utils/logger';
 import type { GraphAccount, SourceAccount } from '../sources/types';
@@ -29,7 +29,7 @@ import {
 /** The part of Move's service `OxyServer` client the gateway uses. */
 export type OxyServiceClient = {
   linkedAccounts: {
-    withRequester(proof: RequesterProof): Pick<OxyServer['linkedAccounts'], 'forUser'>;
+    actingFor(actingFor: ActingFor): Pick<OxyServer['linkedAccounts'], 'forUser'>;
   };
   notifications: Pick<OxyServer['notifications'], 'create'>;
   /** Federation identity lookups: the SDK has no typed `federation` namespace yet. */
@@ -76,10 +76,9 @@ export class OxyGateway {
     oxyUserId: string,
     linkedAccountId: string,
     platform: MigrationPlatform,
-    requester: RequesterProof,
   ): Promise<SourceAccount> {
     const { linkedAccounts } = await this.oxy.linkedAccounts
-      .withRequester(requester)
+      .actingFor({ accountId: oxyUserId })
       .forUser(oxyUserId);
     const account = linkedAccounts.find((entry) => entry.id === linkedAccountId);
     if (!account || account.network !== PLATFORM_NETWORK[platform])

@@ -28,7 +28,7 @@ write the client also acks the fact undo needs — the profile values it is abou
 to overwrite, which targets it already follows or blocks — and Move keeps the
 first value of each fact (`migration_jobs.undo_facts`). So a migration resumes,
 and undoes, from any device. Content is written by the **backend** to Mention
-with Move's attested workload and the job's original requester proof.
+with Move's attested workload, acting for the job's account (oxy ADR 0066).
 
 ## Architecture
 
@@ -158,11 +158,11 @@ Move uses the shared AWS workload provider and Oxy core transport. Configure the
 registered role and environment; local development may use a temporary assumed
 role or SSO provider. No Oxy API key pair, scope list or app consent is needed.
 
-Each migration persists a durable Oxy task created from the real requesting
-session. Private linked-account reads, media imports and Mention calls use that
-same task and account. Cancel revokes it; undo creates a fresh short instruction
-from the current session, retaining the original batch. History, cursors and
-partial results remain intact if authority is revoked. Details and deployment
+Linked-account reads, media imports and Mention calls act for the job's account
+on what Move's first-party registry entry declares (oxy ADR 0066): no session or
+task is kept, so a move runs to the end in the background. Undo keeps the
+original batch. History, cursors and partial results remain intact if Oxy stops
+admitting the account. Details and deployment
 order: [first-party platform migration](docs/first-party-platform.md).
 
 ## Reading Mastodon
