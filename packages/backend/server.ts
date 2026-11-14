@@ -7,13 +7,13 @@ import {
   createOxyRateLimit,
   createOxySocketCors,
   oxyTrustProxy,
+  startEcosystemTraffic,
 } from '@oxy.so/core/server';
 import { config } from './src/config';
 import { oxy } from './src/oxy';
 import { closePostgres, connectPostgres } from './src/db/postgres';
 import healthRoutes from './src/routes/health.routes';
 import { createJobsRouter } from './src/routes/jobs.routes';
-import { startPlatformActivity } from './src/runtime/platformActivity';
 import { setRuntimeSocketServer } from './src/runtime/socketServer';
 import { registerGracefulShutdown } from './src/runtime/gracefulShutdown';
 import { createJobService, createPipelineDeps } from './src/runtime/pipelineDeps';
@@ -31,8 +31,12 @@ const APP_ORIGINS = ['http://localhost:8081', 'http://localhost:19006'];
 // Oxy ecosystem telemetry (traffic + infrastructure heartbeat for the oxy.so
 // dashboard). Started here, in the process entry, so a test that builds routes
 // starts no publisher; and it publishes only on ECS (workload identity), so a
-// local checkout starts none either. `undefined` everywhere else.
-const activity = startPlatformActivity(isRuntimeReady);
+// local checkout starts none either (the handle is inert there).
+const activity = startEcosystemTraffic({
+  service: 'move',
+  ready: isRuntimeReady,
+  deployedOnly: true,
+});
 
 const app = express();
 app.disable('x-powered-by');
@@ -44,7 +48,7 @@ app.disable('x-powered-by');
 // proxied hostname, putting every caller behind one edge in one bucket.
 app.set('trust proxy', oxyTrustProxy);
 // Before every route, the probes included, so the observed traffic is all of it.
-if (activity) app.use(activity.observeHttp);
+app.use(activity.observeHttp);
 app.use(express.json({ limit: '256kb' }));
 app.use(createOxyCors({ appOrigins: APP_ORIGINS }));
 // Probes first, unauthenticated and unthrottled.
@@ -64,7 +68,7 @@ io.on('connection', (socket: Socket & { user?: { id: string } }) => {
     socket.disconnect(true);
     return;
   }
-  activity?.observeSocket(socket);
+  activity.observeSocket(socket);
   void socket.join(`user:${userId}`);
 });
 
@@ -84,7 +88,7 @@ async function boot(): Promise<void> {
   registerGracefulShutdown({
     server,
     io,
-    stopActivity: activity ? () => activity.stop() : undefined,
+    stopActivity: () => activity.stop(),
   });
   server.listen(config.runtime.port, () =>
     logger.info(`Oxy Move backend listening on :${config.runtime.port}`),
@@ -93,7 +97,7 @@ async function boot(): Promise<void> {
 
 void boot().catch(async (error) => {
   logger.error('Boot failed', error);
-  await activity?.stop().catch(() => undefined);
+  await activity.stop().catch(() => undefined);
   await closePostgres().catch(() => undefined);
   process.exit(1);
 });
