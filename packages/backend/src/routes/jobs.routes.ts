@@ -1,4 +1,3 @@
-import type { TaskSession } from '../utils/taskAuthority';
 /**
  * Move's API. Every route is behind the Oxy session (`createOxyAuthMiddleware`);
  * the user id comes from the verified session, never the body.
@@ -124,17 +123,18 @@ function userId(req: Request): string {
   return getRequiredOxyUserId(req as OxyAuthenticatedRequest);
 }
 
-function taskSession(req: Request): TaskSession {
-  const authenticated = req as OxyAuthenticatedRequest;
-  const actor = authenticated.oxyActor;
-  if (!authenticated.accessToken || !actor || actor.effectiveAccountId !== userId(req)) {
-    throw new JobStateError('A current Oxy session is required to start this operation');
+/**
+ * The signed-in person's own account. Move acts for it, now and in the
+ * background, on its declared authority (oxy ADR 0066), so it moves a person's
+ * own account only: never an account they operate.
+ */
+function ownAccount(req: Request): string {
+  const account = userId(req);
+  const actor = (req as OxyAuthenticatedRequest).oxyActor;
+  if (!actor || actor.effectiveAccountId !== account || actor.actorAccountId !== account) {
+    throw new JobStateError('Move moves your own account; switch back to it to do this');
   }
-  return {
-    requesterToken: authenticated.accessToken,
-    actorAccountId: actor.actorAccountId,
-    effectiveAccountId: actor.effectiveAccountId,
-  };
+  return account;
 }
 
 export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router {
@@ -152,16 +152,11 @@ export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router
     handle(async (req, res) => {
       const body = createJobSchema.parse(req.body);
       if (body.dryRun) {
-        const preview = await jobs.preview(
-          userId(req),
-          body.platform,
-          body.linkedAccountId,
-          taskSession(req),
-        );
+        const preview = await jobs.preview(ownAccount(req), body.platform, body.linkedAccountId);
         res.json({ preview });
         return;
       }
-      const job = await jobs.create(userId(req), body, taskSession(req));
+      const job = await jobs.create(ownAccount(req), body);
       res.status(201).json({ job: toJobView(job) });
     }),
   );
@@ -213,11 +208,7 @@ export function createJobsRouter(jobs: JobService, auth: RequestHandler): Router
   router.delete(
     '/jobs/:id',
     handle(async (req, res) => {
-      const result = await jobs.undo(
-        userId(req),
-        jobIdSchema.parse(req.params.id),
-        taskSession(req),
-      );
+      const result = await jobs.undo(ownAccount(req), jobIdSchema.parse(req.params.id));
       // The client reverses what only its session can (profile, follows, blocks),
       // from the facts recorded before it applied them — on any device.
       res.json({

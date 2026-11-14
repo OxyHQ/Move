@@ -1,4 +1,3 @@
-import { taskAuthority } from '../utils/taskAuthority';
 /**
  * Production composition of the pipeline's dependencies — the one place the
  * real Oxy client, Mention client, media limiter and source factory are wired.
@@ -21,7 +20,6 @@ import { socketProgressSink } from './socketServer';
 export function createPipelineDeps(): PipelineDeps {
   return {
     db: getDb(),
-    tasks: taskAuthority(oxy),
     oxy: new OxyGateway(oxy),
     destination: new MentionDestination({ baseUrl: config.mentionApiUrl, oxy }),
     media: createMediaCopier({ limiter: createUploadLimiter(config.media.uploadsPerMinute) }),

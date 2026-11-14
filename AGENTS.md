@@ -47,6 +47,7 @@ More rules with their reasons: [`docs/agent-rules.md`](docs/agent-rules.md).
 - Never store anything beyond migration state (`migration_jobs`, `migration_items`): identity,
   profile, follows, blocks and files are Oxy's, posts are Mention's.
 - Never hold a third-party token or read non-public source data: Oxy's OAuth proves ownership only.
+- First-party never asks people for permissions: this service acts for a person with `actingFor` on what oxy's first-party registry declares (oxy ADR 0066); permissions, scopes and consent are only for third parties.
 - Never write profile, follows or blocks from the backend: Oxy refuses service tokens there, so the client writes them.
 - Never download media in Move: import it by URL through Oxy (`assets.importUserMedia`).
 - Ask first before widening Move's scope or adding a table.
@@ -77,4 +78,4 @@ More rules with their reasons: [`docs/agent-rules.md`](docs/agent-rules.md).
   [Postgres and Drizzle](https://github.com/OxyHQ/oxy/blob/main/docs/postgres-and-drizzle.md),
   [npm releases](https://github.com/OxyHQ/oxy/blob/main/docs/npm-releases.md)
 
-Owner: @NateIsern (Nate Isern). Last reviewed: 2026-11-11.
+Owner: @NateIsern (Nate Isern). Last reviewed: 2026-11-14.

@@ -1,9 +1,8 @@
-/** Own import transport and account authority belong to Mention's SDK and Oxy core. */
+/** Own import transport belongs to Mention's SDK and Oxy core; Oxy checks Move's declared authority. */
 import {
   mentionForOxyService,
   MentionServiceError,
   type MentionServiceIdentity,
-  type MentionRequester,
 } from '@oxy.so/mention-sdk/server';
 import {
   MENTION_BATCH_MAX_ITEMS,
@@ -84,14 +83,15 @@ export class MentionDestination implements ContentDestination {
   readonly maxBatchSize = MENTION_BATCH_MAX_ITEMS;
   constructor(private readonly deps: MentionDestinationDeps) {}
 
+  /** Mention acting for the migrating account, on Move's declared Mention write (oxy ADR 0066). */
   private async withClient<T>(
     accountId: string,
-    requester: MentionRequester,
     run: (client: ReturnType<typeof mentionForOxyService>) => Promise<T>,
   ): Promise<T> {
-    if (requester.accountId !== accountId)
-      throw new DestinationRejectedError('Mention requester differs from migration account', 403);
-    const client = mentionForOxyService(this.deps.oxy, { baseURL: this.deps.baseUrl, requester });
+    const client = mentionForOxyService(this.deps.oxy, {
+      baseURL: this.deps.baseUrl,
+      actingFor: { accountId },
+    });
     try {
       return await run(client);
     } catch (error) {
@@ -113,7 +113,6 @@ export class MentionDestination implements ContentDestination {
   /** Deliver in order, split into requests of ≤ 50 items and ≤ ~0.9 MB each. */
   async deliver(params: {
     oxyUserId: string;
-    requester: MentionRequester;
     platform: 'mastodon' | 'bluesky';
     batchId: string;
     items: PreparedItem[];
@@ -125,9 +124,7 @@ export class MentionDestination implements ContentDestination {
         batchId: params.batchId,
         items: chunk,
       });
-      const raw = await this.withClient(params.oxyUserId, params.requester, (client) =>
-        client.importBatch(payload),
-      );
+      const raw = await this.withClient(params.oxyUserId, (client) => client.importBatch(payload));
       const parsed = mentionBatchResponseSchema.safeParse(raw);
       if (!parsed.success) {
         throw new DestinationRejectedError(
@@ -159,27 +156,20 @@ export class MentionDestination implements ContentDestination {
     return out;
   }
 
-  async undo(params: {
-    oxyUserId: string;
-    batchId: string;
-    requester: MentionRequester;
-  }): Promise<UndoResult> {
-    return this.withClient(params.oxyUserId, params.requester, (client) =>
-      client.undoImportBatch(params.batchId),
-    );
+  async undo(params: { oxyUserId: string; batchId: string }): Promise<UndoResult> {
+    return this.withClient(params.oxyUserId, (client) => client.undoImportBatch(params.batchId));
   }
 
   /** The source ids of this user + platform Mention already imported (any batch). */
   async lookupImported(params: {
     oxyUserId: string;
-    requester: MentionRequester;
     platform: 'mastodon' | 'bluesky';
     sourceIds: string[];
   }): Promise<Set<string>> {
     const found = new Set<string>();
     const unique = [...new Set(params.sourceIds)];
     for (let start = 0; start < unique.length; start += MENTION_LOOKUP_MAX_IDS) {
-      const raw = await this.withClient(params.oxyUserId, params.requester, (client) =>
+      const raw = await this.withClient(params.oxyUserId, (client) =>
         client.lookupImports({
           platform: params.platform,
           sourceIds: unique.slice(start, start + MENTION_LOOKUP_MAX_IDS),

@@ -9,54 +9,32 @@ local SSO roles. Mention's SDK owns its canonical audience, authenticated
 transport and schemas. Move retains batch byte limits, ordering, source SSRF
 protection, fleet media budget, pause-on-429, checkpoints and idempotent undo.
 
-The verified session supplies the original operator and effective account when
-a job is created. Oxy creates the durable goal; Move stores only `oxyTaskId`.
-Every private linked-account read, Files import and Mention call carries its
-original task/account proof. A service header cannot manufacture the account.
-Managed accounts retain their human operator separately. Missing/revoked authority
-stops the job without replacing the requester or deleting partial work.
+## Acting for people (oxy ADR 0066)
 
-Cancel revokes the original task before reporting success. Undo first stops the
-old writer, then obtains a fresh 15-minute request from the current verified
-session, persisting only `undoTaskId`. A compare-and-set prevents concurrent undo
-requests from overwriting each other's authority; the original batch ID remains
-unchanged, including cleanup after an in-flight delivery. Old completed history
-has nullable proof fields and remains readable.
+Oxy's own services never ask people for permissions, tasks or consent. Move's
+entry in [Oxy's first-party registry](https://github.com/OxyHQ/oxy/blob/main/packages/api/src/scripts/seedOxyApplicationsSpecs.ts)
+declares what it does for the people who move: `oxy:files` write (post and
+avatar media), `oxy:linked-accounts` read (the account they move from) and
+Mention write (the posts). Every linked-account read, Files import and Mention
+call names the job's account with `actingFor` and nothing else; Oxy checks the
+declaration and the account live on each call, in the foreground and in the
+background alike. A job stores no authority, so nothing expires or is renewed.
 
-Deployment order: publish/pin Oxy core 7/contracts 6 and the new Mention SDK and
-contracts; deploy Oxy's requester-protected linked-account/Files readers and
-Mention's own import receiver; apply generated migration 0001 in the pre phase;
-then deploy Move. The registry composition below satisfies the package gate;
-Mention receiver readiness and the ordered rollout still precede caller activation.
+Move moves a person's own account: starting, previewing or undoing a job is
+refused when the session's actor is not the account it is in. Cancel and undo
+stop the runner through the job's status (every save is conditional on an
+active job); undo deletes the original batch, and the runner deletes it again
+if a delivery was in flight. If Oxy no longer admits the account (closed,
+supervised), the run fails with `authority-unavailable` and keeps its partial
+work. The off switch is the person's: cancel or undo the job.
 
-The root's read-only production census at 2026-10-23 19:31 UTC found one undone
-job/items and no active jobs. Evidence: organization scratch
-`first-party-root/move-counts-log.json`. Recheck immediately before cutover:
-concurrent active legacy jobs cannot be silently given new authority. Preserve
-them for an explicit current-session operation; never infer a requester from the
-job owner or promote an old external credential. No production writes belong to
-this source migration.
-
-Validation against local candidate packages passed 139 backend tests, source
-typecheck/build, Biome and repository gates. Tests use disposable PostgreSQL
-and real shared SDK HTTP transport:
-operator/effective account, revocation, cancellation, fresh undo, per-audience
-workload mint, no persisted bearer, failed HTTP delivery retaining intent,
-pause/retry, cursor resume and duplicate delivery. The finite Oxy legacy bridge
-can retire only after all ecosystem producers are accounted for.
-
-
-Published registry composition, 2026-10-25: core 7.3.0, contracts 6.0.0,
-services 13.0.0, protocol 1.5.1 and Mention SDK/contracts 0.2.0. Oxy and Mention
-candidate installations were removed before an isolated-cache registry install;
-frozen verification passes and the installed contracts declaration matches the
-published Zod 4 artifact. No local dependency path or override is committed.
-All 139 backend tests pass with these packages, together with backend source/test
-types, frontend source/test types and the backend build. The tests retain real
-PostgreSQL and shared SDK HTTP composition for original authority and delivery
-recovery. CI and deployment remain pending; recheck active legacy jobs before
-cutover and retain history regardless of the result.
-
+`oxy_task_id` and `undo_task_id` leave in two steps. The schema stops naming
+them first, so the image that rolls out never selects them; the generated
+`DROP COLUMN` follows in its own change, marked `pre`, once that image is live.
+A `post` marker would not work here: `/ready` refuses traffic until every
+migration in the image's journal is applied, and `post` runs only after the
+rollout is healthy. Production had one job ever, on a personal account, with
+neither column set (read-only check, 2026-11-14).
 
 ## Alia client transport
 
@@ -78,4 +56,4 @@ cache. A same-session token refresh retains the connection.
 The frontend Socket.IO integration test uses real HTTP/WebSocket connections to
 check expired-token refresh, a connected account switch, sign-out, disposal and
 switch/disposal during a blocked refresh. These changes do not affect migration
-job authority, durable task IDs or external account linking.
+job authority or external account linking.
