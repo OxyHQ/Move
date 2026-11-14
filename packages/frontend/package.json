@@ -22,7 +22,7 @@
     "@oxy.so/app-preset": "6.6.0",
     "@oxy.so/bloom": "21.0.0",
     "@oxy.so/contracts": "7.1.0",
-    "@oxy.so/core": "7.49.0",
+    "@oxy.so/core": "7.51.0",
     "@oxy.so/services": "14.21.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "12.0.1",
