@@ -10,3 +10,15 @@
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+
+# Content-hashed: every file the Expo export writes under /_expo/static/ is named
+# by a hash of its bytes, so a browser keeps it for a year and never revalidates.
+# The asset server's default (`max-age=0, must-revalidate`) made every return
+# visit re-ask for each one. Entry files (index.html, public/) keep that default.
+#
+# Known limit: this app has no Worker, and `not_found_handling` answers a hashed
+# name this deploy lacks (an old tab asking for the last release's chunk) with
+# index.html, which this rule then marks immutable too. Alia's and Clarity's
+# Workers turn that miss into an uncached 404; one here would be its own change.
+/_expo/static/*
+  Cache-Control: public, max-age=31536000, immutable
